@@ -241,7 +241,6 @@ Target "TravisCI" (fun _ ->
 "Clean"
   =?> ("BuildVersion", isAppVeyorBuild)
   ==> "AssemblyInfo"
-  =?> ("VsixManifest", isAppVeyorBuild)
   ==> "Build"
   ==> "BuildTests"
   ==> "UnitTests"
