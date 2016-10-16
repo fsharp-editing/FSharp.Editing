@@ -1,0 +1,29 @@
+source http://nuget.org/api/v2
+redirects: on
+strategy: max
+
+nuget Fantomas
+nuget FSharp.Compiler.Service
+nuget FSharp.Core
+nuget FSharpLint.Core prerelease
+nuget FsPickler
+nuget SourceLink.SymbolStore 0.5.0
+
+group Test
+    source http://nuget.org/api/v2
+
+    nuget FsCheck
+    nuget FSharp.Compiler.Service.ProjectCracker
+    nuget NUnit
+    nuget NUnit.Runners
+    nuget FSharp.Management
+    nuget FSharp.Data
+
+group Build
+    source http://nuget.org/api/v2
+    
+    nuget canopy
+    nuget FAKE
+    nuget FSharp.Formatting
+    nuget Nuget.CommandLine
+    github fsharp/FAKE modules/Octokit/Octokit.fsx
