@@ -362,51 +362,423 @@ module DidChangeWatchedFilesNotification =
         { /// The actual file events.
           Changes: FileEvent list }
 
+/// Diagnostics notification are sent from the server to the client to signal results of validation runs.
+module PublishDiagnosticsNotification =
+    let ``method`` = "textDocument/publishDiagnostics"
+
+    // params: PublishDiagnosticsParams defined as follows:
+    
+    type PublishDiagnosticsParams =
+        { /// The URI for which diagnostic information is reported.
+          Uri: string
+          /// An array of diagnostic information items.
+          Diagnostics: Diagnostic list }
+
+/// The Completion request is sent from the client to the server to compute completion items at a given cursor position. 
+/// Completion items are presented in the IntelliSense user interface. If computing full completion items is expensive, 
+/// servers can additionally provide a handler for the completion item resolve request ('completionItem/resolve'). 
+/// This request is sent when a completion item is selected in the user interface. A typically use case is for example: 
+/// the 'textDocument/completion' request doesn't fill in the documentation property for returned completion items since 
+/// it is expensive to compute. When the item is selected in the user interface then a 'completionItem/resolve' request 
+/// is sent with the selected completion item as a param. The returned completion item should have the documentation property 
+/// filled in.
+module CompletionRequest =
+    let ``method`` = "textDocument/completion"
+
+    // params: TextDocumentPositionParams
+    // result: CompletionItem[] | CompletionList
+    
+    /// The kind of a completion entry.
+    type CompletionItemKind =
+        | Text = 1
+        | Method = 2
+        | Function = 3
+        | Constructor = 4
+        | Field = 5
+        | Variable = 6
+        | Class = 7
+        | Interface = 8
+        | Module = 9
+        | Property = 10
+        | Unit = 11
+        | Value = 12
+        | Enum = 13
+        | Keyword = 14
+        | Snippet = 15
+        | Color = 16
+        | File = 17
+        | Reference = 18
+
+    [<NoComparison>]
+    type CompletionItem =
+        { /// The label of this completion item. By default also the text that is inserted when selecting this completion.
+          Label: string
+          /// The kind of this completion item. Based of the kind an icon is chosen by the editor.
+          Kind: CompletionItemKind option
+          /// A human-readable string with additional information about this item, like type or symbol information.
+          Detail: string option
+          /// A human-readable string that represents a doc-comment.
+          Documentation: string option
+          /// A string that shoud be used when comparing this item with other items. When `falsy` the label is used.
+          SortText: string option
+          /// A string that should be used when filtering a set of completion items. When `falsy` the label is used.
+          FilterText: string option
+          /// A string that should be inserted a document when selecting this completion. When `falsy` the label is used.
+          InsertText: string option
+          /// An edit which is applied to a document when selecting this completion. When an edit is provided the value of
+          // insertText is ignored.
+          TextEdit: TextEdit option
+          /// An optional array of additional text edits that are applied when
+          /// selecting this completion. Edits must not overlap with the main edit nor with themselves.
+          AdditionalTextEdits: TextEdit list
+          /// An optional command that is executed *after* inserting this completion. *Note* that
+          /// additional modifications to the current document should be described with the additionalTextEdits-property.
+          Command: Command option
+          /// An data entry field that is preserved on a completion item between a completion and a completion resolve request.
+          Data: obj option }
+
+    /// Represents a collection of [completion items](#CompletionItem) to be presented in the editor.
+    [<NoComparison>]
+    type CompletionList = 
+        { /// This list it not complete. Further typing should result in recomputing this list.
+          IsIncomplete: bool
+          /// The completion items.
+          Items: CompletionItem list }
+
+    // error: code and message set in case an exception happens during the completion request.
+
+/// The request is sent from the client to the server to resolve additional information for a given completion item.
+module CompletionItemResolveRequest =
+    let ``method`` = "completionItem/resolve"
+
+    // params: CompletionItem
+    // result: CompletionItem
+    // error: code and message set in case an exception happens during the completion resolve request.
+
+/// The hover request is sent from the client to the server to request hover information at a given text document position.
+module HoverRequest =
+    let ``method`` = "textDocument/hover"
+    
+    // params: TextDocumentPositionParams
+    // result: Hover defined as follows:
+
+    /// The marked string is rendered:
+    /// - as markdown if it is represented as a string
+    /// - as code block of the given langauge if it is represented as a pair of a language and a value
+    ///
+    /// The pair of a language and a value is an equivalent to markdown:
+    /// ```${language}
+    /// ${value}
+    /// ```
+    type MarkedString = 
+        { Language: string
+          Value: string }
+    
+    /// The result of a hover request.
+    type Hover = 
+        { /// The hover's content
+          Contents: MarkedString list
+          /// An optional range is a range inside a text document 
+          /// that is used to visualize a hover, e.g. by changing the background color.
+          Range: Range option }
 
 
+    // error: code and message set in case an exception happens during the hover request.
 
-/// An event describing a change to a text document. If range and rangeLength are omitted
-/// the new text is considered to be the full content of the document.
-type TextDocumentContentChangeEvent =
-    { /// The range of the document that changed.
-      Range: Range option
-      /// The length of the range that got replaced.
-      RangeLength: int option
-      /// The new text of the document.
-      Text: string }
+/// The signature help request is sent from the client to the server to request signature information at a given cursor position.
+module SignatureHelpRequest =
+    let ``method`` = "textDocument/signatureHelp"
+    
+    // params: TextDocumentPositionParams
+    // result: SignatureHelp defined as follows:
+    
+    /// Represents a parameter of a callable-signature. A parameter can have a label and a doc-comment.
+    type ParameterInformation =
+        { /// The label of this parameter. Will be shown in the UI.
+          Label: string
+          /// The human-readable doc-comment of this parameter. Will be shown in the UI but can be omitted.
+          Documentation: string option }
 
-type ReferenceContext =
-    { /// Include the declaration of the current symbol.
-      IncludeDeclaration: bool }
+    /// Represents the signature of something callable. 
+    /// A signature can have a label, like a function-name, a doc-comment, and a set of parameters.
+    type SignatureInformation =
+        { /// The label of this signature. Will be shown in the UI.
+          Label: string
+          /// The human-readable doc-comment of this signature. Will be shown in the UI but can be omitted.
+          Documentation: string option
+          /// The parameters of this signature.
+          Parameters: ParameterInformation list }
 
-/// A symbol kind.
-type SymbolKind =
-    | File = 1
-    | Module = 2
-    | Namespace = 3
-    | Package = 4
-    | Class = 5
-    | Method = 6
-    | Property = 7
-    | Field = 8
-    | Constructor = 9
-    | Enum = 10
-    | Interface = 11
-    | Function = 12
-    | Variable = 13
-    | Constant = 14
-    | String = 15
-    | Number = 16
-    | Boolean = 17
-    | Array = 18
+    /// Signature help represents the signature of something callable. There can be multiple 
+    /// signature but only one active and only one active parameter.
+    type SignatureHelp =
+        { /// One or more signatures.
+          Signatures: SignatureInformation list
+          /// The active signature.
+          ActiveSignature: int option
+          /// The active parameter of the active signature.
+          ActiveParameter: int }
+    
+    // error: code and message set in case an exception happens during the signature help request.
 
-/// Represents information about programming constructs like variables, classes, interfaces etc.
-type SymbolInformation = 
-    { /// The name of this symbol.
-      Name: string
-      /// The kind of this symbol.
-      Kind: SymbolKind
-      /// The location of this symbol.
-      Location: Location
-      /// The name of the symbol containing this symbol.
-      ContainerName: string option }
+/// The goto definition request is sent from the client to the server to resolve the definition location of a symbol 
+/// at a given text document position.
+module GotoDefinitionRequest =
+    let ``method`` = "textDocument/definition"
+    
+    //params: TextDocumentPositionParams
+    // result: Location | Location[]
+    // error: code and message set in case an exception happens during the definition request.
+
+/// The references request is sent from the client to the server to resolve project-wide references for the symbol denoted 
+/// by the given text document position.
+module FindReferencesRequest =
+    let ``method`` = "textDocument/references"
+    
+    //params: ReferenceParams defined as follows:
+
+    type ReferenceContext =
+        { /// Include the declaration of the current symbol.
+          IncludeDeclaration: bool }
+
+    type ReferenceParams =
+        { /// The text document.
+          TextDocument: TextDocumentIdentifier
+          /// The position inside the text document.
+          Position: Position
+          Context: ReferenceContext }
+    
+    //Response:
+    // result: Location[]
+    // error: code and message set in case an exception happens during the reference request.
+
+/// The document highlight request is sent from the client to the server to resolve a document highlights 
+/// for a given text document position. For programming languages this usually highlights all references to the symbol 
+/// scoped to this file. However we kept 'textDocument/documentHighlight' and 'textDocument/references' separate 
+/// requests since the first one is allowed to be more fuzzy. Symbol matches usually have a DocumentHighlightKind of 
+/// Read or Write whereas fuzzy or textual matches use Textas the kind.
+module DocumentHighlightsRequest =
+    let ``method`` = "textDocument/documentHighlight"
+    // params: TextDocumentPositionParams
+    // Response
+    // result: DocumentHighlight[] defined as follows:
+    
+    /// A document highlight kind.
+    type DocumentHighlightKind =
+         /// A textual occurrance.
+        | Text = 1
+         /// Read-access of a symbol, like reading a variable.
+        | Read = 2
+         /// Write-access of a symbol, like writing to a variable.
+        | Write = 3
+
+    /// A document highlight is a range inside a text document which deserves special attention. 
+    /// Usually a document highlight is visualized by changing the background color of its range.
+    type DocumentHighlight =
+        { /// The range this highlight applies to.
+          Range: Range
+          /// The highlight kind, default is DocumentHighlightKind.Text.
+          Kind: DocumentHighlightKind option }
+    
+    // error: code and message set in case an exception happens during the document highlight request.
+
+/// The document symbol request is sent from the client to the server to list all symbols found in a given text document.
+module DocumentSymbolsRequest =
+    let ``method`` = "textDocument/documentSymbol"
+    
+    // params: DocumentSymbolParams defined as follows:
+
+    type DocumentSymbolParams =
+        { /// The text document.
+          TextDocument: TextDocumentIdentifier }
+
+    // Response
+    // result: SymbolInformation[] defined as follows:
+
+    /// A symbol kind.
+    type SymbolKind =
+        | File = 1
+        | Module = 2
+        | Namespace = 3
+        | Package = 4
+        | Class = 5
+        | Method = 6
+        | Property = 7
+        | Field = 8
+        | Constructor = 9
+        | Enum = 10
+        | Interface = 11
+        | Function = 12
+        | Variable = 13
+        | Constant = 14
+        | String = 15
+        | Number = 16
+        | Boolean = 17
+        | Array = 18
+    
+    /// Represents information about programming constructs like variables, classes, interfaces etc.
+    type SymbolInformation = 
+        { /// The name of this symbol.
+          Name: string
+          /// The kind of this symbol.
+          Kind: SymbolKind
+          /// The location of this symbol.
+          Location: Location
+          /// The name of the symbol containing this symbol.
+          ContainerName: string option }
+    
+    // error: code and message set in case an exception happens during the document symbol request.
+
+/// The workspace symbol request is sent from the client to the server to list project-wide symbols matching the query string.
+module WorkspaceSymbolsRequest =
+    let ``method`` = "workspace/symbol"
+    // params: WorkspaceSymbolParams defined as follows:
+
+    /// The parameters of a Workspace Symbol Request.
+    type WorkspaceSymbolParams =
+        { /// A non-empty query string
+          Query: string }
+    
+    // Response
+    // result: SymbolInformation[] as defined above.
+    // error: code and message set in case an exception happens during the workspace symbol request.
+
+/// The code action request is sent from the client to the server to compute commands for a given text document and range. The request is triggered when the user moves the cursor into a problem marker in the editor or presses the lightbulb associated with a marker.
+module CodeActionRequest =
+    let ``method`` = "textDocument/codeAction"
+    // params: CodeActionParams defined as follows:
+    
+    /// Contains additional diagnostic information about the context in which a code action is run.
+    type CodeActionContext =
+        { /// An array of diagnostics.
+          Diagnostics: Diagnostic list }
+
+    /// Params for the CodeActionRequest
+    type CodeActionParams =
+        { /// The document in which the command was invoked.
+          TextDocument: TextDocumentIdentifier
+          /// The range for which the command was invoked.
+          Range: Range
+          /// Context carrying additional information.
+          Context: CodeActionContext }
+    
+    // Response
+    // result: Command[] defined as follows:
+    // error: code and message set in case an exception happens during the code action request.
+
+/// The code lens request is sent from the client to the server to compute code lenses for a given text document.
+module CodeLensRequest =
+    let ``method`` = "textDocument/codeLens"
+    // params: CodeLensParams defined as follows:
+    
+    type CodeLensParams =
+        { /// The document to request code lens for.
+          TextDocument: TextDocumentIdentifier }
+    
+    // Response
+    // result: CodeLens[] defined as follows:
+    
+    /// A code lens represents a command that should be shown along with
+    /// source text, like the number of references, a way to run tests, etc.
+    ///
+    /// A code lens is _unresolved_ when no command is associated to it. For performance
+    /// reasons the creation of a code lens and resolving should be done in two stages.
+    [<NoComparison>]
+    type CodeLens = 
+        { /// The range in which this code lens is valid. Should only span a single line.
+          Range: Range
+          /// The command this code lens represents.
+          Command: Command option
+          /// A data entry field that is preserved on a code lens item between
+          /// a code lens and a code lens resolve request.
+          Data: obj option }
+    
+    // error: code and message set in case an exception happens during the code lens request.
+
+/// The code lens resolve request is sent from the client to the server to resolve the command for a given code lens item.
+module CodeLensResolveRequest =
+    let ``method`` = "codeLens/resolve"
+    // params: CodeLens
+    // Response
+    // result: CodeLens
+    // error: code and message set in case an exception happens during the code lens resolve request.
+
+/// Value-object describing what options formatting should use.
+type FormattingOptions = 
+    { /// Size of a tab in spaces.
+        TabSize: int
+        /// Prefer spaces over tabs.
+        InsertSpaces: bool
+        /// Signature for further properties.
+        // [key: string]: boolean | number | string; 
+    }
+
+/// The document formatting request is sent from the server to the client to format a whole document.
+module DocumentFormattingRequest =
+    let ``method`` = "textDocument/formatting"
+    // params: DocumentFormattingParams defined as follows
+    
+
+    type DocumentFormattingParams =
+        { /// The document to format.
+          TextDocument: TextDocumentIdentifier
+          /// The format options.
+          Options: FormattingOptions }
+    
+    // Response
+    // result: TextEdit[] describing the modification to the document to be formatted.
+    /// error: code and message set in case an exception happens during the formatting request.
+
+/// The document range formatting request is sent from the client to the server to format a given range in a document.
+module DocumentRangeFormattingRequest =
+    let ``method`` = "textDocument/rangeFormatting"
+    // params: DocumentRangeFormattingParams defined as follows
+    
+    type DocumentRangeFormattingParams =
+        { /// The document to format.
+          TextDocument: TextDocumentIdentifier
+          /// The range to format
+          Range: Range
+          /// The format options
+          Options: FormattingOptions }
+    
+    // Response
+    // result: TextEdit[] describing the modification to the document to be formatted.
+    // error: code and message set in case an exception happens during the range formatting request.
+
+// The document on type formatting request is sent from the client to the server to format parts of the document during typing.
+module DocumentOnTypeFormattingRequest =
+    let ``method`` = "textDocument/onTypeFormatting"
+    // params: DocumentOnTypeFormattingParams defined as follows
+    
+    type DocumentOnTypeFormattingParams =
+        { /// The document to format.
+          TextDocument: TextDocumentIdentifier
+          /// The position at which this request was sent.
+          Position: Position
+          /// The character that has been typed.
+          Ch: string
+          /// The format options.
+          Options: FormattingOptions }
+    
+    // Response
+    // result: TextEdit[] describing the modification to the document.
+    // error: code and message set in case an exception happens during the range formatting request.
+
+// The rename request is sent from the client to the server to perform a workspace-wide rename of a symbol.
+module RenameRequest =
+    let ``method`` = "textDocument/rename"
+    // params: RenameParams defined as follows
+    
+    type RenameParams =
+        { /// The document to format.
+          TextDocument: TextDocumentIdentifier
+          /// The position at which this request was sent.
+          Position: Position
+          /// The new name of the symbol. If the given name is not valid the
+          /// request must return a [ResponseError](#ResponseError) with an appropriate message set.
+          NewName: string }
+    
+    // Response
+    // result: WorkspaceEdit describing the modification to the workspace.
+    // error: code and message set in case an exception happens during the rename request.
