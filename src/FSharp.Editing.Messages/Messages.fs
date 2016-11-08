@@ -290,6 +290,81 @@ module DidOpenTextDocumentNotification =
           TextDocument: TextDocumentItem }
 
 
+/// The document change notification is sent from the client to the server to signal changes to a text document. 
+/// In 2.0 the shape of the params has changed to include proper version numbers and language ids.
+module DidChangeTextDocumentNotification =
+    let ``method`` = "textDocument/didChange"
+
+    /// An event describing a change to a text document. If range and rangeLength are omitted
+    /// the new text is considered to be the full content of the document.
+    type TextDocumentContentChangeEvent =
+        { /// The range of the document that changed.
+          Range: Range option
+          /// The length of the range that got replaced.
+          RangeLength: int option
+          /// The new text of the document.
+          Ttext: string }
+    
+    // params: DidChangeTextDocumentParams defined as follows:
+
+    type DidChangeTextDocumentParams =
+        { /// The document that did change. The version number points
+          /// to the version after all provided content changes have been applied.
+          TextDocument: VersionedTextDocumentIdentifier
+          /// The actual content changes.
+          ContentChanges: TextDocumentContentChangeEvent list }
+
+/// The document close notification is sent from the client to the server when the document got closed in the client. 
+/// The document's truth now exists where the document's uri points to (e.g. if the document's uri is a file uri the truth now exists on disk).
+module DidCloseTextDocumentNotification =
+    let ``method`` = "textDocument/didClose"
+    
+    // params: DidCloseTextDocumentParams defined as follows:
+
+    type DidCloseTextDocumentParams =
+        { /// The document that was closed.
+          TextDocument: TextDocumentIdentifier }
+
+/// The document save notification is sent from the client to the server when the document was saved in the client.
+module DidSaveTextDocumentNotification =
+    let ``method`` = "textDocument/didSave"
+    
+    // params: DidSaveTextDocumentParams defined as follows:
+    
+    type DidSaveTextDocumentParams = 
+        { /// The document that was saved.
+          TextDocument: TextDocumentIdentifier }
+
+/// The watched files notification is sent from the client to the server when the client detects changes to files 
+/// watched by the language client.
+module DidChangeWatchedFilesNotification =
+    let ``method`` = "workspace/didChangeWatchedFiles"
+
+    /// The file event type.
+    type FileChangeType =
+          /// The file got created.
+        | Created = 1
+          /// The file got changed.
+        | Changed = 2
+          /// The file got deleted.
+        | Deleted = 3
+    
+    /// An event describing a file change.
+    type FileEvent =
+        { /// The file's URI.
+          Uri: string
+          /// The change type.
+          Type: FileChangeType }
+    
+    // params: DidChangeWatchedFilesParams defined as follows:
+
+    type DidChangeWatchedFilesParams =
+        { /// The actual file events.
+          Changes: FileEvent list }
+
+
+
+
 /// An event describing a change to a text document. If range and rangeLength are omitted
 /// the new text is considered to be the full content of the document.
 type TextDocumentContentChangeEvent =
