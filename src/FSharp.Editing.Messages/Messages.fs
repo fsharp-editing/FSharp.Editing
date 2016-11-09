@@ -1,5 +1,60 @@
 ﻿namespace FSharp.Editing.Messages
 
+type IRequest = interface end
+type IResponse = interface end
+type INotification = interface end
+type IResponseError = interface end
+
+/// A request message to describe a request between the client and the server. Every processed request must 
+/// send a response back to the sender of the request.
+type RequestMessage<'parameters when 'parameters :> IRequest> =
+    { /// JSON-RPC version.
+      Jsonrpc: string
+      /// The request id.
+      Id: int
+      /// The method to be invoked.
+      Method: string
+      /// The method's params.
+      Params: 'parameters option }
+
+type ErrorCode =
+    | ParseError = -32700
+    | InvalidRequest = -32600
+    | MethodNotFound = -32601
+    | InvalidParams = -32602
+    | InternalError = -32603
+    | ServerErrorStart = -32099
+    | ServerErrorEnd = -32000
+
+type ResponseError<'data> =
+    { /// A number indicating the error type that occurred.
+      Code: ErrorCode
+      /// A string providing a short description of the error.
+      Message: string
+      /// A Primitive or Structured value that contains additional
+      /// information about the error. Can be omitted.
+      Data: 'data }
+
+/// Response Message sent as a result of a request.
+type ResponseMessage<'result, 'error when 'result :> IResponse and 'error :> IResponseError> =
+    { /// JSON-RPC version.
+      Jsonrpc: string
+      /// The request id.
+      Id: int
+      /// The result of a request. This can be omitted in the case of an error.
+      Result: 'result option
+      /// The error object in case a request fails.
+      Error: ResponseError<'error> option }
+
+/// A notification message. A processed notification message must not send a response back. They work like events.
+type NotificationMessage<'parameters when 'parameters :> INotification> =
+     { /// JSON-RPC version.
+       Jsonrpc: string
+       /// The method to be invoked.
+       Method: string
+       /// The notification's params.
+       Params: 'parameters option }
+
 /// Position in a text document expressed as zero-based line and character offset. 
 /// A position is between two characters like an 'insert' cursor in a editor.
 type Position =
@@ -20,6 +75,13 @@ type Range =
 type Location =
     { Uri: string 
       Range: Range }
+    interface IResponse
+
+// todo: there is no such a type in the spec, but we must return Location | Location [] and
+// this is the best I've come with. But it must be serialized in a special way...
+type Locations = 
+    Locations of Location list
+    with interface IResponse
 
 type DiagnosticSeverity =
     | Error = 1
@@ -98,6 +160,7 @@ type TextDocumentPositionParams =
       TextDocument: TextDocumentIdentifier
       /// The position inside the text document.
       Position: Position }
+    interface IRequest
 
 type MessageType =
     | Error = 1
@@ -124,12 +187,14 @@ module InitializeRequest =
           InitializationOptions: obj option
           /// The capabilities provided by the client (editor)
           Capabilities: ClientCapabilities }
+        interface IRequest
 
     /// error.data
     type InitializeError =
         { /// Indicates whether the client should retry to send the
           /// initilize request after showing the message provided in the ResponseError.
           Retry: bool }
+        interface IResponseError
 
     /// Defines how the host (editor) should sync document changes to the language server.
     type TextDocumentSyncKind =
@@ -200,6 +265,7 @@ module InitializeRequest =
     type InitializeResult =
         { /// The capabilities the language server provides.
           Capabilities: ServerCapabilities }
+        interface IResponse
 
 /// The shutdown request is sent from the client to the server. It asks the server to shut down, 
 /// but to not exit (otherwise the response might not be delivered correctly to the client). 
@@ -224,6 +290,7 @@ module ShowMessageNotification =
           Type: MessageType
           /// The actual message.
           Message: string }
+        interface INotification
 
 /// The show message request is sent from a server to a client to ask the client to display 
 // a particular message in the user interface. In addition to the show message notification the request 
@@ -247,6 +314,7 @@ module ShowMessageRequest =
           Message: string
           /// The message action items to present.
           Aactions: MessageActionItem list }
+        interface IRequest
 
 /// The log message notification is sent from the server to the client to ask the client to log a particular message.
 module LogMessageNotification =
@@ -259,7 +327,7 @@ module LogMessageNotification =
           Type: MessageType
           /// The actual message
           Message: string }
-    
+        interface INotification
 
 /// The telemetry notification is sent from the server to the client to ask the client to log a telemetry event.
 module TelemetryNotification =
@@ -276,6 +344,7 @@ module DidChangeConfigurationNotification =
     type DidChangeConfigurationParams =
         { /// The actual changed settings
           Settings: obj }
+        interface INotification
 
 /// The document open notification is sent from the client to the server to signal newly opened text documents. 
 /// The document's truth is now managed by the client and the server must not try to read the document's 
@@ -288,7 +357,7 @@ module DidOpenTextDocumentNotification =
     type DidOpenTextDocumentParams = 
         { /// The document that was opened.
           TextDocument: TextDocumentItem }
-
+        interface INotification
 
 /// The document change notification is sent from the client to the server to signal changes to a text document. 
 /// In 2.0 the shape of the params has changed to include proper version numbers and language ids.
@@ -313,6 +382,7 @@ module DidChangeTextDocumentNotification =
           TextDocument: VersionedTextDocumentIdentifier
           /// The actual content changes.
           ContentChanges: TextDocumentContentChangeEvent list }
+        interface INotification
 
 /// The document close notification is sent from the client to the server when the document got closed in the client. 
 /// The document's truth now exists where the document's uri points to (e.g. if the document's uri is a file uri the truth now exists on disk).
@@ -324,6 +394,7 @@ module DidCloseTextDocumentNotification =
     type DidCloseTextDocumentParams =
         { /// The document that was closed.
           TextDocument: TextDocumentIdentifier }
+        interface INotification
 
 /// The document save notification is sent from the client to the server when the document was saved in the client.
 module DidSaveTextDocumentNotification =
@@ -334,6 +405,7 @@ module DidSaveTextDocumentNotification =
     type DidSaveTextDocumentParams = 
         { /// The document that was saved.
           TextDocument: TextDocumentIdentifier }
+        interface INotification
 
 /// The watched files notification is sent from the client to the server when the client detects changes to files 
 /// watched by the language client.
@@ -361,6 +433,7 @@ module DidChangeWatchedFilesNotification =
     type DidChangeWatchedFilesParams =
         { /// The actual file events.
           Changes: FileEvent list }
+        interface INotification
 
 /// Diagnostics notification are sent from the server to the client to signal results of validation runs.
 module PublishDiagnosticsNotification =
@@ -373,6 +446,58 @@ module PublishDiagnosticsNotification =
           Uri: string
           /// An array of diagnostic information items.
           Diagnostics: Diagnostic list }
+        interface INotification
+
+/// The kind of a completion entry.
+type CompletionItemKind =
+    | Text = 1
+    | Method = 2
+    | Function = 3
+    | Constructor = 4
+    | Field = 5
+    | Variable = 6
+    | Class = 7
+    | Interface = 8
+    | Module = 9
+    | Property = 10
+    | Unit = 11
+    | Value = 12
+    | Enum = 13
+    | Keyword = 14
+    | Snippet = 15
+    | Color = 16
+    | File = 17
+    | Reference = 18
+
+[<NoComparison>]
+type CompletionItem =
+    { /// The label of this completion item. By default also the text that is inserted when selecting this completion.
+        Label: string
+        /// The kind of this completion item. Based of the kind an icon is chosen by the editor.
+        Kind: CompletionItemKind option
+        /// A human-readable string with additional information about this item, like type or symbol information.
+        Detail: string option
+        /// A human-readable string that represents a doc-comment.
+        Documentation: string option
+        /// A string that shoud be used when comparing this item with other items. When `falsy` the label is used.
+        SortText: string option
+        /// A string that should be used when filtering a set of completion items. When `falsy` the label is used.
+        FilterText: string option
+        /// A string that should be inserted a document when selecting this completion. When `falsy` the label is used.
+        InsertText: string option
+        /// An edit which is applied to a document when selecting this completion. When an edit is provided the value of
+        // insertText is ignored.
+        TextEdit: TextEdit option
+        /// An optional array of additional text edits that are applied when
+        /// selecting this completion. Edits must not overlap with the main edit nor with themselves.
+        AdditionalTextEdits: TextEdit list
+        /// An optional command that is executed *after* inserting this completion. *Note* that
+        /// additional modifications to the current document should be described with the additionalTextEdits-property.
+        Command: Command option
+        /// An data entry field that is preserved on a completion item between a completion and a completion resolve request.
+        Data: obj option }
+    interface IRequest
+    interface IResponse
 
 /// The Completion request is sent from the client to the server to compute completion items at a given cursor position. 
 /// Completion items are presented in the IntelliSense user interface. If computing full completion items is expensive, 
@@ -388,55 +513,6 @@ module CompletionRequest =
     // params: TextDocumentPositionParams
     // result: CompletionItem[] | CompletionList
     
-    /// The kind of a completion entry.
-    type CompletionItemKind =
-        | Text = 1
-        | Method = 2
-        | Function = 3
-        | Constructor = 4
-        | Field = 5
-        | Variable = 6
-        | Class = 7
-        | Interface = 8
-        | Module = 9
-        | Property = 10
-        | Unit = 11
-        | Value = 12
-        | Enum = 13
-        | Keyword = 14
-        | Snippet = 15
-        | Color = 16
-        | File = 17
-        | Reference = 18
-
-    [<NoComparison>]
-    type CompletionItem =
-        { /// The label of this completion item. By default also the text that is inserted when selecting this completion.
-          Label: string
-          /// The kind of this completion item. Based of the kind an icon is chosen by the editor.
-          Kind: CompletionItemKind option
-          /// A human-readable string with additional information about this item, like type or symbol information.
-          Detail: string option
-          /// A human-readable string that represents a doc-comment.
-          Documentation: string option
-          /// A string that shoud be used when comparing this item with other items. When `falsy` the label is used.
-          SortText: string option
-          /// A string that should be used when filtering a set of completion items. When `falsy` the label is used.
-          FilterText: string option
-          /// A string that should be inserted a document when selecting this completion. When `falsy` the label is used.
-          InsertText: string option
-          /// An edit which is applied to a document when selecting this completion. When an edit is provided the value of
-          // insertText is ignored.
-          TextEdit: TextEdit option
-          /// An optional array of additional text edits that are applied when
-          /// selecting this completion. Edits must not overlap with the main edit nor with themselves.
-          AdditionalTextEdits: TextEdit list
-          /// An optional command that is executed *after* inserting this completion. *Note* that
-          /// additional modifications to the current document should be described with the additionalTextEdits-property.
-          Command: Command option
-          /// An data entry field that is preserved on a completion item between a completion and a completion resolve request.
-          Data: obj option }
-
     /// Represents a collection of [completion items](#CompletionItem) to be presented in the editor.
     [<NoComparison>]
     type CompletionList = 
@@ -444,6 +520,7 @@ module CompletionRequest =
           IsIncomplete: bool
           /// The completion items.
           Items: CompletionItem list }
+        interface IResponse
 
     // error: code and message set in case an exception happens during the completion request.
 
@@ -481,7 +558,7 @@ module HoverRequest =
           /// An optional range is a range inside a text document 
           /// that is used to visualize a hover, e.g. by changing the background color.
           Range: Range option }
-
+        interface IResponse
 
     // error: code and message set in case an exception happens during the hover request.
 
@@ -518,6 +595,7 @@ module SignatureHelpRequest =
           ActiveSignature: int option
           /// The active parameter of the active signature.
           ActiveParameter: int }
+        interface IResponse
     
     // error: code and message set in case an exception happens during the signature help request.
 
@@ -547,6 +625,7 @@ module FindReferencesRequest =
           /// The position inside the text document.
           Position: Position
           Context: ReferenceContext }
+        interface IRequest
     
     //Response:
     // result: Location[]
@@ -782,3 +861,4 @@ module RenameRequest =
     // Response
     // result: WorkspaceEdit describing the modification to the workspace.
     // error: code and message set in case an exception happens during the rename request.
+
