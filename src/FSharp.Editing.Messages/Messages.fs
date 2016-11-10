@@ -110,273 +110,183 @@ type MessageType =
     | Info = 3
     | Log = 4
 
-/// The initialize request is sent as the first request from the client to the server.
-module Initialize =
-    let ``method`` = "initialize"
+/// ClientCapabilities are currently empty.
+type ClientCapabilities = ClientCapabilities
 
-    /// ClientCapabilities are currently empty.
-    type ClientCapabilities = ClientCapabilities
+[<NoComparison>]
+type InitializeParams =
+    { /// The process Id of the parent process that started
+      /// the server. Is null if the process has not been started by another process.
+      /// If the parent process is not alive then the server should exit (see exit notification) its process.
+      ProcessId: int option
+      /// The rootPath of the workspace. Is null if no folder is open.
+      RootPath: string option
+      /// User provided initialization options.
+      InitializationOptions: obj option
+      /// The capabilities provided by the client (editor)
+      Capabilities: ClientCapabilities }
 
-    [<NoComparison>]
-    type Params =
-        { /// The process Id of the parent process that started
-          /// the server. Is null if the process has not been started by another process.
-          /// If the parent process is not alive then the server should exit (see exit notification) its process.
-          ProcessId: int option
-          /// The rootPath of the workspace. Is null if no folder is open.
-          RootPath: string option
-          /// User provided initialization options.
-          InitializationOptions: obj option
-          /// The capabilities provided by the client (editor)
-          Capabilities: ClientCapabilities }
+/// error.data
+type InitializeError =
+    { /// Indicates whether the client should retry to send the
+      /// initilize request after showing the message provided in the ResponseError.
+      Retry: bool }
 
-    /// error.data
-    type InitializeError =
-        { /// Indicates whether the client should retry to send the
-          /// initilize request after showing the message provided in the ResponseError.
-          Retry: bool }
+/// Defines how the host (editor) should sync document changes to the language server.
+type TextDocumentSyncKind =
+      /// Documents should not be synced at all.
+    | None = 0
+      /// Documents are synced by always sending the full content of the document.
+    | Full = 1
+      /// Documents are synced by sending the full content on open. After that only incremental 
+      /// updates to the document are sent.
+    | Incremental = 2
 
-    /// Defines how the host (editor) should sync document changes to the language server.
-    type TextDocumentSyncKind =
-          /// Documents should not be synced at all.
-        | None = 0
-          /// Documents are synced by always sending the full content of the document.
-        | Full = 1
-          /// Documents are synced by sending the full content on open. After that only incremental 
-          /// updates to the document are sent.
-        | Incremental = 2
-    
-    /// Completion options.
-    type CompletionOptions =
-        { /// The server provides support to resolve additional information for a completion item.
-          ResolveProvider: bool option
-          /// The characters that trigger completion automatically.
-          TriggerCharacters: string list }
-    
-    /// Signature help options.
-    type SignatureHelpOptions =
-        { /// The characters that trigger signature help automatically.
-          TriggerCharacters: string list }
-    
-    /// Code Lens options.
-    type CodeLensOptions =
-        { /// Code lens has a resolve provider as well.
-          ResolveProvider: bool option }
-    
-    /// Format document on type options
-    type DocumentOnTypeFormattingOptions =
-        { /// A character on which formatting should be triggered, like `}`.
-          FirstTriggerCharacter: string
-          /// More trigger characters.
-          MoreTriggerCharacter: string list }
+/// Completion options.
+type CompletionOptions =
+    { /// The server provides support to resolve additional information for a completion item.
+      ResolveProvider: bool option
+      /// The characters that trigger completion automatically.
+      TriggerCharacters: string list }
 
-    type ServerCapabilities =
-        { /// Defines how text documents are synced.
-          TextDocumentSync: int option
-          /// The server provides hover support.
-          HoverProvider: bool option
-          /// The server provides completion support.
-          CompletionProvider: CompletionOptions option
-          /// The server provides signature help support.
-          SignatureHelpProvider: SignatureHelpOptions option
-          /// The server provides goto definition support.
-          DefinitionProvider: bool option
-          ///The server provides find references support.
-          ReferencesProvider: bool option
-          /// The server provides document highlight support.
-          DocumentHighlightProvider: bool option
-          /// The server provides document symbol support.
-          DocumentSymbolProvider: bool option
-          /// The server provides workspace symbol support.
-          WorkspaceSymbolProvider: bool option
-          /// The server provides code actions.
-          CodeActionProvider: bool option
-          /// The server provides code lens.
-          CodeLensProvider: CodeLensOptions option
-          /// The server provides document formatting.
-          DocumentFormattingProvider: bool option
-          /// The server provides document range formatting.
-          CocumentRangeFormattingProvider: bool option
-          /// The server provides document formatting on typing.
-          DocumentOnTypeFormattingProvider: DocumentOnTypeFormattingOptions option
-          /// The server provides rename support.
-          RenameProvider: bool option }
+/// Signature help options.
+type SignatureHelpOptions =
+    { /// The characters that trigger signature help automatically.
+      TriggerCharacters: string list }
 
-    type Result =
-        { /// The capabilities the language server provides.
-          Capabilities: ServerCapabilities }
+/// Code Lens options.
+type CodeLensOptions =
+    { /// Code lens has a resolve provider as well.
+      ResolveProvider: bool option }
 
-/// The shutdown request is sent from the client to the server. It asks the server to shut down, 
-/// but to not exit (otherwise the response might not be delivered correctly to the client). 
-/// There is a separate exit notification that asks the server to exit.
-module Shutdown =
-    let ``method`` = "shutdown"
+/// Format document on type options
+type DocumentOnTypeFormattingOptions =
+    { /// A character on which formatting should be triggered, like `}`.
+      FirstTriggerCharacter: string
+      /// More trigger characters.
+      MoreTriggerCharacter: string list }
 
-/// A notification to ask the server to exit its process. The server should exit with success code 0 
-/// if the shutdown request has been received before; otherwise with error code 1.
-module Exit =
-    let ``method`` = "exit"
+type ServerCapabilities =
+    { /// Defines how text documents are synced.
+      TextDocumentSync: int option
+      /// The server provides hover support.
+      HoverProvider: bool option
+      /// The server provides completion support.
+      CompletionProvider: CompletionOptions option
+      /// The server provides signature help support.
+      SignatureHelpProvider: SignatureHelpOptions option
+      /// The server provides goto definition support.
+      DefinitionProvider: bool option
+      ///The server provides find references support.
+      ReferencesProvider: bool option
+      /// The server provides document highlight support.
+      DocumentHighlightProvider: bool option
+      /// The server provides document symbol support.
+      DocumentSymbolProvider: bool option
+      /// The server provides workspace symbol support.
+      WorkspaceSymbolProvider: bool option
+      /// The server provides code actions.
+      CodeActionProvider: bool option
+      /// The server provides code lens.
+      CodeLensProvider: CodeLensOptions option
+      /// The server provides document formatting.
+      DocumentFormattingProvider: bool option
+      /// The server provides document range formatting.
+      CocumentRangeFormattingProvider: bool option
+      /// The server provides document formatting on typing.
+      DocumentOnTypeFormattingProvider: DocumentOnTypeFormattingOptions option
+      /// The server provides rename support.
+      RenameProvider: bool option }
 
+type InitializeResult =
+    { /// The capabilities the language server provides.
+      Capabilities: ServerCapabilities }
 
-/// The show message notification is sent from a server to a client to ask the client to display 
-/// a particular message in the user interface.
-module ShowMessageNotification =
-    let ``method`` = "window/showMessage"
-    
-    // params: ShowMessageParams defined as follows:
-    
-    type Params = 
-        { /// The message type.
-          Type: MessageType
-          /// The actual message.
-          Message: string }
+type ShowMessageParams = 
+    { /// The message type.
+      Type: MessageType
+      /// The actual message.
+      Message: string }
 
-/// The show message request is sent from a server to a client to ask the client to display 
-/// a particular message in the user interface. In addition to the show message notification the request 
-/// allows to pass actions and to wait for an answer from the client.
-module ShowMessage =
-    let ``method`` = "window/showMessageRequest"
-    
-    // params: ShowMessageRequestParams defined as follows:
-    // Response:
-    // result: the selected MessageActionItem
-    // error: code and message set in case an exception happens during showing a message.
+type MessageActionItem =
+    { /// A short title like 'Retry', 'Open Log' etc.
+      Title: string }
 
-    type MessageActionItem =
-        { /// A short title like 'Retry', 'Open Log' etc.
-          Title: string }
+type ShowMessageRequestParams = 
+    { /// The message type.
+      Type: MessageType
+      /// The actual message
+      Message: string
+      /// The message action items to present.
+      Aactions: MessageActionItem list }
 
-    type Params = 
-        { /// The message type.
-          Type: MessageType
-          /// The actual message
-          Message: string
-          /// The message action items to present.
-          Aactions: MessageActionItem list }
+type LogMessageParams = 
+    { /// The message type.
+      Type: MessageType
+      /// The actual message
+      Message: string }
 
-/// The log message notification is sent from the server to the client to ask the client to log a particular message.
-module LogMessageNotification =
-    let ``method`` = "window/logMessage"
-    
-    // params: LogMessageParams defined as follows:
-    
-    type Params = 
-        { /// The message type.
-          Type: MessageType
-          /// The actual message
-          Message: string }
+[<NoComparison>]
+type DidChangeConfigurationParams =
+    { /// The actual changed settings
+      Settings: obj }
 
-/// The telemetry notification is sent from the server to the client to ask the client to log a telemetry event.
-module TelemetryNotification =
-    let ``method`` = "telemetry/event"
-    // params: 'any'
+type DidOpenTextDocumentParams = 
+    { /// The document that was opened.
+      TextDocument: TextDocumentItem }
 
-/// A notification sent from the client to the server to signal the change of configuration settings.
-module DidChangeConfigurationNotification =
-    let ``method`` = "workspace/didChangeConfiguration"
-    
-    // params: DidChangeConfigurationParams defined as follows:
-    
-    [<NoComparison>]
-    type Params =
-        { /// The actual changed settings
-          Settings: obj }
+/// An event describing a change to a text document. If range and rangeLength are omitted
+/// the new text is considered to be the full content of the document.
+type TextDocumentContentChangeEvent =
+    { /// The range of the document that changed.
+      Range: Range option
+      /// The length of the range that got replaced.
+      RangeLength: int option
+      /// The new text of the document.
+      Ttext: string }
 
-/// The document open notification is sent from the client to the server to signal newly opened text documents. 
-/// The document's truth is now managed by the client and the server must not try to read the document's 
-/// truth using the document's uri.
-module DidOpenTextDocumentNotification =
-    let ``method`` = "textDocument/didOpen"
-    
-    // params: DidOpenTextDocumentParams defined as follows:
+// params: DidChangeTextDocumentParams defined as follows:
 
-    type Params = 
-        { /// The document that was opened.
-          TextDocument: TextDocumentItem }
+type DidChangeTextDocumentParams =
+    { /// The document that did change. The version number points
+      /// to the version after all provided content changes have been applied.
+      TextDocument: VersionedTextDocumentIdentifier
+      /// The actual content changes.
+      ContentChanges: TextDocumentContentChangeEvent list }
 
-/// The document change notification is sent from the client to the server to signal changes to a text document. 
-/// In 2.0 the shape of the params has changed to include proper version numbers and language ids.
-module DidChangeTextDocumentNotification =
-    let ``method`` = "textDocument/didChange"
+type DidCloseTextDocumentParams =
+    { /// The document that was closed.
+      TextDocument: TextDocumentIdentifier }
 
-    /// An event describing a change to a text document. If range and rangeLength are omitted
-    /// the new text is considered to be the full content of the document.
-    type TextDocumentContentChangeEvent =
-        { /// The range of the document that changed.
-          Range: Range option
-          /// The length of the range that got replaced.
-          RangeLength: int option
-          /// The new text of the document.
-          Ttext: string }
-    
-    // params: DidChangeTextDocumentParams defined as follows:
+type DidSaveTextDocumentParams = 
+    { /// The document that was saved.
+      TextDocument: TextDocumentIdentifier }
 
-    type Params =
-        { /// The document that did change. The version number points
-          /// to the version after all provided content changes have been applied.
-          TextDocument: VersionedTextDocumentIdentifier
-          /// The actual content changes.
-          ContentChanges: TextDocumentContentChangeEvent list }
+/// The file event type.
+type FileChangeType =
+      /// The file got created.
+    | Created = 1
+      /// The file got changed.
+    | Changed = 2
+      /// The file got deleted.
+    | Deleted = 3
 
-/// The document close notification is sent from the client to the server when the document got closed in the client. 
-/// The document's truth now exists where the document's uri points to (e.g. if the document's uri is a file uri the truth now exists on disk).
-module DidCloseTextDocumentNotification =
-    let ``method`` = "textDocument/didClose"
-    
-    // params: DidCloseTextDocumentParams defined as follows:
+/// An event describing a file change.
+type FileEvent =
+    { /// The file's URI.
+      Uri: string
+      /// The change type.
+      Type: FileChangeType }
 
-    type Params =
-        { /// The document that was closed.
-          TextDocument: TextDocumentIdentifier }
+type DidChangeWatchedFilesParams =
+    { /// The actual file events.
+      Changes: FileEvent list }
 
-/// The document save notification is sent from the client to the server when the document was saved in the client.
-module DidSaveTextDocumentNotification =
-    let ``method`` = "textDocument/didSave"
-    
-    // params: DidSaveTextDocumentParams defined as follows:
-    
-    type Params = 
-        { /// The document that was saved.
-          TextDocument: TextDocumentIdentifier }
-
-/// The watched files notification is sent from the client to the server when the client detects changes to files 
-/// watched by the language client.
-module DidChangeWatchedFilesNotification =
-    let ``method`` = "workspace/didChangeWatchedFiles"
-
-    /// The file event type.
-    type FileChangeType =
-          /// The file got created.
-        | Created = 1
-          /// The file got changed.
-        | Changed = 2
-          /// The file got deleted.
-        | Deleted = 3
-    
-    /// An event describing a file change.
-    type FileEvent =
-        { /// The file's URI.
-          Uri: string
-          /// The change type.
-          Type: FileChangeType }
-    
-    // params: DidChangeWatchedFilesParams defined as follows:
-
-    type Params =
-        { /// The actual file events.
-          Changes: FileEvent list }
-
-/// Diagnostics notification are sent from the server to the client to signal results of validation runs.
-module PublishDiagnosticsNotification =
-    let ``method`` = "textDocument/publishDiagnostics"
-
-    // params: PublishDiagnosticsParams defined as follows:
-    
-    type Params =
-        { /// The URI for which diagnostic information is reported.
-          Uri: string
-          /// An array of diagnostic information items.
-          Diagnostics: Diagnostic list }
+type PublishDiagnosticsParams =
+    { /// The URI for which diagnostic information is reported.
+      Uri: string
+      /// An array of diagnostic information items.
+      Diagnostics: Diagnostic list }
 
 /// The kind of a completion entry.
 type CompletionItemKind =
@@ -427,71 +337,34 @@ type CompletionItem =
       /// An data entry field that is preserved on a completion item between a completion and a completion resolve request.
       Data: obj option }
 
-/// The Completion request is sent from the client to the server to compute completion items at a given cursor position. 
-/// Completion items are presented in the IntelliSense user interface. If computing full completion items is expensive, 
-/// servers can additionally provide a handler for the completion item resolve request ('completionItem/resolve'). 
-/// This request is sent when a completion item is selected in the user interface. A typically use case is for example: 
-/// the 'textDocument/completion' request doesn't fill in the documentation property for returned completion items since 
-/// it is expensive to compute. When the item is selected in the user interface then a 'completionItem/resolve' request 
-/// is sent with the selected completion item as a param. The returned completion item should have the documentation property 
-/// filled in.
-module Completion =
-    let ``method`` = "textDocument/completion"
+/// Represents a collection of [completion items](#CompletionItem) to be presented in the editor.
+[<NoComparison>]
+type CompletionList = 
+    { /// This list it not complete. Further typing should result in recomputing this list.
+      IsIncomplete: bool
+      /// The completion items.
+      Items: CompletionItem list }
 
-    // params: TextDocumentPositionParams
-    // result: CompletionItem[] | CompletionList
-    
-    /// Represents a collection of [completion items](#CompletionItem) to be presented in the editor.
-    [<NoComparison>]
-    type CompletionList = 
-        { /// This list it not complete. Further typing should result in recomputing this list.
-          IsIncomplete: bool
-          /// The completion items.
-          Items: CompletionItem list }
+/// The marked string is rendered:
+/// - as markdown if it is represented as a string
+/// - as code block of the given langauge if it is represented as a pair of a language and a value
+///
+/// The pair of a language and a value is an equivalent to markdown:
+/// ```${language}
+/// ${value}
+/// ```
+type MarkedString = 
+    { Language: string
+      Value: string }
 
-    // error: code and message set in case an exception happens during the completion request.
+/// The result of a hover request.
+type Hover = 
+    { /// The hover's content
+      Contents: MarkedString list
+      /// An optional range is a range inside a text document 
+      /// that is used to visualize a hover, e.g. by changing the background color.
+      Range: Range option }
 
-/// The request is sent from the client to the server to resolve additional information for a given completion item.
-module CompletionItemResolve =
-    let ``method`` = "completionItem/resolve"
-
-    // params: CompletionItem
-    // result: CompletionItem
-    // error: code and message set in case an exception happens during the completion resolve request.
-
-/// The hover request is sent from the client to the server to request hover information at a given text document position.
-module Hover =
-    let ``method`` = "textDocument/hover"
-    
-    // params: TextDocumentPositionParams
-    // result: Hover defined as follows:
-
-    /// The marked string is rendered:
-    /// - as markdown if it is represented as a string
-    /// - as code block of the given langauge if it is represented as a pair of a language and a value
-    ///
-    /// The pair of a language and a value is an equivalent to markdown:
-    /// ```${language}
-    /// ${value}
-    /// ```
-    type MarkedString = 
-        { Language: string
-          Value: string }
-    
-    /// The result of a hover request.
-    type Hover = 
-        { /// The hover's content
-          Contents: MarkedString list
-          /// An optional range is a range inside a text document 
-          /// that is used to visualize a hover, e.g. by changing the background color.
-          Range: Range option }
-
-    // error: code and message set in case an exception happens during the hover request.
-
-/// The signature help request is sent from the client to the server to request signature information at a given cursor position.
-module SignatureHelp =
-    let ``method`` = "textDocument/signatureHelp"
-    
     // params: TextDocumentPositionParams
     // result: SignatureHelp defined as follows:
     
@@ -522,68 +395,33 @@ module SignatureHelp =
           /// The active parameter of the active signature.
           ActiveParameter: int }
     
-    // error: code and message set in case an exception happens during the signature help request.
+type ReferenceContext =
+    { /// Include the declaration of the current symbol.
+      IncludeDeclaration: bool }
 
-/// The goto definition request is sent from the client to the server to resolve the definition location of a symbol 
-/// at a given text document position.
-module GotoDefinition =
-    let ``method`` = "textDocument/definition"
+type ReferenceParams =
+    { /// The text document.
+      TextDocument: TextDocumentIdentifier
+      /// The position inside the text document.
+      Position: Position
+      Context: ReferenceContext }
     
-    //params: TextDocumentPositionParams
-    // result: Location | Location[]
-    // error: code and message set in case an exception happens during the definition request.
+/// A document highlight kind.
+type DocumentHighlightKind =
+     /// A textual occurrance.
+    | Text = 1
+     /// Read-access of a symbol, like reading a variable.
+    | Read = 2
+     /// Write-access of a symbol, like writing to a variable.
+    | Write = 3
 
-/// The references request is sent from the client to the server to resolve project-wide references for the symbol denoted 
-/// by the given text document position.
-module FindReferences =
-    let ``method`` = "textDocument/references"
-    
-    //params: ReferenceParams defined as follows:
-
-    type ReferenceContext =
-        { /// Include the declaration of the current symbol.
-          IncludeDeclaration: bool }
-
-    type Params =
-        { /// The text document.
-          TextDocument: TextDocumentIdentifier
-          /// The position inside the text document.
-          Position: Position
-          Context: ReferenceContext }
-    
-    //Response:
-    // result: Location[]
-    // error: code and message set in case an exception happens during the reference request.
-
-/// The document highlight request is sent from the client to the server to resolve a document highlights 
-/// for a given text document position. For programming languages this usually highlights all references to the symbol 
-/// scoped to this file. However we kept 'textDocument/documentHighlight' and 'textDocument/references' separate 
-/// requests since the first one is allowed to be more fuzzy. Symbol matches usually have a DocumentHighlightKind of 
-/// Read or Write whereas fuzzy or textual matches use Textas the kind.
-module DocumentHighlights =
-    let ``method`` = "textDocument/documentHighlight"
-    // params: TextDocumentPositionParams
-    // Response
-    // result: DocumentHighlight[] defined as follows:
-    
-    /// A document highlight kind.
-    type DocumentHighlightKind =
-         /// A textual occurrance.
-        | Text = 1
-         /// Read-access of a symbol, like reading a variable.
-        | Read = 2
-         /// Write-access of a symbol, like writing to a variable.
-        | Write = 3
-
-    /// A document highlight is a range inside a text document which deserves special attention. 
-    /// Usually a document highlight is visualized by changing the background color of its range.
-    type DocumentHighlight =
-        { /// The range this highlight applies to.
-          Range: Range
-          /// The highlight kind, default is DocumentHighlightKind.Text.
-          Kind: DocumentHighlightKind option }
-    
-    // error: code and message set in case an exception happens during the document highlight request.
+/// A document highlight is a range inside a text document which deserves special attention. 
+/// Usually a document highlight is visualized by changing the background color of its range.
+type DocumentHighlight =
+    { /// The range this highlight applies to.
+      Range: Range
+      /// The highlight kind, default is DocumentHighlightKind.Text.
+      Kind: DocumentHighlightKind option }
 
 /// A symbol kind.
 type SymbolKind =
@@ -617,57 +455,30 @@ type SymbolInformation =
       /// The name of the symbol containing this symbol.
       ContainerName: string option }
 
-/// The document symbol request is sent from the client to the server to list all symbols found in a given text document.
-module DocumentSymbols =
-    let ``method`` = "textDocument/documentSymbol"
+
+type DocumentSymbolsParams =
+    { /// The text document.
+      TextDocument: TextDocumentIdentifier }
+
+/// The parameters of a Workspace Symbol Request.
+type WorkspaceSymbolsParams =
+    { /// A non-empty query string
+      Query: string }
     
-    // params: DocumentSymbolParams defined as follows:
+/// Contains additional diagnostic information about the context in which a code action is run.
+type CodeActionContext =
+    { /// An array of diagnostics.
+      Diagnostics: Diagnostic list }
 
-    type Params =
-        { /// The text document.
-          TextDocument: TextDocumentIdentifier }
-
-    // Response
-    // result: SymbolInformation[]
-    // error: code and message set in case an exception happens during the document symbol request.
-
-/// The workspace symbol request is sent from the client to the server to list project-wide symbols matching the query string.
-module WorkspaceSymbols =
-    let ``method`` = "workspace/symbol"
-    // params: WorkspaceSymbolParams defined as follows:
-
-    /// The parameters of a Workspace Symbol Request.
-    type Params =
-        { /// A non-empty query string
-          Query: string }
+/// Params for the CodeActionRequest
+type CodeActionParams =
+    { /// The document in which the command was invoked.
+      TextDocument: TextDocumentIdentifier
+      /// The range for which the command was invoked.
+      Range: Range
+      /// Context carrying additional information.
+      Context: CodeActionContext }
     
-    // Response
-    // result: SymbolInformation[] as defined above.
-    // error: code and message set in case an exception happens during the workspace symbol request.
-
-/// The code action request is sent from the client to the server to compute commands for a given text document and range. The request is triggered when the user moves the cursor into a problem marker in the editor or presses the lightbulb associated with a marker.
-module CodeAction =
-    let ``method`` = "textDocument/codeAction"
-    // params: CodeActionParams defined as follows:
-    
-    /// Contains additional diagnostic information about the context in which a code action is run.
-    type CodeActionContext =
-        { /// An array of diagnostics.
-          Diagnostics: Diagnostic list }
-
-    /// Params for the CodeActionRequest
-    type Params =
-        { /// The document in which the command was invoked.
-          TextDocument: TextDocumentIdentifier
-          /// The range for which the command was invoked.
-          Range: Range
-          /// Context carrying additional information.
-          Context: CodeActionContext }
-    
-    // Response
-    // result: Command[]
-    // error: code and message set in case an exception happens during the code action request.
-
 /// A code lens represents a command that should be shown along with
 /// source text, like the number of references, a way to run tests, etc.
 ///
@@ -683,141 +494,124 @@ type CodeLens =
       /// a code lens and a code lens resolve request.
       Data: obj option }
 
-/// The code lens request is sent from the client to the server to compute code lenses for a given text document.
-module CodeLensRequest =
-    let ``method`` = "textDocument/codeLens"
-    // params: CodeLensParams defined as follows:
+type CodeLensParams =
+    { /// The document to request code lens for.
+      TextDocument: TextDocumentIdentifier }
     
-    type Params =
-        { /// The document to request code lens for.
-          TextDocument: TextDocumentIdentifier }
-    
-    // Response
-    // result: CodeLens[]
-    // error: code and message set in case an exception happens during the code lens request.
-
-/// The code lens resolve request is sent from the client to the server to resolve the command for a given code lens item.
-module CodeLensResolve =
-    let ``method`` = "codeLens/resolve"
-    // params: CodeLens
-    // Response
-    // result: CodeLens
-    // error: code and message set in case an exception happens during the code lens resolve request.
-
 /// Value-object describing what options formatting should use.
 type FormattingOptions = 
     { /// Size of a tab in spaces.
-        TabSize: int
-        /// Prefer spaces over tabs.
-        InsertSpaces: bool
-        /// Signature for further properties.
-        // [key: string]: boolean | number | string; 
+      TabSize: int
+      /// Prefer spaces over tabs.
+      InsertSpaces: bool
+      /// Signature for further properties.
+      // [key: string]: boolean | number | string; 
     }
 
-/// The document formatting request is sent from the server to the client to format a whole document.
-module DocumentFormatting =
-    let ``method`` = "textDocument/formatting"
-    // params: DocumentFormattingParams defined as follows
+type DocumentFormattingParams =
+    { /// The document to format.
+      TextDocument: TextDocumentIdentifier
+      /// The format options.
+      Options: FormattingOptions }
+    
+type DocumentRangeFormattingParams =
+    { /// The document to format.
+      TextDocument: TextDocumentIdentifier
+      /// The range to format
+      Range: Range
+      /// The format options
+      Options: FormattingOptions }
 
-    type Params =
-        { /// The document to format.
-          TextDocument: TextDocumentIdentifier
-          /// The format options.
-          Options: FormattingOptions }
+type DocumentOnTypeFormattingParams =
+    { /// The document to format.
+      TextDocument: TextDocumentIdentifier
+      /// The position at which this request was sent.
+      Position: Position
+      /// The character that has been typed.
+      Ch: string
+      /// The format options.
+      Options: FormattingOptions }
     
-    // Response
-    // result: TextEdit[] describing the modification to the document to be formatted.
-    /// error: code and message set in case an exception happens during the formatting request.
-
-/// The document range formatting request is sent from the client to the server to format a given range in a document.
-module DocumentRangeFormatting =
-    let ``method`` = "textDocument/rangeFormatting"
-    // params: DocumentRangeFormattingParams defined as follows
+type RenameParams =
+    { /// The document to format.
+      TextDocument: TextDocumentIdentifier
+      /// The position at which this request was sent.
+      Position: Position
+      /// The new name of the symbol. If the given name is not valid the
+      /// request must return a [ResponseError](#ResponseError) with an appropriate message set.
+      NewName: string }
     
-    type Params =
-        { /// The document to format.
-          TextDocument: TextDocumentIdentifier
-          /// The range to format
-          Range: Range
-          /// The format options
-          Options: FormattingOptions }
-    
-    // Response
-    // result: TextEdit[] describing the modification to the document to be formatted.
-    // error: code and message set in case an exception happens during the range formatting request.
-
-// The document on type formatting request is sent from the client to the server to format parts of the document during typing.
-module DocumentOnTypeFormatting =
-    let ``method`` = "textDocument/onTypeFormatting"
-    // params: DocumentOnTypeFormattingParams defined as follows
-    
-    type Params =
-        { /// The document to format.
-          TextDocument: TextDocumentIdentifier
-          /// The position at which this request was sent.
-          Position: Position
-          /// The character that has been typed.
-          Ch: string
-          /// The format options.
-          Options: FormattingOptions }
-    
-    // Response
-    // result: TextEdit[] describing the modification to the document.
-    // error: code and message set in case an exception happens during the range formatting request.
-
-// The rename request is sent from the client to the server to perform a workspace-wide rename of a symbol.
-module Rename =
-    let ``method`` = "textDocument/rename"
-    // params: RenameParams defined as follows
-    
-    type Params =
-        { /// The document to format.
-          TextDocument: TextDocumentIdentifier
-          /// The position at which this request was sent.
-          Position: Position
-          /// The new name of the symbol. If the given name is not valid the
-          /// request must return a [ResponseError](#ResponseError) with an appropriate message set.
-          NewName: string }
-    
-    // Response
-    // result: WorkspaceEdit describing the modification to the workspace.
-    // error: code and message set in case an exception happens during the rename request.
-
-// TODO 
-
-[<NoComparison>]
+[<NoComparison; RequireQualifiedAccess>]
 type Request =
-    | Initialize of Initialize.Params
+      /// The initialize request is sent as the first request from the client to the server.
+    | Initialize of InitializeParams
+      /// The shutdown request is sent from the client to the server. It asks the server to shut down, 
+      /// but to not exit (otherwise the response might not be delivered correctly to the client). 
+      /// There is a separate exit notification that asks the server to exit.
     | Shutdown
-    | ShowMessage of ShowMessage.Params
+      /// The show message request is sent from a server to a client to ask the client to display 
+      /// a particular message in the user interface. In addition to the show message notification the request 
+      /// allows to pass actions and to wait for an answer from the client.
+    | ShowMessage of ShowMessageRequestParams
+      /// The Completion request is sent from the client to the server to compute completion items at a given cursor position. 
+      /// Completion items are presented in the IntelliSense user interface. If computing full completion items is expensive, 
+      /// servers can additionally provide a handler for the completion item resolve request ('completionItem/resolve'). 
+      /// This request is sent when a completion item is selected in the user interface. A typically use case is for example: 
+      /// the 'textDocument/completion' request doesn't fill in the documentation property for returned completion items since 
+      /// it is expensive to compute. When the item is selected in the user interface then a 'completionItem/resolve' request 
+      /// is sent with the selected completion item as a param. The returned completion item should have the documentation property 
+      /// filled in.
     | Completion of TextDocumentPositionParams
+      /// The request is sent from the client to the server to resolve additional information for a given completion item.
     | CompletionItemResolve of CompletionItem
+      /// The hover request is sent from the client to the server to request hover information at a given text document position.
     | Hover of TextDocumentPositionParams
+      /// The signature help request is sent from the client to the server to request signature information at a given cursor position.
     | SignatureHelp of TextDocumentPositionParams
+      /// The goto definition request is sent from the client to the server to resolve the definition location of a symbol 
+      /// at a given text document position.
     | GotoDefinition of TextDocumentPositionParams
-    | FindReferences of FindReferences.Params
+      /// The references request is sent from the client to the server to resolve project-wide references for the symbol denoted 
+      /// by the given text document position.
+    | FindReferences of ReferenceParams
+      /// The document highlight request is sent from the client to the server to resolve a document highlights 
+      /// for a given text document position. For programming languages this usually highlights all references to the symbol 
+      /// scoped to this file. However we kept 'textDocument/documentHighlight' and 'textDocument/references' separate 
+      /// requests since the first one is allowed to be more fuzzy. Symbol matches usually have a DocumentHighlightKind of 
+      /// Read or Write whereas fuzzy or textual matches use Textas the kind.
     | DocumentHighlights of TextDocumentPositionParams
-    | DocumentSymbols of DocumentSymbols.Params
-    | WorkspaceSymbols of WorkspaceSymbols.Params
-    | CodeAction of CodeAction.Params
-    | CodeLens of CodeLensRequest.Params
+      /// The document symbol request is sent from the client to the server to list all symbols found in a given text document.
+    | DocumentSymbols of DocumentSymbolsParams
+      /// The workspace symbol request is sent from the client to the server to list project-wide symbols matching the query string.
+    | WorkspaceSymbols of WorkspaceSymbolsParams
+      /// The code action request is sent from the client to the server to compute commands for a given text document and range. 
+      /// The request is triggered when the user moves the cursor into a problem marker in the editor or presses the lightbulb 
+      /// associated with a marker.
+    | CodeAction of CodeActionParams
+      /// The code lens request is sent from the client to the server to compute code lenses for a given text document.
+    | CodeLens of CodeLensParams
+      /// The code lens resolve request is sent from the client to the server to resolve the command for a given code lens item.
     | CodeLensResolve of CodeLens
-    | DocumentFormatting of DocumentFormatting.Params
-    | DocumentRangeFormatting of DocumentRangeFormatting.Params
-    | DocumentOnTypeFormatting of DocumentOnTypeFormatting.Params
-    | Rename of Rename.Params
+      /// The document formatting request is sent from the server to the client to format a whole document.
+    | DocumentFormatting of DocumentFormattingParams
+      /// The document range formatting request is sent from the client to the server to format a given range in a document.
+    | DocumentRangeFormatting of DocumentRangeFormattingParams
+      /// The document on type formatting request is sent from the client to the server to format parts of the document during typing.
+    | DocumentOnTypeFormatting of DocumentOnTypeFormattingParams
+      /// The rename request is sent from the client to the server to perform a workspace-wide rename of a symbol.
+    | Rename of RenameParams
 
 [<NoComparison>]
 type Response =
-    | Initialize of Initialize.Result
-    | ShowMessage of ShowMessage.MessageActionItem
-    | Completion of Completion.CompletionList
+    | Initialize of InitializeResult
+    | ShowMessage of MessageActionItem
+    | Completion of CompletionList
     | CompletionItemResolve of CompletionItem
-    | Hover of Hover.Hover
-    | SignatureHelp of SignatureHelp.SignatureHelp
+    | Hover of Hover
+    | SignatureHelp of SignatureHelp
     | GotoDefinition of Location list
     | FindReferences of Location list
-    | DocumentHighlights of DocumentHighlights.DocumentHighlight list
+    | DocumentHighlights of DocumentHighlight list
     | DocumentSymbols of SymbolInformation list
     | WorkspaceSymbols of SymbolInformation list
     | CodeAction of Command list
@@ -830,17 +624,35 @@ type Response =
 
 [<NoComparison>]
 type Notification =
+      /// A notification to ask the server to exit its process. The server should exit with success code 0 
+      /// if the shutdown request has been received before; otherwise with error code 1.
     | Exit
-    | ShowMessage of ShowMessageNotification.Params
-    | LogMessage of LogMessageNotification.Params
+      /// The show message notification is sent from a server to a client to ask the client to display 
+      /// a particular message in the user interface.
+    | ShowMessage of ShowMessageParams
+      /// The log message notification is sent from the server to the client to ask the client to log a particular message.
+    | LogMessage of LogMessageParams
+      /// The telemetry notification is sent from the server to the client to ask the client to log a telemetry event.
     | Telemetry of obj
-    | DidChangeConfiguration of DidChangeConfigurationNotification.Params
-    | DidOpenTextDocument of DidOpenTextDocumentNotification.Params
-    | DidChangeTextDocument of DidChangeTextDocumentNotification.Params
-    | DidCloseTextDocument of DidCloseTextDocumentNotification.Params
-    | DidSaveTextDocument of DidSaveTextDocumentNotification.Params
-    | DidChangeWatchedFiles of DidChangeWatchedFilesNotification.Params
-    | PublishDiagnostics of PublishDiagnosticsNotification.Params
+      /// A notification sent from the client to the server to signal the change of configuration settings.
+    | DidChangeConfiguration of DidChangeConfigurationParams
+      /// The document open notification is sent from the client to the server to signal newly opened text documents. 
+      /// The document's truth is now managed by the client and the server must not try to read the document's 
+      /// truth using the document's uri.
+    | DidOpenTextDocument of DidOpenTextDocumentParams
+      /// The document change notification is sent from the client to the server to signal changes to a text document. 
+      /// In 2.0 the shape of the params has changed to include proper version numbers and language ids.
+    | DidChangeTextDocument of DidChangeTextDocumentParams
+      /// The document close notification is sent from the client to the server when the document got closed in the client. 
+      /// The document's truth now exists where the document's uri points to (e.g. if the document's uri is a file uri the truth now exists on disk).
+    | DidCloseTextDocument of DidCloseTextDocumentParams
+      /// The document save notification is sent from the client to the server when the document was saved in the client.
+    | DidSaveTextDocument of DidSaveTextDocumentParams
+      /// The watched files notification is sent from the client to the server when the client detects changes to files 
+      /// watched by the language client.
+    | DidChangeWatchedFiles of DidChangeWatchedFilesParams
+      /// Diagnostics notification are sent from the server to the client to signal results of validation runs.
+    | PublishDiagnostics of PublishDiagnosticsParams
 
 
 
