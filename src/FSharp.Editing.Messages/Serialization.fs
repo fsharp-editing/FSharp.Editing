@@ -1,29 +1,98 @@
-﻿namespace FSharp.Editing.Messages
+﻿module FSharp.Editing.Messages.Serialization
+
+open Newtonsoft.Json
+open System
+open Newtonsoft.Json.Linq
+
+let private ($) = (<|)
+
+/// A request message to describe a request between the client and the server. Every processed request must 
+/// send a response back to the sender of the request.
+[<NoComparison; JsonConverter(typeof<RequestConverter>)>]
+type RequestMessage =
+    { /// The request id.
+      Id: int
+      /// The method's params.
+      Request: Request }
+
+and RequestConverter() =
+    inherit JsonConverter()
+
+    override __.WriteJson (w, value, serializer) =
+        let message = value :?> RequestMessage
+
+        let ``method``, parameters =
+            match message.Request with
+            | Request.Initialize x -> "initialize", Some $ box x
+            | Request.Shutdown -> "shutdown", None
+            | Request.ShowMessage x -> "window/showMessageRequest", Some $ box x
+            | Request.Completion x -> "textDocument/completion", Some $ box x
+            | Request.CompletionItemResolve x -> "completionItem/resolve", Some $ box x
+            | Request.Hover x -> "textDocument/hover", Some $ box x
+            | Request.SignatureHelp x -> "textDocument/signatureHelp", Some $ box x
+            | Request.GotoDefinition x -> "textDocument/definition", Some $ box x
+            | Request.FindReferences x -> "textDocument/references", Some $ box x
+            | Request.DocumentHighlights x -> "textDocument/documentHighlight", Some $ box x
+            | Request.DocumentSymbols x -> "textDocument/documentSymbol", Some $ box x
+            | Request.WorkspaceSymbols x -> "workspace/symbol", Some $ box x
+            | Request.CodeAction x -> "textDocument/codeAction", Some $ box x
+            | Request.CodeLens x -> "textDocument/codeLens", Some $ box x
+            | Request.CodeLensResolve x -> "codeLens/resolve", Some $ box x
+            | Request.DocumentFormatting x -> "textDocument/formatting", Some $ box x
+            | Request.DocumentRangeFormatting x -> "textDocument/rangeFormatting", Some $ box x
+            | Request.DocumentOnTypeFormatting x -> "textDocument/onTypeFormatting", Some $ box x
+            | Request.Rename x -> "textDocument/rename", Some $ box x
+
+        w.WriteStartObject()
+        w.WritePropertyName "jsonrpc"
+        w.WriteValue "2.0"
+        w.WritePropertyName "method"
+        w.WriteValue ``method``
+        match parameters with
+        | Some x ->
+            w.WritePropertyName "params"
+            serializer.Serialize (w, x)
+        | None -> ()
+        w.WriteEndObject()
+
+    override __.ReadJson (reader, objectType, existingValue, serializer) =
+        reader.Read()
+        let jsonObject = JObject.Load reader
+        let parametersReader = jsonObject.Property("params")
+        let parameters = serializer.Populate (reader)
+        let ``method`` =
+            match (JToken.op_Explicit $ jsonObject.Property("method").Value) : string with
+            | "initialize" -> serializer.Deserialize Request.Initialize x -> "initialize", Some $ box x
+            | Request.Shutdown -> "shutdown", None
+            | Request.ShowMessage x -> "window/showMessageRequest", Some $ box x
+            | Request.Completion x -> "textDocument/completion", Some $ box x
+            | Request.CompletionItemResolve x -> "completionItem/resolve", Some $ box x
+            | Request.Hover x -> "textDocument/hover", Some $ box x
+            | Request.SignatureHelp x -> "textDocument/signatureHelp", Some $ box x
+            | Request.GotoDefinition x -> "textDocument/definition", Some $ box x
+            | Request.FindReferences x -> "textDocument/references", Some $ box x
+            | Request.DocumentHighlights x -> "textDocument/documentHighlight", Some $ box x
+            | Request.DocumentSymbols x -> "textDocument/documentSymbol", Some $ box x
+            | Request.WorkspaceSymbols x -> "workspace/symbol", Some $ box x
+            | Request.CodeAction x -> "textDocument/codeAction", Some $ box x
+            | Request.CodeLens x -> "textDocument/codeLens", Some $ box x
+            | Request.CodeLensResolve x -> "codeLens/resolve", Some $ box x
+            | Request.DocumentFormatting x -> "textDocument/formatting", Some $ box x
+            | Request.DocumentRangeFormatting x -> "textDocument/rangeFormatting", Some $ box x
+            | Request.DocumentOnTypeFormatting x -> "textDocument/onTypeFormatting", Some $ box x
+            | Request.Rename x -> "textDocument/rename", Some $ box x
+
+    override __.CanConvert objectType = objectType = typeof<RequestMessage>
+        
+let serializer = JsonSerializer(Formatting = Formatting.Indented)
 
 module Serialize =
-    let request (id: int) (request: Request) =
-        let ``method`` =
-            match request with
-            | Request.Initialize _ -> "initialize"
-            | Request.Shutdown -> "shutdown"
-            | Request.ShowMessage _ -> "window/showMessageRequest"
-            | Request.Completion _ -> "textDocument/completion"
-            | Request.CompletionItemResolve _ -> "completionItem/resolve"
-            | Request.Hover _ -> "textDocument/hover"
-            | Request.SignatureHelp _ -> "textDocument/signatureHelp"
-            | Request.GotoDefinition _ -> "textDocument/definition"
-            | Request.FindReferences _ -> "textDocument/references"
-            | Request.DocumentHighlights _ -> "textDocument/documentHighlight"
-            | Request.DocumentSymbols _ -> "textDocument/documentSymbol"
-            | Request.WorkspaceSymbols _ -> "workspace/symbol"
-            | Request.CodeAction _ -> "textDocument/codeAction"
-            | Request.CodeLens _ -> "textDocument/codeLens"
-            | Request.CodeLensResolve _ -> "codeLens/resolve"
-            | Request.DocumentFormatting _ -> "textDocument/formatting"
-            | Request.DocumentRangeFormatting _ -> "textDocument/rangeFormatting"
-            | Request.DocumentOnTypeFormatting _ -> "textDocument/onTypeFormatting"
-            | Request.Rename _ -> "textDocument/rename"
-        ()
+    open System.IO
+
+    let request (request: RequestMessage) =
+        use writer = new StringWriter()
+        serializer.Serialize (writer, request)
+        writer.ToString()
         
     let notification (id: int) (notification: Notification) =
         let ``method`` =

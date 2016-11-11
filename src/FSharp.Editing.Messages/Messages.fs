@@ -1,5 +1,7 @@
 ﻿namespace FSharp.Editing.Messages
 
+open Newtonsoft.Json
+
 /// Position in a text document expressed as zero-based line and character offset. 
 /// A position is between two characters like an 'insert' cursor in a editor.
 type Position =
@@ -218,7 +220,7 @@ type ShowMessageRequestParams =
       /// The actual message
       Message: string
       /// The message action items to present.
-      Aactions: MessageActionItem list }
+      Actions: MessageActionItem list }
 
 type LogMessageParams = 
     { /// The message type.
@@ -653,24 +655,6 @@ type Notification =
     | DidChangeWatchedFiles of DidChangeWatchedFilesParams
       /// Diagnostics notification are sent from the server to the client to signal results of validation runs.
     | PublishDiagnostics of PublishDiagnosticsParams
-
-
-
-/// ************** Top level messages **************
-
-
-/// A request message to describe a request between the client and the server. Every processed request must 
-/// send a response back to the sender of the request.
-[<NoComparison>]
-type RequestMessage =
-    { /// JSON-RPC version.
-      Jsonrpc: string
-      /// The request id.
-      Id: int
-      /// The method to be invoked.
-      Method: string
-      /// The method's params.
-      Params: Request option }
 
 type ErrorCode =
     | ParseError = -32700
