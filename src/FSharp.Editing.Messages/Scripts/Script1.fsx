@@ -15,6 +15,6 @@ let msg: Message =
                     { Title = "a title 2" } ] }}
     
 let json = Serializer.serialize msg
-
+printfn "%s" json
 let msg1 = Serializer.deserialize json
 //Serializer.serialize (Message.Request { Id = 24; Request = Request.Shutdown })
