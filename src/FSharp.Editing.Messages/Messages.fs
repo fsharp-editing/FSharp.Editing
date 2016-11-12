@@ -675,6 +675,38 @@ type ResponseError =
       /// information about the error. Can be omitted.
       Data: obj }
 
+[<NoComparison>]
+type RequestWithId =
+    { Id: int
+      Request: Request }
+
+[<NoComparison>]
+type ResponseWithId =
+    { Id: int
+      Request: Response option
+      Error: ResponseError option }
+
+[<NoComparison>]
+type Message =
+    | Request of RequestWithId
+    | Response of ResponseWithId
+    | Notification of Notification
+
+// ****** 1-to-1 Json representation ******
+
+/// A request message to describe a request between the client and the server. Every processed request must 
+/// send a response back to the sender of the request.
+[<NoComparison>]
+type RequestMessage =
+    { /// JSON-RPC version.
+      Jsonrpc: string
+      /// The request id.
+      Id: int
+      /// The method to be invoked.
+      Method: string
+      /// The method's params.
+      Params: obj }
+
 /// Response Message sent as a result of a request.
 [<NoComparison>]
 type ResponseMessage =
@@ -688,7 +720,7 @@ type ResponseMessage =
       Error: ResponseError option }
 
 /// A notification message. A processed notification message must not send a response back. They work like events.
-[<NoComparison>]
+[<NoComparison; RequireQualifiedAccess>]
 type NotificationMessage =
      { /// JSON-RPC version.
        Jsonrpc: string
