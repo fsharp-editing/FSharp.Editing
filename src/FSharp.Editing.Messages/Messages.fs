@@ -683,7 +683,7 @@ type RequestWithId =
 [<NoComparison>]
 type ResponseWithId =
     { Id: int
-      Request: Response option
+      Response: Response option
       Error: ResponseError option }
 
 [<NoComparison>]
@@ -715,7 +715,7 @@ type ResponseMessage =
       /// The request id.
       Id: int
       /// The result of a request. This can be omitted in the case of an error.
-      Result: Response option
+      Result: obj
       /// The error object in case a request fails.
       Error: ResponseError option }
 

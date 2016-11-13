@@ -2,6 +2,10 @@ REDIRECTS: ON
 STRATEGY: MAX
 NUGET
   remote: http://www.nuget.org/api/v2
+    Aether (8.1.2)
+    Chiron (6.2.1)
+      Aether (>= 8.0.2 < 9.0)
+      FParsec (>= 1.0 < 2.0)
     Fantomas (2.3)
       FSharp.Compiler.Service (>= 5.0)
     FParsec (1.0.2)

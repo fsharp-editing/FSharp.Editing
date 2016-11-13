@@ -9,6 +9,7 @@ nuget FSharpLint.Core prerelease
 nuget FsPickler
 nuget SourceLink.SymbolStore 0.5.0
 nuget Newtonsoft.Json
+nuget Chiron
 
 group Test
     source http://nuget.org/api/v2

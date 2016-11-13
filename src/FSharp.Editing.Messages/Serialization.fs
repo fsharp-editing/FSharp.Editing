@@ -88,51 +88,101 @@ module Request =
         use writer = new StringWriter()
         serializer.Serialize(writer, requestMessage)
         writer.ToString()
+        
+    let inline private fromJObject<'a>(parameters: obj): 'a = (parameters :?> JObject).ToObject<'a>()
 
     let deserialize (json: string) : RequestWithId =
         use reader = new StringReader(json)
         let msg = serializer.Deserialize(reader, typeof<RequestMessage>) :?> RequestMessage
         let request =
             match msg.Method with
-            | Method.Initialize               -> Request.Initialize               (msg.Params :?> InitializeParams)
+            | Method.Initialize               -> Request.Initialize               $ fromJObject msg.Params
             | Method.Shutdown                 -> Request.Shutdown
-            | Method.ShowMessage              -> Request.ShowMessage              (msg.Params :?> ShowMessageRequestParams)
-            | Method.Completion               -> Request.Completion               (msg.Params :?> TextDocumentPositionParams)
-            | Method.CompletionItemResolve    -> Request.CompletionItemResolve    (msg.Params :?> CompletionItem)
-            | Method.Hover                    -> Request.Hover                    (msg.Params :?> TextDocumentPositionParams)
-            | Method.SignatureHelp            -> Request.SignatureHelp            (msg.Params :?> TextDocumentPositionParams)
-            | Method.GotoDefinition           -> Request.GotoDefinition           (msg.Params :?> TextDocumentPositionParams)
-            | Method.FindReferences           -> Request.FindReferences           (msg.Params :?> ReferenceParams)
-            | Method.DocumentHighlights       -> Request.DocumentHighlights       (msg.Params :?> TextDocumentPositionParams)
-            | Method.DocumentSymbols          -> Request.DocumentSymbols          (msg.Params :?> DocumentSymbolsParams)
-            | Method.WorkspaceSymbols         -> Request.WorkspaceSymbols         (msg.Params :?> WorkspaceSymbolsParams)
-            | Method.CodeAction               -> Request.CodeAction               (msg.Params :?> CodeActionParams)
-            | Method.CodeLens                 -> Request.CodeLens                 (msg.Params :?> CodeLensParams)
-            | Method.CodeLensResolve          -> Request.CodeLensResolve          (msg.Params :?> CodeLens)
-            | Method.DocumentFormatting       -> Request.DocumentFormatting       (msg.Params :?> DocumentFormattingParams)
-            | Method.DocumentRangeFormatting  -> Request.DocumentRangeFormatting  (msg.Params :?> DocumentRangeFormattingParams)
-            | Method.DocumentOnTypeFormatting -> Request.DocumentOnTypeFormatting (msg.Params :?> DocumentOnTypeFormattingParams)
-            | Method.Rename                   -> Request.Rename                   (msg.Params :?> RenameParams)
+            | Method.ShowMessage              -> Request.ShowMessage              $ fromJObject msg.Params
+            | Method.Completion               -> Request.Completion               $ fromJObject msg.Params
+            | Method.CompletionItemResolve    -> Request.CompletionItemResolve    $ fromJObject msg.Params
+            | Method.Hover                    -> Request.Hover                    $ fromJObject msg.Params
+            | Method.SignatureHelp            -> Request.SignatureHelp            $ fromJObject msg.Params
+            | Method.GotoDefinition           -> Request.GotoDefinition           $ fromJObject msg.Params
+            | Method.FindReferences           -> Request.FindReferences           $ fromJObject msg.Params
+            | Method.DocumentHighlights       -> Request.DocumentHighlights       $ fromJObject msg.Params
+            | Method.DocumentSymbols          -> Request.DocumentSymbols          $ fromJObject msg.Params
+            | Method.WorkspaceSymbols         -> Request.WorkspaceSymbols         $ fromJObject msg.Params
+            | Method.CodeAction               -> Request.CodeAction               $ fromJObject msg.Params
+            | Method.CodeLens                 -> Request.CodeLens                 $ fromJObject msg.Params
+            | Method.CodeLensResolve          -> Request.CodeLensResolve          $ fromJObject msg.Params
+            | Method.DocumentFormatting       -> Request.DocumentFormatting       $ fromJObject msg.Params
+            | Method.DocumentRangeFormatting  -> Request.DocumentRangeFormatting  $ fromJObject msg.Params
+            | Method.DocumentOnTypeFormatting -> Request.DocumentOnTypeFormatting $ fromJObject msg.Params
+            | Method.Rename                   -> Request.Rename                   $ fromJObject msg.Params
             | _ -> failwithf "Unsupported request method '%s'" msg.Method
-
 
         { Id = msg.Id
           Request = request }
 
-//        w.WriteStartObject()
-//        w.WritePropertyName "jsonrpc"
-//        w.WriteValue "2.0"
-//        w.WritePropertyName "method"
-//        w.WriteValue ``method``
-//        match parameters with
-//        | Some x ->
-//            w.WritePropertyName "params"
-//            serializer.Serialize (w, x)
-//        | None -> ()
-//        w.WriteEndObject()
-
 module Response =
-    let serialize (response: ResponseWithId) : string = ""
+    let serialize (response: ResponseWithId) : string = 
+        let result =
+            match response.Response with
+            | Some (Response.Initialize x)               -> box x
+            | Some (Response.ShowMessage x)              -> box x
+            | Some (Response.Completion x)               -> box x
+            | Some (Response.CompletionItemResolve x)    -> box x
+            | Some (Response.Hover x)                    -> box x
+            | Some (Response.SignatureHelp x)            -> box x
+            | Some (Response.GotoDefinition x)           -> box x
+            | Some (Response.FindReferences x)           -> box x
+            | Some (Response.DocumentHighlights x)       -> box x
+            | Some (Response.DocumentSymbols x)          -> box x
+            | Some (Response.WorkspaceSymbols x)         -> box x
+            | Some (Response.CodeAction x)               -> box x
+            | Some (Response.CodeLens x)                 -> box x
+            | Some (Response.CodeLensResolve x)          -> box x
+            | Some (Response.DocumentFormatting x)       -> box x
+            | Some (Response.DocumentRangeFormatting x)  -> box x
+            | Some (Response.DocumentOnTypeFormatting x) -> box x
+            | Some (Response.Rename x)                   -> box x
+            | None                                       -> null
+
+        let requestMessage: ResponseMessage =
+            { Jsonrpc = "2.0"
+              Id = request.Id
+              Result = parameters }
+
+        use writer = new StringWriter()
+        serializer.Serialize(writer, requestMessage)
+        writer.ToString()
+        
+    let inline private fromJObject<'a>(parameters: obj): 'a = (parameters :?> JObject).ToObject<'a>()
+
+    let deserialize (json: string) : RequestWithId =
+        use reader = new StringReader(json)
+        let msg = serializer.Deserialize(reader, typeof<RequestMessage>) :?> RequestMessage
+        let request =
+            match msg.Method with
+            | Method.Initialize               -> Request.Initialize               $ fromJObject msg.Params
+            | Method.Shutdown                 -> Request.Shutdown
+            | Method.ShowMessage              -> Request.ShowMessage              $ fromJObject msg.Params
+            | Method.Completion               -> Request.Completion               $ fromJObject msg.Params
+            | Method.CompletionItemResolve    -> Request.CompletionItemResolve    $ fromJObject msg.Params
+            | Method.Hover                    -> Request.Hover                    $ fromJObject msg.Params
+            | Method.SignatureHelp            -> Request.SignatureHelp            $ fromJObject msg.Params
+            | Method.GotoDefinition           -> Request.GotoDefinition           $ fromJObject msg.Params
+            | Method.FindReferences           -> Request.FindReferences           $ fromJObject msg.Params
+            | Method.DocumentHighlights       -> Request.DocumentHighlights       $ fromJObject msg.Params
+            | Method.DocumentSymbols          -> Request.DocumentSymbols          $ fromJObject msg.Params
+            | Method.WorkspaceSymbols         -> Request.WorkspaceSymbols         $ fromJObject msg.Params
+            | Method.CodeAction               -> Request.CodeAction               $ fromJObject msg.Params
+            | Method.CodeLens                 -> Request.CodeLens                 $ fromJObject msg.Params
+            | Method.CodeLensResolve          -> Request.CodeLensResolve          $ fromJObject msg.Params
+            | Method.DocumentFormatting       -> Request.DocumentFormatting       $ fromJObject msg.Params
+            | Method.DocumentRangeFormatting  -> Request.DocumentRangeFormatting  $ fromJObject msg.Params
+            | Method.DocumentOnTypeFormatting -> Request.DocumentOnTypeFormatting $ fromJObject msg.Params
+            | Method.Rename                   -> Request.Rename                   $ fromJObject msg.Params
+            | _ -> failwithf "Unsupported request method '%s'" msg.Method
+
+        { Id = msg.Id
+          Request = request }
 
 module Notification =
     let serialize (notification: Notification) : string = ""
