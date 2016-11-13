@@ -3,6 +3,8 @@ STRATEGY: MAX
 NUGET
   remote: http://www.nuget.org/api/v2
     Aether (8.1.2)
+    AustinHarris.JsonRpc (1.1.63)
+      Newtonsoft.Json (>= 9.0)
     Chiron (6.2.1)
       Aether (>= 8.0.2 < 9.0)
       FParsec (>= 1.0 < 2.0)

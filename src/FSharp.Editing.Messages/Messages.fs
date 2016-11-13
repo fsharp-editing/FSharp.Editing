@@ -1,7 +1,5 @@
 ﻿namespace FSharp.Editing.Messages
 
-open Newtonsoft.Json
-
 /// Position in a text document expressed as zero-based line and character offset. 
 /// A position is between two characters like an 'insert' cursor in a editor.
 type Position =
