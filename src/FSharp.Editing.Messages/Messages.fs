@@ -601,39 +601,33 @@ type Request =
       /// The rename request is sent from the client to the server to perform a workspace-wide rename of a symbol.
     | Rename of RenameParams
 
-[<NoComparison>]
-type Response =
-    | Initialize of InitializeResult
-    | ShowMessage of MessageActionItem
-    | Completion of CompletionList
-    | CompletionItemResolve of CompletionItem
-    | Hover of Hover
-    | SignatureHelp of SignatureHelp
-    | GotoDefinition of Location list
-    | FindReferences of Location list
-    | DocumentHighlights of DocumentHighlight list
-    | DocumentSymbols of SymbolInformation list
-    | WorkspaceSymbols of SymbolInformation list
-    | CodeAction of Command list
-    | CodeLens of CodeLens list
-    | CodeLensResolve of CodeLens
-    | DocumentFormatting of TextEdit list
-    | DocumentRangeFormatting of TextEdit list
-    | DocumentOnTypeFormatting of TextEdit list
-    | Rename of WorkspaceEdit
+//[<NoComparison>]
+//type Response =
+//    | Initialize of InitializeResult
+//    | ShowMessage of MessageActionItem
+//    | Completion of CompletionList
+//    | CompletionItemResolve of CompletionItem
+//    | Hover of Hover
+//    | SignatureHelp of SignatureHelp
+//    | GotoDefinition of Location list
+//    | FindReferences of Location list
+//    | DocumentHighlights of DocumentHighlight list
+//    | DocumentSymbols of SymbolInformation list
+//    | WorkspaceSymbols of SymbolInformation list
+//    | CodeAction of Command list
+//    | CodeLens of CodeLens list
+//    | CodeLensResolve of CodeLens
+//    | DocumentFormatting of TextEdit list
+//    | DocumentRangeFormatting of TextEdit list
+//    | DocumentOnTypeFormatting of TextEdit list
+//    | Rename of WorkspaceEdit
 
+/// Notification sent from client to server.
 [<NoComparison>]
-type Notification =
+type ClientNotification =
       /// A notification to ask the server to exit its process. The server should exit with success code 0 
       /// if the shutdown request has been received before; otherwise with error code 1.
     | Exit
-      /// The show message notification is sent from a server to a client to ask the client to display 
-      /// a particular message in the user interface.
-    | ShowMessage of ShowMessageParams
-      /// The log message notification is sent from the server to the client to ask the client to log a particular message.
-    | LogMessage of LogMessageParams
-      /// The telemetry notification is sent from the server to the client to ask the client to log a telemetry event.
-    | Telemetry of obj
       /// A notification sent from the client to the server to signal the change of configuration settings.
     | DidChangeConfiguration of DidChangeConfigurationParams
       /// The document open notification is sent from the client to the server to signal newly opened text documents. 
@@ -651,8 +645,24 @@ type Notification =
       /// The watched files notification is sent from the client to the server when the client detects changes to files 
       /// watched by the language client.
     | DidChangeWatchedFiles of DidChangeWatchedFilesParams
+
+/// Notification sent from server to client.
+[<NoComparison>]
+type ServerNotification =
+      /// The show message notification is sent from a server to a client to ask the client to display 
+      /// a particular message in the user interface.
+    | ShowMessage of ShowMessageParams
+      /// The log message notification is sent from the server to the client to ask the client to log a particular message.
+    | LogMessage of LogMessageParams
+      /// The telemetry notification is sent from the server to the client to ask the client to log a telemetry event.
+    | Telemetry of obj
       /// Diagnostics notification are sent from the server to the client to signal results of validation runs.
     | PublishDiagnostics of PublishDiagnosticsParams
+
+[<NoComparison>]
+type Notification =
+    | Client of ClientNotification
+    | Server of ServerNotification
 
 type ErrorCode =
     | ParseError = -32700
@@ -679,16 +689,15 @@ type RequestWithId =
       Request: Request }
 
 [<NoComparison>]
-type ResponseWithId =
+type ResponseWithId<'result> =
     { Id: int
-      Response: Response option
+      Result: 'result option
       Error: ResponseError option }
 
 [<NoComparison>]
-type Message =
+type ClientMessage =
     | Request of RequestWithId
-    | Response of ResponseWithId
-    | Notification of Notification
+    | ClientNotification of ClientNotification
 
 // ****** 1-to-1 Json representation ******
 

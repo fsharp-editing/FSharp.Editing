@@ -3,12 +3,10 @@
 open System.Threading
 open System.IO
 open System.Net
-open AustinHarris.JsonRpc
 open System
-open Newtonsoft.Json
-open Newtonsoft.Json.Linq
+open FSharp.Editing.Messages
 
-type JsonRpcClient(serviceEndpoint: Uri) =
+type Client(serviceEndpoint: Uri) =
     let id = ref 0
 
     let copyAndClose (inputStream: Stream) =
@@ -60,3 +58,6 @@ type JsonRpcClient(serviceEndpoint: Uri) =
         }
     
     member this.Invoke<'a>(``method``: string, arg: obj) = this.Invoke(``method``, [|arg|])
+
+    member __.ShowMessage (p: ShowMessageRequestParams) : Async<MessageActionItem> = 
+        { Title = "a title" }

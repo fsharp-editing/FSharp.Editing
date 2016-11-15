@@ -1,6 +1,5 @@
 ﻿namespace FSharp.Editing.Server
 
-open AustinHarris.JsonRpc
 open FSharp.Editing.Messages
 
 type Service() =
@@ -9,3 +8,4 @@ type Service() =
     [<JsonRpcMethod "window/showMessageRequest">]
     member __.ShowMessage(p: ShowMessageRequestParams) : MessageActionItem = 
         { Title = "a title" }
+

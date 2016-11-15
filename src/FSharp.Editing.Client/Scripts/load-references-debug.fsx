@@ -3,4 +3,4 @@
 #r "System.Core.dll"
 #r "System.dll"
 #r "System.Numerics.dll"
-#r "../../../packages/Newtonsoft.Json/lib/net45/Newtonsoft.Json.dll"
+#r "../../FSharp.Editing.Messages/bin/Debug/FSharp.Editing.Messages.dll"
