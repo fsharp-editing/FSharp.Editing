@@ -6,14 +6,19 @@ open Newtonsoft.Json.Linq
 
 let private ($) = (<|)
 
-let private serializer = 
+let private serializer =
     JsonSerializer(
         Formatting = Formatting.Indented, 
         DefaultValueHandling = DefaultValueHandling.Ignore)
 
+let serialize (x: obj) : string =
+    use writer = new StringWriter()
+    serializer.Serialize(writer, x)
+    writer.ToString()
+
 module Request =
     [<RequireQualifiedAccess>]
-    module private Method =
+    module Method =
         let [<Literal>] Initialize               = "initialize"
         let [<Literal>] Shutdown                 = "shutdown"
         let [<Literal>] ShowMessage              = "window/showMessageRequest"
@@ -33,28 +38,6 @@ module Request =
         let [<Literal>] DocumentRangeFormatting  = "textDocument/rangeFormatting"
         let [<Literal>] DocumentOnTypeFormatting = "textDocument/onTypeFormatting"
         let [<Literal>] Rename                   = "textDocument/rename"
-
-    let (|RequestMethod|_|) = function
-        | Method.Initialize              
-        | Method.Shutdown                
-        | Method.ShowMessage             
-        | Method.Completion              
-        | Method.CompletionItemResolve   
-        | Method.Hover                   
-        | Method.SignatureHelp           
-        | Method.GotoDefinition          
-        | Method.FindReferences          
-        | Method.DocumentHighlights      
-        | Method.DocumentSymbols         
-        | Method.WorkspaceSymbols        
-        | Method.CodeAction              
-        | Method.CodeLens                
-        | Method.CodeLensResolve         
-        | Method.DocumentFormatting      
-        | Method.DocumentRangeFormatting 
-        | Method.DocumentOnTypeFormatting
-        | Method.Rename -> Some()
-        | _ -> None
 
     let serialize (request: RequestWithId) : string = 
         let ``method``, parameters =
@@ -139,7 +122,7 @@ module Response =
 
     let deserialize<'result>(json: string) : ResponseWithId<'result> =
         use reader = new StringReader(json)
-        let msg = serializer.Deserialize(reader, typeof<RequestMessage>) :?> ResponseMessage
+        let msg = serializer.Deserialize(reader, typeof<ResponseMessage>) :?> ResponseMessage
         let result: 'result option = fromJObject msg.Result 
 
         { Id = msg.Id

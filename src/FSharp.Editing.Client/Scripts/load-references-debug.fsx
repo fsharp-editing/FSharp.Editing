@@ -4,3 +4,5 @@
 #r "System.dll"
 #r "System.Numerics.dll"
 #r "../../FSharp.Editing.Messages/bin/Debug/FSharp.Editing.Messages.dll"
+#r "../../../packages/ExtCore/lib/net45/ExtCore.dll"
+#r "../../../packages/Newtonsoft.Json/lib/net45/Newtonsoft.Json.dll"

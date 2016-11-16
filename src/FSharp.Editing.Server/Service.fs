@@ -2,10 +2,10 @@
 
 open FSharp.Editing.Messages
 
-type Service() =
-    inherit JsonRpcService() 
+module Service =
+    open Suave
 
-    [<JsonRpcMethod "window/showMessageRequest">]
-    member __.ShowMessage(p: ShowMessageRequestParams) : MessageActionItem = 
-        { Title = "a title" }
-
+    let handle (req: HttpRequest) : WebPart =
+        async {
+            return! Response.response HttpCode.HTTP_200 [||]
+        }

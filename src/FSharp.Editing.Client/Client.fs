@@ -5,6 +5,16 @@ open System.IO
 open System.Net
 open System
 open FSharp.Editing.Messages
+open FSharp.Editing.Messages.Serialization
+open ExtCore.Control
+
+[<AutoOpen>]
+module Utils =
+    let inline (|Ok|Fail|) x = match x with Choice1Of2 a -> Ok a | Choice2Of2 e -> Fail e
+    let Ok = Choice1Of2
+    let Fail = Choice2Of2
+
+type RequestResult<'a> = Async<Choice<'a, ResponseError>>
 
 type Client(serviceEndpoint: Uri) =
     let id = ref 0
@@ -21,43 +31,42 @@ type Client(serviceEndpoint: Uri) =
         inputStream.Close()
         ms
 
-    member __.Invoke<'a> (jsonRpc: JsonRequest) : Async<JsonResponse<'a>> =
+    member __.Request<'a> (``method``: string, parameters: obj) : RequestResult<'a> =
         async {
             let id = Interlocked.Increment id
-            jsonRpc.Id <- string id
-            let req = HttpWebRequest.Create(Uri(serviceEndpoint, sprintf "?callid=%d" id))
+            
+            let requestMessage =
+                { RequestMessage.Id = id
+                  Jsonrpc = "2.0"
+                  Method = ``method``
+                  Params = parameters }
+
+            let req = HttpWebRequest.Create serviceEndpoint
             req.Method <- "Post"
             req.ContentType <- "application/json-rpc"
             use! reqStream = req.GetRequestStreamAsync() |> Async.AwaitTask
-            use writer = new StreamWriter(reqStream)
-            let json = JsonConvert.SerializeObject jsonRpc
+            use writer = new StreamWriter (reqStream)
+            let json = serialize requestMessage
             writer.Write json
             writer.Flush()
             reqStream.Close()
         
             let! resp = req.AsyncGetResponse()
             use respStream = resp.GetResponseStream()
-            use reader = new StreamReader(copyAndClose respStream)
-            let contentStr = reader.ReadToEnd()
-            let rjson = JsonConvert.DeserializeObject<JsonResponse<'a>>(contentStr)
-
-            if isNull rjson then
-                if not (String.IsNullOrEmpty contentStr) then
-                    let jo = JsonConvert.DeserializeObject contentStr :?> JObject
-                    failwithf "%O" jo.["Error"]
-                else
-                    failwithf "Empty response"
-
-            return rjson
+            use reader = new StreamReader (copyAndClose respStream)
+            let responseJson = reader.ReadToEnd()
+            let response: ResponseWithId<'a> = Response.deserialize responseJson
+            return 
+                match response.Result, response.Error with
+                | _, Some error -> Fail error
+                | Some result, _ -> Ok result
+                | None, None ->
+                    Fail { ResponseError.Code = ErrorCode.InternalError
+                           Message = "Server returned inconsistent response. Either Result or Error must be filled."
+                           Data = null }
         }
 
-    member this.Invoke<'a>(``method``: string, args: obj[]) =
-        async {
-            let req = new JsonRequest(Method = ``method``, Params = args)
-            return! this.Invoke<'a> req
-        }
-    
-    member this.Invoke<'a>(``method``: string, arg: obj) = this.Invoke(``method``, [|arg|])
-
-    member __.ShowMessage (p: ShowMessageRequestParams) : Async<MessageActionItem> = 
-        { Title = "a title" }
+    member this.ShowMessage (p: ShowMessageRequestParams) : RequestResult<MessageActionItem> = 
+        this.Request (Request.Method.Initialize, p)
+        
+        //asyncChoice.Return { Title = "a title" }

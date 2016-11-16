@@ -2,6 +2,7 @@ REDIRECTS: ON
 STRATEGY: MAX
 NUGET
   remote: http://www.nuget.org/api/v2
+    ExtCore (0.8.45)
     Fantomas (2.3)
       FSharp.Compiler.Service (>= 5.0)
     FParsec (1.0.2)
