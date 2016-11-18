@@ -1,8 +1,13 @@
 ﻿#load "load-project-debug.fsx"
 
+open FSharp.Editing.Messages
 open FSharp.Editing.Client
 open System
 
-let client = JsonRpcClient(Uri("http://127.0.0.1:32009"))
+let client = Client (Uri "http://127.0.0.1:8083")
 
-client.Invoke("foo", box 1) |> Async.RunSynchronously
+{ Type = MessageType.Info
+  Message = "foo"
+  Actions = [] }
+|> client.ShowMessage
+|> Async.RunSynchronously

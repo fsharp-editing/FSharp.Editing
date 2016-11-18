@@ -4,17 +4,10 @@ open System.Threading
 open System.IO
 open System.Net
 open System
+open FSharp.Editing
 open FSharp.Editing.Messages
 open FSharp.Editing.Messages.Serialization
 open ExtCore.Control
-
-[<AutoOpen>]
-module Utils =
-    let inline (|Ok|Fail|) x = match x with Choice1Of2 a -> Ok a | Choice2Of2 e -> Fail e
-    let Ok = Choice1Of2
-    let Fail = Choice2Of2
-
-type RequestResult<'a> = Async<Choice<'a, ResponseError>>
 
 type Client(serviceEndpoint: Uri) =
     let id = ref 0

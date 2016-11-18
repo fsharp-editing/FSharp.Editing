@@ -104,15 +104,15 @@ module Request =
           Request = request }
 
 module Response =
-    let serialize (response: ResponseWithId<_>) : string = 
-        let requestMessage: ResponseMessage =
-            { Jsonrpc = "2.0"
-              Id = response.Id
-              Result = response.Result
-              Error = response.Error }
+    let toMessage (response: ResponseWithId<_>) : ResponseMessage = 
+        { Jsonrpc = "2.0"
+          Id = response.Id
+          Result = response.Result
+          Error = response.Error }
 
+    let serialize (response: ResponseWithId<_>) : string = 
         use writer = new StringWriter()
-        serializer.Serialize(writer, requestMessage)
+        serializer.Serialize(writer, toMessage response)
         writer.ToString()
         
     let inline private fromJObject<'a>(parameters: obj): 'a option = 

@@ -2,5 +2,6 @@
 #I __SOURCE_DIRECTORY__
 #load "load-references-debug.fsx"
 #load "../AssemblyInfo.fs"
+      "../Utils.fs"
       "../Messages.fs"
       "../Serialization.fs"

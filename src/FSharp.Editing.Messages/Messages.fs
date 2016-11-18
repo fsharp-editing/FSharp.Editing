@@ -735,3 +735,5 @@ type NotificationMessage =
        Method: string
        /// The notification's params.
        Params: Notification option }
+
+type RequestResult<'a> = Async<Choice<'a, ResponseError>>
