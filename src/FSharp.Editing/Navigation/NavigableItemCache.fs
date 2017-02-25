@@ -7,6 +7,7 @@ open System.Threading
 open System.Collections.Concurrent
 open System.Security.Cryptography
 open MBrace.FsPickler
+open Microsoft.CodeAnalysis
 open FSharp.Editing
 
 type Source = string
@@ -83,32 +84,46 @@ let saveToDisk  (cache:ConcurrentDictionary<FilePath, FileNavigableItems>) (dirt
                     profiler.Result
 
 // TODO ::
-//  - set this up to work with the active FSharp Workspace 
-//  - subscribe to the workspace event equivalent of the VS solution events
-type NavigableItemCache (solutionPath:FilePath) =
+//  - Should this be changed to use projects instead of solutions? 
+type NavigableItemCache (solution:Solution) as navcache =
     let cache = ConcurrentDictionary<FilePath, FileNavigableItems>(StringComparer.Ordinal)
     let mutable dirty = false
     let pickler = FsPickler.CreateBinarySerializer ()
-    let tryLoadFromFile path = loadFromDisk cache pickler path
-    let trySaveToDisk path = saveToDisk cache &dirty pickler path
+    
+    let tryLoadFromFile path = 
+        if String.IsNullOrWhiteSpace path then () else 
+        loadFromDisk cache pickler path
 
-//    let dte = serviceProvider.GetService<DTE, SDTE>()
-//    let tryGetSolutionPath() = Option.attempt (fun () -> dte.Solution.FullName)  
-//    let afterSolutionClosing = _dispSolutionEvents_AfterClosingEventHandler (fun () -> cache.Clear())
+    let trySaveToDisk path = 
+        if String.IsNullOrWhiteSpace path then () else
+        saveToDisk cache &dirty pickler path
 
-//    let solutionOpened = _dispSolutionEvents_OpenedEventHandler tryLoadFromFile
-//    let mutable solutionEvents: SolutionEvents = null
-//    
-//    do match dte.Events with
-//       | :? Events2 as events ->
-//           solutionEvents <- events.SolutionEvents
-//           solutionEvents.add_Opened solutionOpened
-//           solutionEvents.add_AfterClosing afterSolutionClosing
-//       | _ -> ()
-    do tryLoadFromFile solutionPath
+    do tryLoadFromFile solution.FilePath
 
-    let saveTimer = new Timer((fun _ -> trySaveToDisk solutionPath), null, 0, 5000)
+    let saveTimer = new Timer((fun _ -> trySaveToDisk solution.FilePath), null, 0, 5000)
 
+    let workspaceEventStream = solution.Workspace.WorkspaceChanged
+
+    let onWorkspaceEvent (args:WorkspaceChangeEventArgs) =
+        match args.Kind with
+        | WorkspaceChangeKind.SolutionAdded 
+            ->  tryLoadFromFile args.NewSolution.FilePath
+                trySaveToDisk args.OldSolution.FilePath        
+        | WorkspaceChangeKind.DocumentRemoved
+            ->  let doc = solution.GetDocument args.DocumentId 
+                navcache.Remove doc.FilePath
+        | WorkspaceChangeKind.ProjectRemoved
+            ->  let proj = solution.GetProject args.ProjectId
+                proj.GetDocumentFilePaths()
+                |> Seq.iter ^ fun path -> navcache.Remove path
+        | WorkspaceChangeKind.SolutionRemoved
+        | WorkspaceChangeKind.SolutionCleared
+            -> cache.Clear ()
+        | _ -> ()
+
+    let subscription = workspaceEventStream.Subscribe onWorkspaceEvent 
+
+        
     member __.TryGet (file: FileDescriptor): NavigableItem[] option =
         match cache.TryGetValue file.Path with
         | true, x when x.Descriptor.LastWriteTime = file.LastWriteTime -> 
@@ -129,9 +144,8 @@ type NavigableItemCache (solutionPath:FilePath) =
     member __.Remove (filePath: FilePath): unit = cache.TryRemove filePath |> ignore
 
     interface IDisposable with
-        member __.Dispose() =
-            saveTimer.Dispose()
-//            solutionEvents.remove_Opened solutionOpened
-//            solutionEvents.remove_AfterClosing afterSolutionClosing
+        member __.Dispose () = 
+            dispose saveTimer
+            dispose subscription
 
     

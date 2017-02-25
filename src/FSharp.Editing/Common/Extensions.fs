@@ -204,6 +204,19 @@ open Microsoft.CodeAnalysis.Text
 //    member x.GetService<'T, 'S>() = x.GetService(typeof<'S>) :?> 'T
 
 
+
+
+type Solution with 
+    member self.GetDocumentFilePath (docId:DocumentId) = 
+        let target =
+            self.Projects
+            |> Seq.collect ^ fun proj -> proj.Documents
+            |> Seq.tryFind ^ fun doc -> doc.Id = docId 
+        target |> Option.map ^ fun doc -> doc.FilePath    
+
+type Project with
+    member self.GetDocumentFilePaths () = self.Documents |> Seq.map ^ fun doc -> doc.FilePath
+
 [<NoComparison>][<NoEquality>]
 type CheckResults =
     | Ready of (FSharpParseFileResults * FSharpCheckFileResults) option
@@ -465,6 +478,7 @@ type FSharpEntity with
 [<CompilationRepresentation (CompilationRepresentationFlags.ModuleSuffix)>]
 module Seq =
     let toReadOnlyCollection (xs: _ seq) = ResizeArray(xs).AsReadOnly()
+    
 
 [<RequireQualifiedAccess>]
 module List =
