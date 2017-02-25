@@ -128,68 +128,69 @@ module internal CommonHelpers =
     let getColorizationData(documentKey: DocumentId, sourceText: SourceText, textSpan: TextSpan, fileName: string option, defines: string list, 
                             cancellationToken: CancellationToken) : List<ClassifiedSpan> =
          try
-             let sourceTokenizer = FSharpSourceTokenizer(defines, fileName)
-             let lines = sourceText.Lines
-             // We keep incremental data per-document.  When text changes we correlate text line-by-line (by hash codes of lines)
-             let sourceTextData = dataCache.GetValue(documentKey, fun key -> SourceTextData(lines.Count))
+            let sourceTokenizer = FSharpSourceTokenizer(defines, fileName)
+            let lines = sourceText.Lines
+            // We keep incremental data per-document.  When text changes we correlate text line-by-line (by hash codes of lines)
+            let sourceTextData = dataCache.GetValue(documentKey, fun key -> SourceTextData(lines.Count))
  
-             let startLine = lines.GetLineFromPosition(textSpan.Start).LineNumber
-             let endLine = lines.GetLineFromPosition(textSpan.End).LineNumber
-             // Go backwards to find the last cached scanned line that is valid
-             let scanStartLine = 
-                 let mutable i = startLine
-                 while i > 0 && (match sourceTextData.[i] with Some data -> not (data.IsValid(lines.[i])) | None -> true)  do
-                     i <- i - 1
-                 i
-             // Rescan the lines if necessary and report the information
-             let result = new List<ClassifiedSpan>()
-             let mutable lexState = if scanStartLine = 0 then 0L else sourceTextData.[scanStartLine - 1].Value.LexStateAtEndOfLine
+            let startLine = lines.GetLineFromPosition(textSpan.Start).LineNumber
+            let endLine = lines.GetLineFromPosition(textSpan.End).LineNumber
+            // Go backwards to find the last cached scanned line that is valid
+            let scanStartLine = 
+                let mutable i = startLine
+                while i > 0 && (match sourceTextData.[i] with Some data -> not (data.IsValid(lines.[i])) | None -> true)  do
+                    i <- i - 1
+                i
+            // Rescan the lines if necessary and report the information
+            let result = new List<ClassifiedSpan>()
+            let mutable lexState = if scanStartLine = 0 then 0L else sourceTextData.[scanStartLine - 1].Value.LexStateAtEndOfLine
  
-             for i = scanStartLine to endLine do
-                 cancellationToken.ThrowIfCancellationRequested()
-                 let textLine = lines.[i]
-                 let lineContents = textLine.Text.ToString(textLine.Span)
+            for i = scanStartLine to endLine do
+                cancellationToken.ThrowIfCancellationRequested()
+                let textLine = lines.[i]
+                let lineContents = textLine.Text.ToString(textLine.Span)
  
-                 let lineData = 
-                     // We can reuse the old data when 
-                     //   1. the line starts at the same overall position
-                     //   2. the hash codes match
-                     //   3. the start-of-line lex states are the same
-                     match sourceTextData.[i] with 
-                     | Some data when data.IsValid(textLine) && data.LexStateAtStartOfLine = lexState -> 
-                         data
-                     | _ -> 
-                         // Otherwise, we recompute
-                         let newData = scanSourceLine(sourceTokenizer, textLine, lineContents, lexState)
-                         sourceTextData.[i] <- Some newData
-                         newData
+                let lineData = 
+                    // We can reuse the old data when 
+                    //   1. the line starts at the same overall position
+                    //   2. the hash codes match
+                    //   3. the start-of-line lex states are the same
+                    match sourceTextData.[i] with 
+                    | Some data when data.IsValid(textLine) && data.LexStateAtStartOfLine = lexState -> 
+                        data
+                    | _ -> 
+                        // Otherwise, we recompute
+                        let newData = scanSourceLine(sourceTokenizer, textLine, lineContents, lexState)
+                        sourceTextData.[i] <- Some newData
+                        newData
                      
-                 lexState <- lineData.LexStateAtEndOfLine
+                lexState <- lineData.LexStateAtEndOfLine
  
-                 if startLine <= i then
-                     result.AddRange(lineData.ClassifiedSpans |> Seq.filter(fun token ->
-                         textSpan.Contains(token.TextSpan.Start) ||
-                         textSpan.Contains(token.TextSpan.End - 1) ||
-                         (token.TextSpan.Start <= textSpan.Start && textSpan.End <= token.TextSpan.End)))
+                if startLine <= i then
+                    result.AddRange(lineData.ClassifiedSpans |> Seq.filter(fun token ->
+                        textSpan.Contains(token.TextSpan.Start) ||
+                        textSpan.Contains(token.TextSpan.End - 1) ||
+                        (token.TextSpan.Start <= textSpan.Start && textSpan.End <= token.TextSpan.End)))
 
-             // If necessary, invalidate all subsequent lines after endLine
-             if endLine < lines.Count - 1 then 
-                 match sourceTextData.[endLine+1] with 
-                 | Some data  -> 
-                     if data.LexStateAtStartOfLine <> lexState then
-                          sourceTextData.ClearFrom (endLine+1)
-                 | None -> ()
-             result
+            // If necessary, invalidate all subsequent lines after endLine
+            if endLine < lines.Count - 1 then 
+                match sourceTextData.[endLine+1] with 
+                | Some data  -> 
+                    if data.LexStateAtStartOfLine <> lexState then
+                        sourceTextData.ClearFrom (endLine+1)
+                | None -> ()
+            result
          with 
          | :? System.OperationCanceledException -> reraise()
          |  ex -> 
-             Assert.Exception(ex)
-             List<ClassifiedSpan>()
+            Assert.Exception ex
+            List<ClassifiedSpan>()
 
-    type private DraftToken =
-        { Kind: LexerSymbolKind
-          Token: FSharpTokenInfo 
-          RightColumn: int }
+    type private DraftToken = { 
+        Kind: LexerSymbolKind
+        Token: FSharpTokenInfo 
+        RightColumn: int 
+    } with
         static member inline Create kind token = 
             { Kind = kind; Token = token; RightColumn = token.LeftColumn + token.FullMatchedLength - 1 }
     
