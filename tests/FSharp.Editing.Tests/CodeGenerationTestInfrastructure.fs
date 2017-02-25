@@ -5,7 +5,6 @@ open Microsoft.FSharp.Compiler.Range
 open Microsoft.FSharp.Compiler.SourceCodeServices
 open FSharp.Editing.Navigation
 open FSharp.Editing
-open FSharp.Editing.AsyncMaybe
 open FSharp.Editing.CodeGeneration
 
 type pos with
@@ -72,7 +71,7 @@ type CodeGenerationTestService(languageService: LanguageService, compilerOptions
             }
 
         member __.ParseFileInProject(snapshot, projectOptions) =
-            languageService.ParseFileInProject(projectOptions, snapshot.FullName, snapshot.GetText()) |> AsyncMaybe.liftAsync
+            languageService.ParseFileInProject(projectOptions, snapshot.FullName, snapshot.GetText()) |> liftAsync
 
         member __.ExtractFSharpPos(pos) = pos
 

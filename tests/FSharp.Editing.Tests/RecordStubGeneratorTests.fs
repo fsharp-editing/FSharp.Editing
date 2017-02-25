@@ -21,8 +21,8 @@ open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.Range
 open TestHelpers.LanguageServiceTestHelper
 open FSharp.Editing
-open FSharp.Editing.Features.RecordStubGenerator
-open FSharp.Editing.Features
+open FSharp.Editing.CodeGeneration
+open FSharp.Editing.CodeGeneration.RecordStubGenerator
 open CodeGenerationTestInfrastructure
 
 let args = LanguageServiceTestHelper.args

@@ -24,9 +24,9 @@ open Microsoft.FSharp.Compiler.Range
 open Microsoft.FSharp.Compiler.SourceCodeServices
 open TestHelpers.LanguageServiceTestHelper
 open FSharp.Editing
-open FSharp.Editing.Features
+open FSharp.Editing.CodeGeneration
+open FSharp.Editing.CodeGeneration.UnionPatternMatchCaseGenerator
 open CodeGenerationTestInfrastructure
-open FSharp.Editing.Features.UnionPatternMatchCaseGenerator
 
 let languageService = LanguageService()
 

@@ -5,15 +5,16 @@ open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.Range
 open Microsoft.FSharp.Compiler.SourceCodeServices
 open FSharp.Data
-open FSharp.Editing
-open FSharp.Editing.Features
 open CodeGenerationTestInfrastructure
 open LanguageServiceTestHelper
 open System
 open System.Xml.Linq
 open System.Collections.Generic
 open System.IO
-open FSharp.Editing.Features.SignatureGenerator
+open FSharp.Editing
+open FSharp.Editing.Coloring
+open FSharp.Editing.CodeGeneration
+open FSharp.Editing.CodeGeneration.SignatureGenerator
 
 let languageService = LanguageService()
 let xmlFileCache = Dictionary()
@@ -99,15 +100,18 @@ let validateSignature source signature =
     let sourceFile = Path.ChangeExtension(Path.GetTempFileName(), ".fs")
     File.WriteAllText(sourceFile, source)
     let signatureFile = @"/Temp.fsi"
-    let opts =
-        { ProjectFileName = projFileName
-          ProjectFileNames = [| sourceFile; signatureFile|]
-          OtherOptions = LanguageServiceTestHelper.args
-          ReferencedProjects = Array.empty
-          IsIncompleteTypeCheckEnvironment = false
-          UseScriptResolutionRules = true
-          LoadTime = DateTime.UtcNow
-          UnresolvedReferences = None }
+    let opts = { 
+        ProjectFileName = projFileName
+        ProjectFileNames = [| sourceFile; signatureFile|]
+        OtherOptions = LanguageServiceTestHelper.args
+        ReferencedProjects = Array.empty
+        IsIncompleteTypeCheckEnvironment = false
+        UseScriptResolutionRules = true
+        LoadTime = DateTime.UtcNow
+        UnresolvedReferences = None 
+        OriginalLoadReferences = []
+        ExtraProjectInfo = None
+    }
     let results =
         languageService.ParseAndCheckFileInProject(opts, signatureFile, signature, AllowStaleResults.No)
         |> Async.RunSynchronously
