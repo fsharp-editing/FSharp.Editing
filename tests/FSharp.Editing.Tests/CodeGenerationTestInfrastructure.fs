@@ -3,9 +3,10 @@
 open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.Range
 open Microsoft.FSharp.Compiler.SourceCodeServices
-open FSharp.Editing.Features
+open FSharp.Editing.Navigation
 open FSharp.Editing
 open FSharp.Editing.AsyncMaybe
+open FSharp.Editing.CodeGeneration
 
 type pos with
     member x.Line0: int<Line0> = LanguagePrimitives.Int32WithMeasure(x.Line - 1)

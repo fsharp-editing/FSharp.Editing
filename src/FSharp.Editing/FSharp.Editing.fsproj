@@ -98,7 +98,6 @@
     <Compile Include="CodeGeneration\UnionPatternMatchCaseGenerator.fs" />
     <Compile Include="CodeGeneration\InterfaceStubGenerator.fs" />
     <Compile Include="CodeGeneration\RecordStubGenerator.fs" />
-    <Compile Include="TaskListCommentExtractor.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
