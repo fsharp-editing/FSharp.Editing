@@ -103,6 +103,7 @@
     <Compile Include="ProjectSystem\SolutionProvider.fs" />
     <Compile Include="Navigation\NavigableItemsCollector.fs" />
     <Compile Include="Navigation\NavigateToIndex.fs" />
+    <Compile Include="Navigation\NavigableItemCache.fs" />
     <Compile Include="Coloring\DepthParser.fs" />
     <Compile Include="Coloring\OpenDeclarationsGetter.fs" />
     <Compile Include="Coloring\UnopenedNamespacesResolver.fs" />
