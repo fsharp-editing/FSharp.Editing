@@ -7,6 +7,7 @@ nuget FSharp.Compiler.Service
 nuget FSharp.Core
 nuget FSharpLint.Core prerelease
 nuget FsPickler
+nuget Microsoft.CodeAnalysis
 nuget SourceLink.SymbolStore 0.5.0
 nuget Newtonsoft.Json
 nuget Suave
