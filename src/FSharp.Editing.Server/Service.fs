@@ -12,9 +12,9 @@ module Service =
     let private handleRequest (request: RequestWithId) : RequestResult<obj> =
         asyncChoice {
             match request.Request with
-            | Request.ShowMessage p -> 
+            | Request.ShowMessage _p -> 
                 return box { MessageActionItem.Title = "a title" }
-            | Request.CodeLens p ->
+            | Request.CodeLens _p ->
                 return box 
                     [ { CodeLens.Command = None
                         CodeLens.Range =
