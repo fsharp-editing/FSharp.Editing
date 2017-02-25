@@ -1,4 +1,4 @@
-﻿module FSharp.Editing.Features.PrintfSpecifiersUsageGetter
+﻿module FSharp.Editing.Coloring.PrintfSpecifiersUsageGetter
 
 open Microsoft.FSharp.Compiler
 open FSharp.Editing.UntypedAstUtils

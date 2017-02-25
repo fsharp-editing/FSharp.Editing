@@ -1,4 +1,4 @@
-﻿module FSharp.Editing.Features.RecordStubGenerator
+﻿module FSharp.Editing.CodeGeneration.RecordStubGenerator
 
 open FSharp.Editing
 open FSharp.Editing.UntypedAstUtils

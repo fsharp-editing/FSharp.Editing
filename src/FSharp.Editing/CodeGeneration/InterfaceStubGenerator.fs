@@ -1,4 +1,4 @@
-﻿namespace FSharp.Editing.Features
+﻿namespace FSharp.Editing.CodeGeneration
 
 open System
 open System.Diagnostics

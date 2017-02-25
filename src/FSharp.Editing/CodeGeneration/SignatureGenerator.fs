@@ -1,4 +1,4 @@
-﻿module FSharp.Editing.Features.SignatureGenerator
+﻿module FSharp.Editing.CodeGeneration.SignatureGenerator
 
 open System
 open System.Diagnostics

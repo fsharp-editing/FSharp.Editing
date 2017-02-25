@@ -1,14 +1,11 @@
-﻿namespace FSharp.Editing.Features
+﻿namespace FSharp.Editing
 
-open System
-open System.IO
-open System.CodeDom.Compiler
-open FSharp.Editing
-open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.Range
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
+/// Line Number from a 0 indexed buffer
 [<Measure>] type Line0
+/// Line Number from a 1 indexed buffer
 [<Measure>] type Line1
 
 type IDocument =
@@ -32,9 +29,18 @@ type ICodeGenerationService<'Project, 'Pos, 'Range> =
     // TODO: enhance this clumsy design
     abstract ExtractFSharpPos: 'Pos -> pos
 
+namespace FSharp.Editing.CodeGeneration
+
 [<AutoOpen>]
 module internal CodeGenerationUtils =
+    open System
+    open System.IO
+    open System.CodeDom.Compiler
+    open FSharp.Editing
     open Microsoft.FSharp.Compiler.SourceCodeServices.PrettyNaming
+    open Microsoft.FSharp.Compiler.Ast
+    open Microsoft.FSharp.Compiler.Range
+    open Microsoft.FSharp.Compiler.SourceCodeServices
 
     type ColumnIndentedTextWriter() =
         let stringWriter = new StringWriter()

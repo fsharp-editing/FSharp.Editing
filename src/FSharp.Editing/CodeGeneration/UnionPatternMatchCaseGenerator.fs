@@ -1,4 +1,4 @@
-﻿module FSharp.Editing.Features.UnionPatternMatchCaseGenerator
+﻿module FSharp.Editing.CodeGeneration.UnionPatternMatchCaseGenerator
 
 open System
 open System.Diagnostics

@@ -1,4 +1,6 @@
-﻿namespace FSharp.Editing
+﻿namespace FSharp.Editing.Coloring
+
+open FSharp.Editing
 
 module internal DepthParsing =
 

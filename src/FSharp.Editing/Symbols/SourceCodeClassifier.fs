@@ -1,8 +1,9 @@
-﻿namespace FSharp.Editing.Features
+﻿namespace FSharp.Editing.Symbols
 
 open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.SourceCodeServices
 open FSharp.Editing
+open FSharp.Editing.Coloring
 
 type WordSpan = 
     { SymbolKind: SymbolKind

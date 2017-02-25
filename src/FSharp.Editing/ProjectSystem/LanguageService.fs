@@ -148,7 +148,7 @@ type LanguageService (?backgroundCompilation: bool, ?projectCacheSize: int, ?fil
 
   let files = ConcurrentDictionary<string, FileState>()
   
-  let isResultObsolete fileName = 
+  let _isResultObsolete fileName = 
       match files.TryGetValue fileName with
       | true, Cancelled -> true
       | _ -> false
@@ -167,8 +167,7 @@ type LanguageService (?backgroundCompilation: bool, ?projectCacheSize: int, ?fil
                    
                    debug "[LanguageService] Change state for %s to `BeingChecked`" filePath
                    debug "[LanguageService] Parse and typecheck source..."
-                   return! x.ParseAndCheckFileInProject (fixedFilePath, 0, source, options, 
-                                                         IsResultObsolete (fun _ -> isResultObsolete filePath), null) 
+                   return! x.ParseAndCheckFileInProject (fixedFilePath, 0, source, options) 
               finally 
                    if files.TryUpdate (filePath, Checked, BeingChecked) then
                        debug "[LanguageService] %s: BeingChecked => Checked" filePath
@@ -267,15 +266,18 @@ type LanguageService (?backgroundCompilation: bool, ?projectCacheSize: int, ?fil
   
   /// Constructs options for the interactive checker for a project under the given configuration. 
   member __.GetProjectCheckerOptions(projFilename, files, args, referencedProjects) =
-    let opts =
-        { ProjectFileName = projFilename
-          ProjectFileNames = files
-          OtherOptions = args
-          IsIncompleteTypeCheckEnvironment = false
-          UseScriptResolutionRules = false
-          LoadTime = fakeDateTimeRepresentingTimeLoaded projFilename
-          UnresolvedReferences = None
-          ReferencedProjects = referencedProjects }
+    let opts = { 
+        ProjectFileName = projFilename
+        ProjectFileNames = files
+        OtherOptions = args
+        IsIncompleteTypeCheckEnvironment = false
+        UseScriptResolutionRules = false
+        LoadTime = fakeDateTimeRepresentingTimeLoaded projFilename
+        UnresolvedReferences = None
+        ReferencedProjects = referencedProjects 
+        OriginalLoadReferences = []
+        ExtraProjectInfo = None
+    }
     debug "GetProjectCheckerOptions: ProjectFileName: %s, ProjectFileNames: %A, FSharpProjectOptions: %A, IsIncompleteTypeCheckEnvironment: %A, UseScriptResolutionRules: %A, ReferencedProjects: %A" 
                                     opts.ProjectFileName opts.ProjectFileNames opts.OtherOptions opts.IsIncompleteTypeCheckEnvironment opts.UseScriptResolutionRules opts.ReferencedProjects
     opts
