@@ -13,7 +13,8 @@ open System.IO
 open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.SourceCodeServices
 open FSharp.Editing
-open FSharp.Editing.Features
+open FSharp.Editing.Symbols
+open FSharp.Editing.CodeGeneration
 
 [<Literal>]
 let dataFolderName = __SOURCE_DIRECTORY__ + "/../data/"

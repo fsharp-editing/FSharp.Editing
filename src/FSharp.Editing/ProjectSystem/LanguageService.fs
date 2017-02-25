@@ -3,8 +3,151 @@
 open System
 open System.IO
 open System.Diagnostics
+open System.ComponentModel.Composition
+open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.Diagnostics
+open Microsoft.CodeAnalysis.Completion
+open Microsoft.CodeAnalysis.Options
 open Microsoft.FSharp.Compiler.SourceCodeServices
-open AsyncMaybe
+open FSharp.Editing.ProjectSystem
+
+
+// Exposes FSharpChecker as MEF export
+//[<Export(typeof<FSharpCheckerProvider>); Composition.Shared>]
+type internal FSharpCheckerProvider 
+    //[<ImportingConstructor>]
+    (
+        //analyzerService: DiagnosticAnalyzer
+    ) =
+    let checker = 
+        lazy
+            let checker = FSharpChecker.Create(projectCacheSize = 200, keepAllBackgroundResolutions = false)
+
+            // This is one half of the bridge between the F# background builder and the Roslyn analysis engine.
+            // When the F# background builder refreshes the background semantic build context for a file,
+            // we request Roslyn to reanalyze that individual file.
+            checker.BeforeBackgroundFileCheck.Add(fun (fileName, extraProjectInfo) ->  
+               async {
+                try 
+                    match extraProjectInfo with 
+                    | Some (:? Workspace as workspace) -> 
+                        let solution = workspace.CurrentSolution
+                        let documentIds = solution.GetDocumentIdsWithFilePath(fileName)
+                        if not documentIds.IsEmpty then 
+                            //analyzerService.Reanalyze(workspace,documentIds=documentIds)
+                            ()
+                    | _ -> ()
+                with ex -> 
+                    Assert.Exception(ex)
+                } |> Async.StartImmediate
+            )
+            checker
+
+    member this.Checker = checker.Value
+
+
+open System.Collections.Generic
+open System.Collections.Concurrent
+// Exposes project information as MEF component
+//[<Export(typeof<ProjectInfoManager>); Composition.Shared>]
+type internal ProjectInfoManager 
+    //[<ImportingConstructor>]
+    (
+        _checkerProvider: FSharpCheckerProvider
+        //[<Import(typeof<SVsServiceProvider>)>] serviceProvider: System.IServiceProvider
+    ) =
+    // A table of information about projects, excluding single-file projects.  
+    let projectTable = ConcurrentDictionary<ProjectId, FSharpProjectOptions>()
+
+    // A table of information about single-file projects.  Currently we only need the load time of each such file, plus
+    // the original options for editing
+    let singleFileProjectTable = ConcurrentDictionary<ProjectId, DateTime * FSharpProjectOptions>()
+
+    member this.AddSingleFileProject(projectId, timeStampAndOptions) =
+        singleFileProjectTable.TryAdd(projectId, timeStampAndOptions) |> ignore
+
+    member this.RemoveSingleFileProject(projectId) =
+        singleFileProjectTable.TryRemove(projectId) |> ignore
+
+    /// Clear a project from the project table
+    member this.ClearProjectInfo(projectId: ProjectId) =
+        projectTable.TryRemove(projectId) |> ignore
+
+    // TODO Reimplement on top of a workspace based project system
+        
+    ///// Get the exact options for a single-file script
+    //member this.ComputeSingleFileOptions (fileName, loadTime, fileContents, workspace: Workspace) = async {
+    //    let extraProjectInfo = Some(box workspace)
+    //    if SourceFile.MustBeSingleFileProject(fileName) then 
+    //        let! options = checkerProvider.Checker.GetProjectOptionsFromScript(fileName, fileContents, loadTime, [| |], ?extraProjectInfo=extraProjectInfo) 
+    //        let site = ProjectSitesAndFiles.CreateProjectSiteForScript(fileName, options)
+    //        return ProjectSitesAndFiles.GetProjectOptionsForProjectSite(site,fileName,options.ExtraProjectInfo,serviceProvider)
+    //    else
+    //        let site = ProjectSitesAndFiles.ProjectSiteOfSingleFile(fileName)
+    //        return ProjectSitesAndFiles.GetProjectOptionsForProjectSite(site,fileName,extraProjectInfo,serviceProvider)
+    //  }
+
+    ///// Update the info for a project in the project table
+    //member this.UpdateProjectInfo(projectId: ProjectId, site: IProjectSite, workspace: Workspace) =
+    //    let extraProjectInfo = Some(box workspace)
+    //    let options = ProjectSitesAndFiles.GetProjectOptionsForProjectSite(site, site.ProjectFileName(), extraProjectInfo, serviceProvider)
+    //    checkerProvider.Checker.InvalidateConfiguration(options)
+    //    projectTable.[projectId] <- options
+
+    /// Get compilation defines relevant for syntax processing.  
+    /// Quicker then TryGetOptionsForDocumentOrProject as it doesn't need to recompute the exact project 
+    /// options for a script.
+    member this.GetCompilationDefinesForEditingDocument(document: Document) = 
+        let projectOptionsOpt = this.TryGetOptionsForProject(document.Project.Id)  
+        let otherOptions = 
+            match projectOptionsOpt with 
+            | None -> []
+            | Some options -> options.OtherOptions |> Array.toList
+        CompilerEnvironment.GetCompilationDefinesForEditing(document.Name, otherOptions)
+
+    /// Get the options for a project
+    member this.TryGetOptionsForProject(projectId: ProjectId) = 
+        if projectTable.ContainsKey(projectId) then
+            Some(projectTable.[projectId])
+        else
+            None
+
+    /// Get the exact options for a document or project
+    member this.TryGetOptionsForDocumentOrProject(document: Document) = async { 
+        let projectId = document.Project.Id
+        
+        // The options for a single-file script project are re-requested each time the file is analyzed.  This is because the
+        // single-file project may contain #load and #r references which are changing as the user edits, and we may need to re-analyze
+        // to determine the latest settings.  FCS keeps a cache to help ensure these are up-to-date.
+        if singleFileProjectTable.ContainsKey(projectId) then 
+          try
+            let loadTime,_ = singleFileProjectTable.[projectId]
+            let _fileName = document.FilePath
+            let! cancellationToken = Async.CancellationToken
+            let! _sourceText = document.GetTextAsync(cancellationToken) |> Async.AwaitTask
+            //let! options = this.ComputeSingleFileOptions (fileName, loadTime, sourceText.ToString(), document.Project.Solution.Workspace) |> Async.AwaitTask
+            let options = Unchecked.defaultof<FSharpProjectOptions>
+            singleFileProjectTable.[projectId] <- (loadTime, options)
+            return Some options
+          with ex -> 
+            Assert.Exception(ex)
+            return None
+        else return this.TryGetOptionsForProject(projectId) 
+     }
+
+    /// Get the options for a document or project relevant for syntax processing.
+    /// Quicker then TryGetOptionsForDocumentOrProject as it doesn't need to recompute the exact project options for a script.
+    member this.TryGetOptionsForEditingDocumentOrProject(document: Document) = 
+        let projectId = document.Project.Id
+        if singleFileProjectTable.ContainsKey(projectId) then 
+            let _loadTime, originalOptions = singleFileProjectTable.[projectId]
+            Some originalOptions
+        else 
+            this.TryGetOptionsForProject(projectId) 
+
+
+
+
 
 // --------------------------------------------------------------------------------------
 /// Wraps the result of type-checking and provides methods for implementing

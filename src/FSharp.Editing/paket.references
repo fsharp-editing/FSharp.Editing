@@ -1,2 +1,4 @@
 FSharp.Compiler.Service
-FSharp.Core
+Microsoft.CodeAnalysis.Common
+Microsoft.CodeAnalysis.Workspaces.Common
+Microsoft.CodeAnalysis.Features

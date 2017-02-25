@@ -56,6 +56,8 @@ module Prelude =
     let inline Fail a = Choice2Of2 a
     let inline (|Ok|Fail|) a = a
 
+    let getEnvInteger e dflt = match System.Environment.GetEnvironmentVariable(e) with null -> dflt | t -> try int t with _ -> dflt
+
       
     
 [<RequireQualifiedAccess>]
@@ -240,6 +242,9 @@ module Array =
 [<RequireQualifiedAccess>]
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Option =
+
+    let inline orElseWith ifNoneThunk option = match option with None -> ifNoneThunk () | Some _ -> option
+
     let inline ofNull value =
         if obj.ReferenceEquals(value, null) then None else Some value
 
@@ -473,7 +478,7 @@ type AsyncMaybeBuilder () =
         Some () |> async.Return
 
     [<DebuggerStepThrough>]
-    member __.Delay (f : unit -> Async<'T option>) : Async<'T option> = f ()
+    member __.Delay (f : unit -> Async<'T option>) : Async<'T option> = async.Delay f
 
     [<DebuggerStepThrough>]
     member __.Combine (r1, r2 : Async<'T option>) : Async<'T option> =
@@ -494,6 +499,13 @@ type AsyncMaybeBuilder () =
         }
 
     [<DebuggerStepThrough>]
+    member __.Bind (value: System.Threading.Tasks.Task<'T>, f : 'T -> Async<'U option>) : Async<'U option> =
+        async {
+            let! value' = Async.AwaitTask value
+            return! f value'
+        }
+
+    [<DebuggerStepThrough>]
     member __.Bind (value: 'T option, f : 'T -> Async<'U option>) : Async<'U option> =
         async {
             match value with
@@ -504,8 +516,7 @@ type AsyncMaybeBuilder () =
     [<DebuggerStepThrough>]
     member __.Using (resource : ('T :> IDisposable), body : _ -> Async<_ option>) : Async<_ option> =
         try body resource
-        finally 
-            if isNotNull resource then resource.Dispose ()
+        finally if not (isNull resource) then resource.Dispose ()
 
     [<DebuggerStepThrough>]
     member x.While (guard, body : Async<_ option>) : Async<_ option> =
@@ -527,10 +538,6 @@ type AsyncMaybeBuilder () =
     member inline __.TryFinally (computation : Async<'T option>, compensation : unit -> unit) : Async<'T option> =
             async.TryFinally (computation, compensation)
 
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module AsyncMaybe =
-    let inline liftAsync (async : Async<'T>) : Async<_ option> =
-        async |> Async.map Some
 
 [<AutoOpen; CompilationRepresentation (CompilationRepresentationFlags.ModuleSuffix)>]
 module Pervasive =
@@ -546,6 +553,13 @@ module Pervasive =
     let maybe = MaybeBuilder()
     let asyncMaybe = AsyncMaybeBuilder()
     
+    
+    let inline liftAsync (computation : Async<'T>) : Async<'T option> = async {
+        let! a = computation
+        return Some a 
+    }
+
+
     let tryCast<'T> (o: obj): 'T option = 
         match o with
         | null -> None
@@ -738,6 +752,7 @@ module String =
             else loop (reader.ReadLine())
         loop (reader.ReadLine())
 
+
 open System.Text
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module StringBuilder =
@@ -864,3 +879,9 @@ type Profiler() =
              |> string)
 
     member __.Elapsed = total.Elapsed        
+
+/// Assert helpers
+type internal Assert() = 
+    /// Display a good exception for this error message and then rethrow.
+    static member Exception(e:Exception) =  
+        System.Diagnostics.Debug.Assert(false, "Unexpected exception seen in language service", e.ToString())

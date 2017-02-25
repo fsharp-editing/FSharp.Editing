@@ -20,7 +20,7 @@ open NUnit.Framework
 open FSharp.Editing
 open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.Range
-open FSharp.Editing.Features
+open FSharp.Editing.Coloring
 
 let openDeclWithAutoOpens decls =
     { Declarations = 

@@ -17,7 +17,7 @@ module FSharp.Editing.Tests.UnopenedNamespacesResolverTests
 
 open NUnit.Framework
 open FSharp.Editing
-open FSharp.Editing.Features
+open FSharp.Editing.Coloring
 
 // Entity.TryCreate tests
 

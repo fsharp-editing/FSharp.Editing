@@ -11,7 +11,7 @@ open NUnit.Framework
 open System.IO
 open Microsoft.FSharp.Compiler.SourceCodeServices
 open FSharp.Editing
-open FSharp.Editing.Features
+open FSharp.Editing.Coloring
 
 let fileName = Path.Combine (__SOURCE_DIRECTORY__, __SOURCE_FILE__)
 let projectFileName = Path.ChangeExtension(fileName, ".fsproj")

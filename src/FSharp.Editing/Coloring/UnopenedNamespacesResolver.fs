@@ -1,4 +1,4 @@
-﻿namespace FSharp.Editing.Features
+﻿namespace FSharp.Editing.Coloring
 
 open FSharp.Editing
 open FSharp.Editing.UntypedAstUtils
