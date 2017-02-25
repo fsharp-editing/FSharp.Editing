@@ -83,6 +83,9 @@
     <None Include="Scratchpad.fsx" />
     <Content Include="paket.references" />
     <Compile Include="AssemblyInfo.fs" />
+    <Compile Include="Common\Pervasive.fs" />
+    <Compile Include="Common\Extensions.fs" />
+    <Compile Include="Common\Logging.fs" />
     <Compile Include="Common\Utils.fs" />
     <Compile Include="Common\CompilerLocationUtils.fs" />
     <Compile Include="Common\UntypedAstUtils.fs" />
