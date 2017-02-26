@@ -47,12 +47,11 @@ open System.Collections.Generic
 open System.Collections.Concurrent
 // Exposes project information as MEF component
 //[<Export(typeof<ProjectInfoManager>); Composition.Shared>]
-type internal ProjectInfoManager 
+type internal ProjectInfoManager () =
     //[<ImportingConstructor>]
-    (
-        _checkerProvider: FSharpCheckerProvider
+//    (_checkerProvider: FSharpCheckerProvider
         //[<Import(typeof<SVsServiceProvider>)>] serviceProvider: System.IServiceProvider
-    ) =
+//    ) =
     // A table of information about projects, excluding single-file projects.  
     let projectTable = ConcurrentDictionary<ProjectId, FSharpProjectOptions>()
 
@@ -241,9 +240,11 @@ type private FileState =
 // Language service 
 
 /// Provides functionality for working with the F# interactive checker running in background
-type LanguageService (?backgroundCompilation: bool, ?projectCacheSize: int, ?fileSystem: IFileSystem) =
+type LanguageService (workspace:FSharpWorkspace,?backgroundCompilation: bool, ?projectCacheSize: int) =
+    let fileSystem = WorkspaceFileSystem workspace 
 
-    do Option.iter (fun fs -> Shim.FileSystem <- fs) fileSystem
+    do Shim.FileSystem <- fileSystem :> IFileSystem
+
     let mutable errorHandler = None
   
     let handleCriticalErrors e file source opts = 

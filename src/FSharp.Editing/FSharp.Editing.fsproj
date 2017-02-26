@@ -100,6 +100,7 @@
     <Compile Include="ProjectSystem\OpenDocumentsTracker.fs" />
     <Compile Include="ProjectSystem\ProjectSitesAndFiles.fs" />
     <Compile Include="ProjectSystem\FSharpWorkspace.fs" />
+    <Compile Include="ProjectSystem\FileSystem.fs" />
     <Compile Include="ProjectSystem\LanguageService.fs" />
     <Compile Include="ProjectSystem\SolutionProvider.fs" />
     <Compile Include="Navigation\NavigableItemsCollector.fs" />
@@ -134,6 +135,11 @@
       <ItemGroup>
         <Reference Include="FSharp.Compiler.Service">
           <HintPath>..\..\packages\FSharp.Compiler.Service\lib\net45\FSharp.Compiler.Service.dll</HintPath>
+          <Private>True</Private>
+          <Paket>True</Paket>
+        </Reference>
+        <Reference Include="FSharp.Compiler.Service.MSBuild.v12">
+          <HintPath>..\..\packages\FSharp.Compiler.Service\lib\net45\FSharp.Compiler.Service.MSBuild.v12.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

@@ -4,11 +4,18 @@ module FSharp.Editing.Extensions
 
 open System
 open System.IO
+open System.Diagnostics
+open System.Threading
+open System.Threading.Tasks
 open System.Collections.Generic
 open Microsoft.FSharp.Control
+open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.Text
 open Microsoft.FSharp.Compiler
+open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.SourceCodeServices
+open FSharp.Editing
+
 
 [<RequireQualifiedAccess>]
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -133,7 +140,7 @@ module Async =
                 async {
                     if i >= len then
                         return false
-                    else
+                    else                        
                         let! found = predicate array.[i]
                         if found then
                             return true
@@ -183,14 +190,53 @@ type Async with
                 and remover2: IDisposable = ev2.Subscribe callback2
                 ()
 
-open System.Threading.Tasks
+    /// Better implementation of Async.AwaitTask that correctly passes the exception of a failed task to the async mechanism
+    static member AwaitTaskCorrect (task:Task) : unit Async =
+        Async.FromContinuations ^ fun (successCont,exceptionCont,_cancelCont) ->
+            task.ContinueWith (fun (task:Task) ->
+                if task.IsFaulted then
+                    let e = task.Exception
+                    if e.InnerExceptions.Count = 1 then 
+                        exceptionCont e.InnerExceptions.[0]
+                    else exceptionCont e
+                elif task.IsCanceled then
+                    exceptionCont ^ TaskCanceledException ()
+                else successCont ())
+            |> ignore
+
+    /// Better implementation of Async.AwaitTask that correctly passes the exception of a failed task to the async mechanism
+    static member AwaitTaskCorrect (task:'T Task) : 'T Async =
+        Async.FromContinuations ^ fun (successCont,exceptionCont,_cancelCont) ->
+            task.ContinueWith (fun (task:'T Task) ->
+                if task.IsFaulted then
+                    let e = task.Exception
+                    if e.InnerExceptions.Count = 1 then 
+                        exceptionCont e.InnerExceptions.[0]
+                    else exceptionCont e
+                elif task.IsCanceled then
+                    exceptionCont ^ TaskCanceledException ()
+                else successCont task.Result)
+            |> ignore
+
+
 
 type AsyncBuilder with
-    member self.Bind (task: 'a Task, fn: 'a -> 'b Async) =
-        self.Bind (Async.AwaitTask task, fn)
 
-    member self.Bind (task: Task, fn: unit -> unit Async) =
-        self.Bind (Async.AwaitTask task, fn)
+//    
+    // M<'T> * ('T -> M<'U>) -> M<'U>
+    [<DebuggerStepThrough>]
+    member self.Bind (task: 'a Task, fn: 'a -> 'b Async) = async {
+        let! result = Async.AwaitTaskCorrect task
+        return! fn result
+    }
+
+    // M<'T> -> M<'T>
+    [<DebuggerStepThrough>]
+    member self.ReturnFrom (task: 'a Task) = async {
+        let! result = Async.AwaitTaskCorrect task
+        return result
+    }
+
 
 
 [<RequireQualifiedAccess>]
@@ -225,13 +271,6 @@ type Path with
     static member GetFileNameSafe path = try Path.GetFileName path with _ -> path
 
 
-open System.Threading
-open System.Threading.Tasks
-open Microsoft.FSharp.Compiler
-open Microsoft.FSharp.Compiler.SourceCodeServices
-open Microsoft.FSharp.Compiler.Ast
-open Microsoft.CodeAnalysis
-open Microsoft.CodeAnalysis.Text
 
 //
 //type System.IServiceProvider with
@@ -248,6 +287,12 @@ type TextSpan with
     /// Compares two instances of Microsoft.CodeAnalysis.Text.TextSpan
     static member CompareTo (a:TextSpan,b:TextSpan) = a.CompareTo b
 
+type SourceText with
+
+    member self.GetBytes () = 
+        self.ToString() |> self.Encoding.GetBytes    
+
+
 type Document with
 
     member self.ToDocumentInfo () =
@@ -259,6 +304,19 @@ type Document with
             ,   loader=FileTextLoader(self.FilePath,Text.Encoding.UTF8)
             ,   filePath=self.FilePath
             )
+    
+    /// Retrieves the 'SourceText' for the document Synchronously
+    member self.GetText () = 
+        self.GetTextAsync () |> Async.AwaitTaskCorrect |> Async.RunSynchronously
+    
+    /// Retrieves the 'VersionStamp' for the document Synchronously
+    member self.GetTextVerison () =
+        self.GetTextVersionAsync () |> Async.AwaitTaskCorrect |> Async.RunSynchronously
+    
+    member self.GetBytesAsync () = async {
+        let! src = self.GetTextAsync ()
+        return src.GetBytes ()
+    }
 
 
 type TextDocument with

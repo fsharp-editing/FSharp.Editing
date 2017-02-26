@@ -3,8 +3,12 @@
 open System
 open System.Text
 open System.Collections.Generic
+open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.Text
 open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.Range
+open FSharp.Editing
+
 
 [<NoComparison>]
 type EditorBuffer = { 
@@ -23,6 +27,8 @@ type EditorBuffer = {
         LastChangeTime = lastChangeTime
         ViewCount = 1 
     }
+
+
 
 type IBufferTracker =
     abstract MapEditorBuffers : (KeyValuePair<string, EditorBuffer> -> 'a) -> seq<'a>
@@ -43,3 +49,23 @@ type IOpenDocumentsTracker<'OpenDoc when 'OpenDoc :> IOpenDocument> =
     abstract DocumentChanged: IEvent<string>
     abstract DocumentClosed: IEvent<string>
 
+
+[<NoComparison>]
+type OpenDocument = { 
+    Document: Document
+    Source: SourceText 
+    Encoding: Encoding
+    LastChangeTime: VersionStamp
+    ViewCount: int 
+} with
+    static member Create (document:Document) = 
+        let src = document.GetText() in
+        {   Document = document
+            Source = src
+            Encoding = src.Encoding
+            LastChangeTime = document.GetTextVerison()
+            ViewCount = 1 
+        }
+    member x.Text = lazy x.Source.ToString()
+    interface IOpenDocument with
+        member x.Text = lazy x.Source.ToString()

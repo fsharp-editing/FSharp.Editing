@@ -34,10 +34,8 @@ type ZeroBasedIndexConverter() =
             let result = serializer.Deserialize<int Nullable> reader
             if result.HasValue then
                 result.Value :> obj
-            else
-                null
-        else
-            null
+            else null
+        else null
 
     (*  Omnisharp has a configuration on whether to use zerobasedindices or not
                 if (Configuration.ZeroBasedIndices)

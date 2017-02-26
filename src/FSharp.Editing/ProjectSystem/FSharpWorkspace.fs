@@ -15,12 +15,20 @@ open Microsoft.FSharp.Compiler.SourceCodeServices
 open FSharp.Editing
 
 
+type LastWriteTime = DateTime
 
 [<Export; Shared>]
 type FSharpWorkspace (hostServices : Host.HostServices) as self =
     inherit Workspace (hostServices,Constants.FSharpLanguageName)
     let bufferManager = new BufferManager(self)
     let disposables = ResizeArray<IDisposable>()
+
+    let workspaceEvent = Event<_>() 
+
+    do  self.WorkspaceChanged.Subscribe (fun eventArgs -> workspaceEvent.Trigger eventArgs)
+        |> disposables.Add
+
+    let eventStream = workspaceEvent.Publish
 
     let _checkProjectId (projectId:ProjectId) =
         match self.CurrentSolution.ContainsProject projectId with
@@ -29,13 +37,16 @@ type FSharpWorkspace (hostServices : Host.HostServices) as self =
 
     let _projectOptions = ConcurrentDictionary<ProjectId,FSharpProjectOptions>()
 
+    let documentTimeStamps = ConcurrentDictionary<DocumentId, LastWriteTime>()
+
     // TODO -
     //  What additional data caches does the workspace need?
     //  * FSharpProjectOptions dictionary that updates on projectInfo change events?
     //  *
 
-    do
-        disposables.Add bufferManager
+    do  disposables.Add bufferManager
+
+    new () = new FSharpWorkspace(Host.Mef.DesktopMefHostServices.DefaultServices)
 
 //    new (aggregator:HostServicesAggregator) =
 //        new FSharpWorkspace (aggregator.CreateHostServices())
@@ -43,56 +54,14 @@ type FSharpWorkspace (hostServices : Host.HostServices) as self =
 //    new () =
 //        new FSharpWorkspace(FSharpHostService())
 
+    member __.WorkspaceEvents = eventStream
 
     //let activeDocuments = HashSet<DocumentId>()
     //new() = new FSharpWorkspace(HostServicesAggregator(Seq.empty))
     override __.CanOpenDocuments = true
     override __.CanApplyChange _ = true
 
-    /// Adds a document to the workspace.
-    member self.AddDocument (documentInfo:DocumentInfo) =
-        checkNullArg documentInfo "documentInfo"
-        base.OnDocumentAdded documentInfo
-        self.CurrentSolution.GetDocument documentInfo.Id
 
-    /// Adds a document to a project in the workspace.
-    member __.AddDocument (projectId:ProjectId, name:string, text:SourceText) =
-        checkNullArg projectId "projectId"
-        checkNullArg name "name"
-        checkNullArg text "text"
-        DocumentInfo.Create(
-            DocumentId.CreateNewId projectId, name,
-            loader = TextLoader.From ^ TextAndVersion.Create (text, VersionStamp.Create ())
-        )
-
-
-    /// Puts the specified document into the open state.
-    override __.OpenDocument (docId, activate) =
-        let doc = base.CurrentSolution.GetDocument docId
-        if isNull doc then ()
-        else
-            let task = doc.GetTextAsync CancellationToken.None
-            task.Wait CancellationToken.None
-            let text = task.Result
-            base.OnDocumentOpened (docId, text.Container, activate)
-
-
-    /// Puts the specified document into the closed state.
-    override __.CloseDocument docId =
-        let doc = base.CurrentSolution.GetDocument docId
-        if isNull doc then ()
-        else
-            let task = doc.GetTextAsync CancellationToken.None
-            task.Wait CancellationToken.None
-            let text = task.Result
-            let versionTask = doc.GetTextVersionAsync CancellationToken.None
-            versionTask.Wait CancellationToken.None
-            let version = versionTask.Result
-            let loader = TextLoader.From ^ TextAndVersion.Create(text, version, doc.FilePath)
-            base.OnDocumentClosed (docId, loader)
-
-
-    /// Adds a project to the workspace. All previous projects remain intact.
     member self.AddProject projectInfo =
         checkNullArg projectInfo "projectInfo"
         base.OnProjectAdded projectInfo
@@ -142,15 +111,68 @@ type FSharpWorkspace (hostServices : Host.HostServices) as self =
     member __.RemoveMetadataReference (projectId, metadataReference) =
         base.OnMetadataReferenceRemoved (projectId, metadataReference)
 
-    //    member __. AddDocument documentInfo =
-    //        base.OnDocumentAdded documentInfo
-    member __.RemoveDocument documentId = base.OnDocumentRemoved documentId
 
     member __.RemoveProject projectId = base.OnProjectRemoved projectId
 
     member __.SetCompilationOptions (projectId, options) = base.OnCompilationOptionsChanged(projectId, options)
 
     member __.SetParseOptions (projectId, parseOptions) = base.OnParseOptionsChanged(projectId, parseOptions)
+
+
+    /// Adds a document to the workspace.
+    member self.AddDocument (documentInfo:DocumentInfo) =
+        checkNullArg documentInfo "documentInfo"
+        base.OnDocumentAdded documentInfo
+        self.CurrentSolution.GetDocument documentInfo.Id
+
+    /// Adds a document to a project in the workspace.
+    member __.AddDocument (projectId:ProjectId, name:string, text:SourceText) =
+        checkNullArg projectId "projectId"
+        checkNullArg name "name"
+        checkNullArg text "text"
+        let docInfo = 
+            DocumentInfo.Create(
+                DocumentId.CreateNewId projectId, name,
+                loader = TextLoader.From ^ TextAndVersion.Create (text, VersionStamp.Create ())
+            )
+        base.OnDocumentAdded docInfo
+
+
+    member __.RemoveDocument documentId = base.OnDocumentRemoved documentId
+
+    /// Puts the specified document into the open state.
+    override __.OpenDocument (docId, activate) =
+        let doc = base.CurrentSolution.GetDocument docId
+        if isNull doc then ()
+        else
+            let task = doc.GetTextAsync CancellationToken.None
+            task.Wait CancellationToken.None
+            let text = task.Result
+            base.OnDocumentOpened (docId, text.Container, activate)
+
+
+    
+
+    /// Puts the specified document into the closed state.
+    override __.CloseDocument docId =
+        let doc = base.CurrentSolution.GetDocument docId
+        if isNull doc then ()
+        else
+            let task = doc.GetTextAsync CancellationToken.None
+            task.Wait CancellationToken.None
+            let text = task.Result
+            let versionTask = doc.GetTextVersionAsync CancellationToken.None
+            versionTask.Wait CancellationToken.None
+            let version = versionTask.Result
+            let loader = TextLoader.From ^ TextAndVersion.Create(text, version, doc.FilePath)
+            base.OnDocumentClosed (docId, loader)
+
+
+    override __.OnDocumentTextChanged (doc:Document) =
+        let time = DateTime.UtcNow
+        documentTimeStamps.AddOrUpdate(doc.Id,time,(fun _docId _lastTime -> time)) |> ignore
+        base.OnDocumentTextChanged doc
+        
 
     member __.OnDocumentChanged (documentId, text) =
         base.OnDocumentTextChanged (documentId, text, PreservationMode.PreserveIdentity)
@@ -171,6 +193,12 @@ type FSharpWorkspace (hostServices : Host.HostServices) as self =
     member self.TryGetDocument filePath =
         self.TryGetDocumentId filePath |> Option.map (fun docId -> self.CurrentSolution.GetDocument docId)
 
+
+    member self.GetLastWriteTime docId =
+        match documentTimeStamps.TryGetValue docId with
+        | true, time -> Some time | _ -> None
+
+
     interface IDisposable with
         member __.Dispose() =
             disposables |> Seq.iter dispose
@@ -181,10 +209,9 @@ and internal BufferManager (workspace:FSharpWorkspace) as self =
     let transientDocuments = ConcurrentDictionary<FilePath, DocumentId list>(StringComparer.OrdinalIgnoreCase)
     let transientDocumentIds = HashSet<DocumentId>()
     let lockObj = obj()
-    let workspaceEvent = workspace.WorkspaceChanged
     let subscriptions = ResizeArray<IDisposable>()
     do
-        workspaceEvent.Subscribe self.OnWorkspaceChanged |> subscriptions.Add
+        workspace.WorkspaceEvents.Subscribe self.OnWorkspaceChanged |> subscriptions.Add
 
     let tryAddTransientDocument (fileName : string) (fileContent : string) =
         if String.IsNullOrWhiteSpace fileName then false
