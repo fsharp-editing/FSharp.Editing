@@ -11,7 +11,9 @@ open FSharp.Editing.Tests
 let dataFolderName = __SOURCE_DIRECTORY__ + "/../data/"
 type dataFolder = FSharp.Management.FileSystem<dataFolderName>
 
-let languageService = LanguageService()
+open FSharp.Editing.ProjectSystem
+let workspace = new FSharpWorkspace ()
+let languageService = LanguageService workspace
 
 
 let canonicalizeFilename filename = Path.GetFullPathSafe filename //(new FileInfo(filename)).FullName

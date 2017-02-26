@@ -27,8 +27,9 @@ open FSharp.Editing
 open FSharp.Editing.CodeGeneration
 open FSharp.Editing.CodeGeneration.UnionPatternMatchCaseGenerator
 open CodeGenerationTestInfrastructure
-
-let languageService = LanguageService()
+open FSharp.Editing.ProjectSystem
+let workspace = new FSharpWorkspace ()
+let languageService = LanguageService workspace
 
 let tryFindUnionDefinition codeGenService (pos: pos) (document: IDocument) =
     tryFindUnionDefinitionFromPos codeGenService (projectOptions document.FullName) pos document
@@ -69,7 +70,8 @@ module ClausesAnalysisTests =
 
     let tryGetWrittenCases (pos: pos) (src: string) =
         let codeGenService: ICodeGenerationService<_, _, _> = 
-            upcast CodeGenerationTestService(LanguageService(), LanguageServiceTestHelper.args)
+//            upcast CodeGenerationTestService(LanguageService(), LanguageServiceTestHelper.args)
+            upcast CodeGenerationTestService(languageService, LanguageServiceTestHelper.args)
         src 
         |> asDocument
         |> tryFindPatternMatchExpr codeGenService pos

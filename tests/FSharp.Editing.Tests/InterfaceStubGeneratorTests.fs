@@ -23,8 +23,10 @@ type dataFolder = FSharp.Management.FileSystem<dataFolderName>
 let fileName = dataFolder.``InterfaceSampleFile.fs``
 let source = File.ReadAllText(fileName)
 let projectFileName = Path.ChangeExtension(fileName, ".fsproj")
-let vsLanguageService = LanguageService()
-let opts = vsLanguageService.GetProjectCheckerOptions(projectFileName, [| fileName |], TestHelpers.LanguageServiceTestHelper.args, [||]) 
+open FSharp.Editing.ProjectSystem
+let workspace = new FSharpWorkspace ()
+let languageService = LanguageService workspace
+let opts = languageService.GetProjectCheckerOptions(projectFileName, [| fileName |], TestHelpers.LanguageServiceTestHelper.args, [||]) 
 
 #if INTERACTIVE
 let checker = FSharpChecker.Create()
@@ -63,7 +65,7 @@ allUsesOfAllSymbols |> List.iter (printfn "%A")
 
 let private isInterfaceDeclarationAt line col =
     let results = 
-        vsLanguageService.ParseAndCheckFileInProject(opts, fileName, source, AllowStaleResults.MatchingSource)
+        languageService.ParseAndCheckFileInProject(opts, fileName, source, AllowStaleResults.MatchingSource)
         |> Async.RunSynchronously
     
     let ast = results.ParseTree
@@ -97,7 +99,7 @@ let ``should not find interface declaration in object expression if the base typ
 
 let getInterfaceStub typeParams line col lineStr idents verboseMode =
     let results = 
-        vsLanguageService.ParseAndCheckFileInProject(opts, fileName, source, AllowStaleResults.MatchingSource)
+        languageService.ParseAndCheckFileInProject(opts, fileName, source, AllowStaleResults.MatchingSource)
         |> Async.RunSynchronously
     let symbolUse = results.GetSymbolUseAtLocation(line, col, lineStr, idents) |> Async.RunSynchronously
     let typeParams = 

@@ -11,6 +11,7 @@ open System.IO
 open NUnit.Framework
 open TestHelpers.LanguageServiceTestHelper
 open FSharp.Editing
+open FSharp.Editing.ProjectSystem
 open FSharp.Editing.Coloring
 
 [<Literal>]
@@ -19,7 +20,9 @@ type dataFolder = FSharp.Management.FileSystem<dataFolderName>
  
 let fileName = dataFolder.``DepthColorizerSampleFile.fs``
 let input = File.ReadAllText(fileName)
-let languageService = LanguageService()
+open FSharp.Editing.ProjectSystem
+let workspace = new FSharpWorkspace ()
+let languageService = LanguageService workspace
 let output = 
     lazy
         async {

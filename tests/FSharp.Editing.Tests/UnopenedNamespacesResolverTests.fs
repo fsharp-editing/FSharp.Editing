@@ -303,7 +303,9 @@ let ``fully qualified external entities / partially qualified name``() =
 open FSharp.Editing
 
 let file = "/File.fs"
-let languageService = LanguageService()
+open FSharp.Editing.ProjectSystem
+let workspace = new FSharpWorkspace ()
+let languageService = LanguageService workspace
 
 type Source = string
 

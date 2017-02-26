@@ -24,7 +24,7 @@ module HighlightUsageInFile =
     
     [<NoComparisonAttribute(* due to FSharpSymbol *)>]
     type HighlightUsageInFileResult =
-        | UsageInFile of FSharpSymbol * string * FSharpSymbolUse array
+        | UsageInFile of FSharpSymbol * LongIdent * FSharpSymbolUse array
 
     let findUsageInFile (currentLine: CurrentLine<FCS>) (symbol: Symbol) (getCheckResults: GetCheckResults) = 
         asyncMaybe {

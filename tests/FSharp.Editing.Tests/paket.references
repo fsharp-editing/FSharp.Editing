@@ -1,7 +1,8 @@
 FSharp.Compiler.Service
-
+Microsoft.CodeAnalysis.Common
+Microsoft.CodeAnalysis.Workspaces.Common
+Microsoft.CodeAnalysis.Features
 group Test
-
 FsCheck
 NUnit
 FSharp.Management

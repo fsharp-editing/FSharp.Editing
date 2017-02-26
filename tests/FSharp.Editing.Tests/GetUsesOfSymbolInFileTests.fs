@@ -11,12 +11,15 @@ open NUnit.Framework
 open System.IO
 open Microsoft.FSharp.Compiler.SourceCodeServices
 open FSharp.Editing
+open FSharp.Editing.ProjectSystem
 
 let fileName = Path.Combine (__SOURCE_DIRECTORY__, __SOURCE_FILE__)
 let projectFileName = Path.ChangeExtension(fileName, ".fsproj")
 let sourceFiles = [| fileName |]
 let framework = FSharpCompilerVersion.FSharp_3_1
-let languageService = LanguageService()
+open FSharp.Editing.ProjectSystem
+let workspace = new FSharpWorkspace ()
+let languageService = LanguageService workspace
 
 let opts source = 
     let opts = 

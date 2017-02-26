@@ -16,7 +16,9 @@ open FSharp.Editing.Coloring
 open FSharp.Editing.CodeGeneration
 open FSharp.Editing.CodeGeneration.SignatureGenerator
 
-let languageService = LanguageService()
+open FSharp.Editing.ProjectSystem
+let workspace = new FSharpWorkspace ()
+let languageService = LanguageService workspace
 let xmlFileCache = Dictionary()
 
 type GenericTestsFolder = FSharp.Management.FileSystem< const(__SOURCE_DIRECTORY__ + "/../data/gotodef")>
