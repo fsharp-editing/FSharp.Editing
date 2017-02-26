@@ -5,3 +5,4 @@ Microsoft.CodeAnalysis.Features
 FsPickler
 Microsoft.Extensions.Logging.Abstractions
 Newtonsoft.Json
+FSharp.Core

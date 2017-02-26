@@ -1,6 +1,5 @@
 source http://nuget.org/api/v2
 redirects: on
-strategy: max
 
 nuget Fantomas
 nuget FSharp.Compiler.Service content: none 
@@ -11,13 +10,14 @@ nuget Microsoft.CodeAnalysis.Common prerelease
 nuget Microsoft.CodeAnalysis.Workspaces.Common prerelease
 nuget Microsoft.CodeAnalysis.Features prerelease
 nuget Microsoft.Extensions.Logging.Abstractions
-nuget SourceLink.SymbolStore 0.5.0
+nuget SourceLink.SymbolStore
 nuget Newtonsoft.Json
 nuget Suave
 nuget ExtCore
 
 group Test
     source http://nuget.org/api/v2
+    redirects: on
 
     nuget FsCheck
     nuget FSharp.Compiler.Service.ProjectCracker
@@ -28,6 +28,7 @@ group Test
 
 group Build
     source http://nuget.org/api/v2
+    redirects: on
     
     nuget canopy
     nuget FAKE

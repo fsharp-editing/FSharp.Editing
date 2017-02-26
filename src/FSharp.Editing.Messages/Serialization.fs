@@ -130,5 +130,5 @@ module Response =
           Error = msg.Error }
 
 module Notification =
-    let serialize (notification: Notification) : string = ""
+    let serialize (_notification: Notification) : string = ""
 
