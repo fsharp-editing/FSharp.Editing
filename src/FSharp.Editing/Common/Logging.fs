@@ -2,6 +2,17 @@
 
 open System
 open System.IO
+open Microsoft.Extensions.Logging
+
+
+type ILogger with
+    member self.LogInfofn msg     = Printf.ksprintf (fun s -> self.LogInformation(s, [||])) msg
+    member self.LogCriticalfn msg = Printf.ksprintf (fun s -> self.LogCritical(s, [||])) msg
+    member self.LogDebugfn msg    = Printf.ksprintf (fun s -> self.LogDebug(s, [||])) msg
+    member self.LogTracefn msg    = Printf.ksprintf (fun s -> self.LogTrace(s, [||])) msg
+    member self.LogErrorfn msg    = Printf.ksprintf (fun s -> self.LogError(s, [||])) msg
+    member self.LogWarningfn msg  = Printf.ksprintf (fun s -> self.LogWarning(s, [||])) msg
+
 
 [<RequireQualifiedAccess>]
 type LogType =
@@ -9,8 +20,7 @@ type LogType =
     | Warn
     | Error
     | Message
-    override x.ToString () =
-        match x with
+    override x.ToString () = x |> function 
         | Message   -> "Message"
         | Info      -> "Information"
         | Warn      -> "Warning"
@@ -39,7 +49,7 @@ let private writeText toStdErr color newLine text =
     printer "%s" text
     if curColor <> color then Console.ForegroundColor <- curColor
 
-let private monitor = new Object()
+let private monitor = new obj ()
 
 let logToConsole (trace:Trace) =
     lock monitor ^ fun () ->

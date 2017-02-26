@@ -12,6 +12,22 @@ let (^) = (<|)
 /// Path.Combine
 let (</>) path1 path2 = Path.Combine (path1, path2)
 
+/// Null coalescing operator, return non null a, otherwise b
+let (?|?) a b = if isNull a then b else a
+
+
+/// OR predicate combinator
+let inline (|?|) (pred1:'a->bool) (pred2:'a->bool)  =
+    fun a -> pred1 a || pred2 a
+
+/// AND predicate combinator
+let inline (|&|) (pred1:'a->bool) (pred2:'a->bool)  =
+    fun a -> pred1 a && pred2 a
+
+/// If arg is null raise an `ArgumentNullException` with the argname
+let inline checkNullArg arg argName = if isNull arg then nullArg argName
+
+
 /// obj.ReferenceEquals
 let inline (==) a b = obj.ReferenceEquals(a, b)
 /// LanguagePrimitives.PhysicalEquality
@@ -32,6 +48,11 @@ let inline dispose (disposable:#IDisposable) = disposable.Dispose ()
 let inline Ok a = Choice1Of2 a
 let inline Fail a = Choice2Of2 a
 let inline (|Ok|Fail|) a = a
+
+/// String Equals Ordinal Ignore Case
+let (|EqualsIC|_|) (str : string) arg =
+    if String.Compare(str, arg, StringComparison.OrdinalIgnoreCase) = 0 then Some()
+    else None
 
 let getEnvInteger e defaultValue = 
     match System.Environment.GetEnvironmentVariable e with 

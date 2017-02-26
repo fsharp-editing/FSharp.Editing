@@ -3,7 +3,12 @@
 module FSharp.Editing.Extensions
 
 open System
+open System.IO
+open System.Collections.Generic
 open Microsoft.FSharp.Control
+open Microsoft.CodeAnalysis.Text
+open Microsoft.FSharp.Compiler
+open Microsoft.FSharp.Compiler.SourceCodeServices
 
 [<RequireQualifiedAccess>]
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
@@ -160,9 +165,6 @@ module Async =
             mapImpl (mapping, [], list)
 
 
-
-
-
 type Async with
     static member EitherEvent(ev1: IObservable<'T>, ev2: IObservable<'U>) = 
         synchronize ^ fun f -> 
@@ -181,7 +183,40 @@ type Async with
                 and remover2: IDisposable = ev2.Subscribe callback2
                 ()
 
-open System.IO
+open System.Threading.Tasks
+
+type AsyncBuilder with
+    member self.Bind (task: 'a Task, fn: 'a -> 'b Async) =
+        self.Bind (Async.AwaitTask task, fn)
+
+    member self.Bind (task: Task, fn: unit -> unit Async) =
+        self.Bind (Async.AwaitTask task, fn)
+
+
+[<RequireQualifiedAccess>]
+module Dict = 
+
+    let add key value (dict: #IDictionary<_,_>) =
+        dict.[key] <- value
+        dict
+
+    let remove (key: 'k) (dict: #IDictionary<'k,_>) =
+        dict.Remove key |> ignore
+        dict
+
+    let tryFind key (dict: #IDictionary<'k, 'v>) = 
+        let mutable value = Unchecked.defaultof<_>
+        if dict.TryGetValue (key, &value) then Some value
+        else None
+
+    let ofSeq (xs: ('k * 'v) seq) = 
+        let dict = Dictionary()
+        for k, v in xs do dict.[k] <- v
+        dict
+
+
+
+
 
 type Path with
 
@@ -204,9 +239,42 @@ open Microsoft.CodeAnalysis.Text
 //    member x.GetService<'T, 'S>() = x.GetService(typeof<'S>) :?> 'T
 
 
+(*  =================================== *)
+(*   Microsoft.CodeAnalysis Extensions  *)
+(*  =================================== *)
+
+
+type TextSpan with
+    /// Compares two instances of Microsoft.CodeAnalysis.Text.TextSpan
+    static member CompareTo (a:TextSpan,b:TextSpan) = a.CompareTo b
+
+type Document with
+
+    member self.ToDocumentInfo () =
+        DocumentInfo.Create
+            (   id=self.Id
+            ,   name=self.Name
+            ,   folders=self.Folders
+            ,   sourceCodeKind=self.SourceCodeKind
+            ,   loader=FileTextLoader(self.FilePath,Text.Encoding.UTF8)
+            ,   filePath=self.FilePath
+            )
+
+
+type TextDocument with
+
+    member self.ToDocumentInfo () =
+        DocumentInfo.Create
+            (   id=self.Id
+            ,   name=self.Name
+            ,   folders=self.Folders
+            ,   loader=FileTextLoader(self.FilePath,Text.Encoding.UTF8)
+            ,   filePath=self.FilePath
+            )
 
 
 type Solution with 
+
     member self.GetDocumentFilePath (docId:DocumentId) = 
         let target =
             self.Projects
@@ -214,8 +282,146 @@ type Solution with
             |> Seq.tryFind ^ fun doc -> doc.Id = docId 
         target |> Option.map ^ fun doc -> doc.FilePath    
 
+    /// Try to get a document inside the solution using the DocumentId
+    member self.TryGetDocument (docId:DocumentId) =
+        if self.ContainsDocument docId then Some (self.GetDocument docId) else None
+
+    /// Try to get a document inside the solution using the document's name
+    member self.TryGetDocument docName =
+        self.AllDocuments |> Seq.tryFind ^ fun (doc:DocumentInfo) -> doc.Name = docName
+
+    /// Get a project inside the solution using the project's name
+    member self.GetProject projectName =
+        self.Projects |> Seq.find ^ fun proj -> proj.Name = projectName
+
+    /// Try to get a project inside the solution using the project's name
+    member self.TryGetProject projectName =
+        self.Projects |> Seq.tryFind ^ fun proj -> proj.Name = projectName
+
+    /// Try to get a project inside the solution using the project's id
+    member self.TryGetProject (projId:ProjectId) =
+        if self.ContainsProject projId then Some (self.GetProject projId) else None
+
+    /// Sequence of DocumentInfo for all source files and addtional documents
+    /// from all of the projects within the solution
+    member self.AllDocuments =
+        self.Projects |> Seq.collect ^ fun proj ->
+            Seq.append
+                (proj.Documents |> Seq.map ^ fun doc -> doc.ToDocumentInfo ())
+                (proj.AdditionalDocuments |> Seq.map ^ fun doc -> doc.ToDocumentInfo ())
+
+
+
 type Project with
-    member self.GetDocumentFilePaths () = self.Documents |> Seq.map ^ fun doc -> doc.FilePath
+
+    /// The list of all other projects within the same solution that reference this project.
+    member this.GetDependentProjects () =
+        this.Solution.GetProjectDependencyGraph().GetProjectsThatDirectlyDependOnThisProject(this.Id)
+        |> Seq.map this.Solution.GetProject
+
+    member self.GetDocumentFilePaths () = 
+        self.Documents |> Seq.map ^ fun doc -> doc.FilePath
+
+    member self.GetDocument docName =
+        self.Documents |> Seq.find ^ fun doc -> doc.Name = docName
+
+    member self.TryGetDocument docName =
+        self.Documents |> Seq.tryFind ^ fun doc -> doc.Name = docName
+
+    member self.ToProjectInfo () =
+        ProjectInfo.Create
+            (   self.Id
+            ,   self.Version
+            ,   self.Name
+            ,   self.AssemblyName
+            ,   self.Language
+            ,   self.FilePath
+            ,   outputFilePath = self.OutputFilePath
+            ,   projectReferences = self.ProjectReferences
+            ,   metadataReferences = self.MetadataReferences
+            ,   analyzerReferences = self.AnalyzerReferences
+            ,   documents = (self.Documents |> Seq.map ^ fun doc -> doc.ToDocumentInfo ())
+            ,   additionalDocuments = (self.AdditionalDocuments |> Seq.map ^ fun doc -> doc.ToDocumentInfo ())
+            ,   compilationOptions = self.CompilationOptions
+            ,   parseOptions = self.ParseOptions
+            ,   isSubmission = self.IsSubmission
+            )
+
+let internal toFSharpProjectOptions (workspace:'a :> Workspace) (projInfo:ProjectInfo): FSharpProjectOptions =
+    let projectStore = Dictionary<ProjectId,FSharpProjectOptions>()
+    let loadTime = System.DateTime.Now
+    let rec generate (projInfo:ProjectInfo) : FSharpProjectOptions =
+        let getProjectRefs (projInfo:ProjectInfo): (string * FSharpProjectOptions)[] =
+            projInfo.ProjectReferences
+            |> Seq.choose ^ fun pref -> workspace.CurrentSolution.TryGetProject pref.ProjectId
+            |> Seq.map ^ fun proj ->
+                let proj = proj.ToProjectInfo ()
+                if projectStore.ContainsKey proj.Id then
+                    (proj.OutputFilePath, projectStore.[proj.Id])
+                else
+                    let fsinfo = generate proj
+                    projectStore.Add( proj.Id,fsinfo)
+                    (proj.OutputFilePath, fsinfo)
+            |> Array.ofSeq
+
+        {   ProjectFileName = projInfo.FilePath
+            ProjectFileNames = projInfo.Documents |> Seq.map (fun doc -> doc.FilePath) |> Array.ofSeq
+            OtherOptions = [||]
+            ReferencedProjects =  getProjectRefs projInfo
+            IsIncompleteTypeCheckEnvironment = false
+            UseScriptResolutionRules = false
+            LoadTime = loadTime
+            UnresolvedReferences = None
+            OriginalLoadReferences = []
+//            ExtraProjectInfo = None
+            // I think this is supposed to hold the workspace?
+            ExtraProjectInfo = Some (workspace :> _)
+        }
+    let fsprojOptions = generate projInfo
+    projectStore.Clear ()
+    fsprojOptions
+
+
+type ProjectInfo with
+    /// Converts a CodeAnalysis ProjectInfo into FSharpProjectOptions for the FSharp.Compiler.Service
+    member self.ToFSharpProjectOptions (workspace:'a :> Workspace) : FSharpProjectOptions =
+        toFSharpProjectOptions workspace self
+
+
+type Project with
+    /// Converts a CodeAnalysis Project into FSharpProjectOptions for the FSharp.Compiler.Service
+    member self.ToFSharpProjectOptions (workspace:'a :> Workspace) : FSharpProjectOptions =
+        self.ToProjectInfo().ToFSharpProjectOptions workspace
+
+
+type Workspace with
+
+    member self.ProjectDictionary () =
+        let dict = Dictionary<_,_>()
+        self.CurrentSolution.Projects
+        |> Seq.iter ^ fun proj -> dict.Add(proj.FilePath,proj.Id)
+        dict
+
+
+    member self.ProjectPaths () =
+        self.CurrentSolution.Projects |> Seq.map ^ fun proj -> proj.FilePath
+
+
+    member self.GetProjectIdFromPath path : ProjectId option =
+        let dict = self.ProjectDictionary ()
+        Dict.tryFind path dict
+
+
+    /// checks the workspace for projects located at the provided paths.
+    /// returns a mapping of the projectId and path of projects inside the workspace
+    /// and a list of the paths to projects the workspace doesn't include
+    member self.GetProjectIdsFromPaths paths =
+        let dict = self.ProjectDictionary ()
+        let pathsInside,pathsOutside = paths |> List.ofSeq |> List.partition ^ fun path -> dict.ContainsKey path
+        let idmap = pathsInside |> Seq.map ^ fun path -> dict.[path]
+        idmap, pathsOutside
+
+
 
 [<NoComparison>][<NoEquality>]
 type CheckResults =
@@ -225,20 +431,20 @@ type CheckResults =
 let getFreshFileCheckResultsTimeoutMillis = getEnvInteger "FSE_GetFreshFileCheckResultsTimeoutMillis" 1000
     
 type FSharpChecker with
-    member this.ParseDocument(document: Document, options: FSharpProjectOptions, sourceText: string) :  Async<ParsedInput option> = asyncMaybe {
-        let! (fileParseResults:FSharpParseFileResults) = this.ParseFileInProject(document.FilePath, sourceText, options) |> liftAsync
+    member this.ParseDocument (document: Document, options: FSharpProjectOptions, sourceText: string) :  Async<ParsedInput option> = asyncMaybe {
+        let! (fileParseResults:FSharpParseFileResults) = this.ParseFileInProject (document.FilePath, sourceText, options) |> liftAsync
         return! fileParseResults.ParseTree
     }
 
-    member this.ParseDocument(document: Document, options: FSharpProjectOptions, ?sourceText: SourceText) = asyncMaybe {
+    member this.ParseDocument (document: Document, options: FSharpProjectOptions, ?sourceText: SourceText) = asyncMaybe {
         let! sourceText =
             match sourceText with
             | Some x -> Task.FromResult x
             | None -> document.GetTextAsync()
-        return! this.ParseDocument(document, options, sourceText.ToString())
+        return! this.ParseDocument (document, options, sourceText.ToString())
     }
 
-    member this.ParseAndCheckDocument(filePath: string, textVersionHash: int, sourceText: string, options: FSharpProjectOptions, allowStaleResults: bool) : Async<(FSharpParseFileResults * Ast.ParsedInput * FSharpCheckFileResults) option> =
+    member this.ParseAndCheckDocument (filePath: string, textVersionHash: int, sourceText: string, options: FSharpProjectOptions, allowStaleResults: bool) : Async<(FSharpParseFileResults * Ast.ParsedInput * FSharpCheckFileResults) option> =
         let parseAndCheckFile = async {
             let! parseResults, checkFileAnswer = this.ParseAndCheckFileInProject(filePath, textVersionHash, sourceText, options)
             return
@@ -477,8 +683,12 @@ type FSharpEntity with
 [<RequireQualifiedAccess>]
 [<CompilationRepresentation (CompilationRepresentationFlags.ModuleSuffix)>]
 module Seq =
+
     let toReadOnlyCollection (xs: _ seq) = ResizeArray(xs).AsReadOnly()
     
+    let sortWithDescending fn source =
+        source |> Seq.sortWith (fun a b -> fn b a)
+
 
 [<RequireQualifiedAccess>]
 module List =
@@ -657,27 +867,7 @@ module Array =
 
 
 
-[<RequireQualifiedAccess>]
-module Dict = 
-    open System.Collections.Generic
 
-    let add key value (dict: #IDictionary<_,_>) =
-        dict.[key] <- value
-        dict
-
-    let remove (key: 'k) (dict: #IDictionary<'k,_>) =
-        dict.Remove key |> ignore
-        dict
-
-    let tryFind key (dict: #IDictionary<'k, 'v>) = 
-        let mutable value = Unchecked.defaultof<_>
-        if dict.TryGetValue (key, &value) then Some value
-        else None
-
-    let ofSeq (xs: ('k * 'v) seq) = 
-        let dict = Dictionary()
-        for k, v in xs do dict.[k] <- v
-        dict
 
 [<RequireQualifiedAccess>]
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]

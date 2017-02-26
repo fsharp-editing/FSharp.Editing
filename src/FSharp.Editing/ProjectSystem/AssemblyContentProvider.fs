@@ -1,6 +1,8 @@
 ﻿namespace FSharp.Editing
 
 open System
+open System.Reflection
+open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
 
 type internal ShortIdent = string
@@ -13,35 +15,62 @@ type EntityKind =
     | Type
     | FunctionOrValue of isActivePattern:bool
     | Module of ModuleKind
-    override x.ToString() = sprintf "%A" x
+    override x.ToString () = sprintf "%A" x
 
-type RawEntity = 
-    { /// Full entity name as it's seen in compiled code (raw FSharpEntity.FullName, FSharpValueOrFunction.FullName). 
-      FullName: string
-      /// Entity name parts with removed module suffixes (Ns.M1Module.M2Module.M3.entity -> Ns.M1.M2.M3.entity)
-      /// and replaced compiled names with display names (FSharpEntity.DisplayName, FSharpValueOrFucntion.DisplayName).
-      /// Note: *all* parts are cleaned, not the last one. 
-      CleanedIdents: Idents
-      Namespace: Idents option
-      IsPublic: bool
-      TopRequireQualifiedAccessParent: Idents option
-      AutoOpenParent: Idents option
-      Kind: EntityKind }
+type RawEntity = { 
+    /// Full entity name as it's seen in compiled code (raw FSharpEntity.FullName, FSharpValueOrFunction.FullName). 
+    FullName: string
+    /// Entity name parts with removed module suffixes (Ns.M1Module.M2Module.M3.entity -> Ns.M1.M2.M3.entity)
+    /// and replaced compiled names with display names (FSharpEntity.DisplayName, FSharpValueOrFucntion.DisplayName).
+    /// Note: *all* parts are cleaned, not the last one. 
+    CleanedIdents: Idents
+    Namespace: Idents option
+    IsPublic: bool
+    TopRequireQualifiedAccessParent: Idents option
+    AutoOpenParent: Idents option
+    Kind: EntityKind 
+} with
     override x.ToString() = sprintf "%A" x  
+
+
+
+namespace FSharp.Editing.ProjectSystem
+
+open System
+open System.Reflection
+open Microsoft.CodeAnalysis
+open Microsoft.FSharp.Compiler.SourceCodeServices
+open FSharp.Editing
+
+
+type AnalyzerAssemblyLoader() as self =
+
+    member __.AddDependencyLocation (_fullPath: string): unit = ()
+
+    member __.LoadFromPath(fullPath: string): System.Reflection.Assembly =
+        Assembly.Load (AssemblyName.GetAssemblyName fullPath)
+
+    interface IAnalyzerAssemblyLoader with
+        member __.AddDependencyLocation fullPath = self.AddDependencyLocation fullPath
+        member __.LoadFromPath fullPath = self.LoadFromPath fullPath
+
 
 type AssemblyPath = string
 type AssemblyContentType = Public | Full
 
-type Parent = 
-    { Namespace: Idents option
-      RequiresQualifiedAccess: Idents option
-      AutoOpen: Idents option
-      WithModuleSuffix: Idents option }
-    static member Empty = 
-        { Namespace = None
-          RequiresQualifiedAccess = None
-          AutoOpen = None
-          WithModuleSuffix = None }
+type Parent = { 
+    Namespace: Idents option
+    RequiresQualifiedAccess: Idents option
+    AutoOpen: Idents option
+    WithModuleSuffix: Idents option 
+} with
+    static member Empty = { 
+        Namespace = None
+        RequiresQualifiedAccess = None
+        AutoOpen = None
+        WithModuleSuffix = None 
+    }
+
     static member RewriteParentIdents (parentIdents: Idents option) (idents: Idents) =
         match parentIdents with
         | Some p when p.Length <= idents.Length -> 
@@ -59,13 +88,13 @@ type Parent =
         // and System.Data.Listeners`1.Func -> System.Data.Listeners.Func
         let removeGenericParamsCount (idents: Idents) =
             idents 
-            |> Array.map (fun ident ->
+            |> Array.map ^ fun ident ->
                 if ident.Length > 0 && Char.IsDigit ident.[ident.Length - 1] then
                     let lastBacktickIndex = ident.LastIndexOf '`' 
                     if lastBacktickIndex <> -1 then
                         ident.Substring(0, lastBacktickIndex)
                     else ident
-                else ident)
+                else ident
 
         let removeModuleSuffix (idents: Idents) =
             if entity.IsFSharpModule && idents.Length > 0 && hasModuleSuffixAttribute entity then
@@ -75,22 +104,20 @@ type Parent =
                 else idents
             else idents
 
-        entity.TryGetFullName()
-        |> Option.bind (fun fullName -> 
-            entity.TryGetFullDisplayName()
-            |> Option.map (fun fullDisplayName ->
-                fullName,
-                fullDisplayName.Split '.'
-                |> removeGenericParamsCount 
-                |> removeModuleSuffix))
+        entity.TryGetFullName ()
+        |> Option.bind ^ fun fullName -> 
+            entity.TryGetFullDisplayName ()
+            |> Option.map ^ fun fullDisplayName ->
+                (fullName, fullDisplayName.Split '.' |> removeGenericParamsCount |> removeModuleSuffix)
 
 module AssemblyContentProvider =
     open System.IO
 
-    type AssemblyContentCacheEntry =
-        { FileWriteTime: DateTime 
-          ContentType: AssemblyContentType 
-          Entities: RawEntity list }
+    type AssemblyContentCacheEntry = { 
+        FileWriteTime: DateTime 
+        ContentType: AssemblyContentType 
+        Entities: RawEntity list 
+    }
 
     [<NoComparison; NoEquality>]
     type IAssemblyContentCache =
@@ -99,39 +126,42 @@ module AssemblyContentProvider =
 
     let private createEntity ns (parent: Parent) (entity: FSharpEntity) =
         parent.FormatEntityFullName entity
-        |> Option.map (fun (fullName, cleanIdents) ->
-            { FullName = fullName
-              CleanedIdents = cleanIdents
-              Namespace = ns
-              IsPublic = entity.Accessibility.IsPublic
-              TopRequireQualifiedAccessParent = parent.RequiresQualifiedAccess |> Option.map parent.FixParentModuleSuffix
-              AutoOpenParent = parent.AutoOpen |> Option.map parent.FixParentModuleSuffix
-              Kind = 
-                match entity with
-                | TypedAstPatterns.Attribute -> EntityKind.Attribute 
-                | FSharpModule ->
-                    EntityKind.Module 
-                        { IsAutoOpen = hasAttribute<AutoOpenAttribute> entity.Attributes
-                          HasModuleSuffix = hasModuleSuffixAttribute entity }
-                | _ -> EntityKind.Type })
+        |> Option.map ^ fun (fullName, cleanIdents) -> 
+            {   FullName = fullName
+                CleanedIdents = cleanIdents
+                Namespace = ns
+                IsPublic = entity.Accessibility.IsPublic
+                TopRequireQualifiedAccessParent = parent.RequiresQualifiedAccess |> Option.map parent.FixParentModuleSuffix
+                AutoOpenParent = parent.AutoOpen |> Option.map parent.FixParentModuleSuffix
+                Kind = 
+                    match entity with
+                    | TypedAstPatterns.Attribute -> EntityKind.Attribute 
+                    | FSharpModule ->
+                        EntityKind.Module { 
+                            IsAutoOpen = hasAttribute<AutoOpenAttribute> entity.Attributes
+                            HasModuleSuffix = hasModuleSuffixAttribute entity 
+                        }
+                    | _ -> EntityKind.Type 
+            }
 
     let private traverseMemberFunctionAndValues ns (parent: Parent) (membersFunctionsAndValues: seq<FSharpMemberOrFunctionOrValue>) =
         membersFunctionsAndValues
-        |> Seq.collect (fun func ->
-            let processIdents fullName idents = 
-                { FullName = fullName
-                  CleanedIdents = parent.FixParentModuleSuffix idents
-                  Namespace = ns
-                  IsPublic = func.Accessibility.IsPublic
-                  TopRequireQualifiedAccessParent = 
-                        parent.RequiresQualifiedAccess |> Option.map parent.FixParentModuleSuffix
-                  AutoOpenParent = parent.AutoOpen |> Option.map parent.FixParentModuleSuffix
-                  Kind = EntityKind.FunctionOrValue func.IsActivePattern }
+        |> Seq.collect ^ fun func ->
+            let processIdents fullName idents = { 
+                FullName = fullName
+                CleanedIdents = parent.FixParentModuleSuffix idents
+                Namespace = ns
+                IsPublic = func.Accessibility.IsPublic
+                TopRequireQualifiedAccessParent = 
+                    parent.RequiresQualifiedAccess |> Option.map parent.FixParentModuleSuffix
+                AutoOpenParent = parent.AutoOpen |> Option.map parent.FixParentModuleSuffix
+                Kind = EntityKind.FunctionOrValue func.IsActivePattern 
+            }
 
-            [ yield! func.TryGetFullDisplayName() 
-                     |> Option.map (fun fullDisplayName -> processIdents func.FullName (fullDisplayName.Split '.'))
-                     |> Option.toList
-              (* for 
+            [   yield! func.TryGetFullDisplayName () 
+                    |> Option.map (fun fullDisplayName -> processIdents func.FullName (fullDisplayName.Split '.'))
+                    |> Option.toList
+                (* for 
                  [<CompilationRepresentation (CompilationRepresentationFlags.ModuleSuffix)>]
                  module M =
                      let (++) x y = ()
@@ -139,65 +169,66 @@ module AssemblyContentProvider =
                  let _ = 1 ++ 2
                 
                  we should return additional RawEntity { FullName = MModule.op_PlusPlus; CleanedIdents = [|"M"; "op_PlusPlus"|] ... }
-              *)
-              yield! func.TryGetFullCompiledOperatorNameIdents() 
-                     |> Option.map (fun fullCompiledIdents ->
-                          processIdents (fullCompiledIdents |> String.concat ".") fullCompiledIdents)
-                     |> Option.toList ])
+                *)
+                yield! func.TryGetFullCompiledOperatorNameIdents() 
+                    |> Option.map (fun fullCompiledIdents ->
+                        processIdents (fullCompiledIdents |> String.concat ".") fullCompiledIdents)
+                     |> Option.toList 
+            ]
 
-    let rec private traverseEntity contentType (parent: Parent) (entity: FSharpEntity) = 
+    let rec private traverseEntity contentType (parent: Parent) (entity: FSharpEntity) = seq { 
+        if entity.IsProvided then () else
+        match contentType, entity.Accessibility.IsPublic with
+        | Full, _ | Public, true ->
+            let ns = entity.Namespace |> Option.map (fun x -> x.Split '.') |> Option.orElse parent.Namespace
+            let currentEntity = createEntity ns parent entity
 
-        seq { if not entity.IsProvided then
-                match contentType, entity.Accessibility.IsPublic with
-                | Full, _ | Public, true ->
-                    let ns = entity.Namespace |> Option.map (fun x -> x.Split '.') |> Option.orElse parent.Namespace
-                    let currentEntity = createEntity ns parent entity
+            match currentEntity with
+            | Some x -> yield x
+            | None -> ()
 
-                    match currentEntity with
-                    | Some x -> yield x
-                    | None -> ()
+            let currentParent = { 
+                RequiresQualifiedAccess =
+                    parent.RequiresQualifiedAccess
+                    |> Option.orElse ^
+                        if hasAttribute<RequireQualifiedAccessAttribute> entity.Attributes then 
+                            parent.FormatEntityFullName entity |> Option.map snd
+                        else None
+                AutoOpen =
+                    let isAutoOpen = entity.IsFSharpModule && hasAttribute<AutoOpenAttribute> entity.Attributes
+                    match isAutoOpen, parent.AutoOpen with
+                    // if parent is also AutoOpen, then keep the parent
+                    | true, Some parent -> Some parent 
+                    // if parent is not AutoOpen, but current entity is, peek the latter as a new AutoOpen module
+                    | true, None -> parent.FormatEntityFullName entity |> Option.map snd
+                    // if current entity is not AutoOpen, we discard whatever parent was
+                    | false, _ -> None 
 
-                    let currentParent =
-                        { RequiresQualifiedAccess =
-                            parent.RequiresQualifiedAccess
-                            |> Option.orElse (
-                                if hasAttribute<RequireQualifiedAccessAttribute> entity.Attributes then 
-                                    parent.FormatEntityFullName entity |> Option.map snd
-                                else None)
-                          AutoOpen =
-                            let isAutoOpen = entity.IsFSharpModule && hasAttribute<AutoOpenAttribute> entity.Attributes
-                            match isAutoOpen, parent.AutoOpen with
-                            // if parent is also AutoOpen, then keep the parent
-                            | true, Some parent -> Some parent 
-                            // if parent is not AutoOpen, but current entity is, peek the latter as a new AutoOpen module
-                            | true, None -> parent.FormatEntityFullName entity |> Option.map snd
-                            // if current entity is not AutoOpen, we discard whatever parent was
-                            | false, _ -> None 
+                WithModuleSuffix = 
+                    if entity.IsFSharpModule && hasModuleSuffixAttribute entity then 
+                        currentEntity |> Option.map ^ fun e -> e.CleanedIdents
+                    else parent.WithModuleSuffix
+                Namespace = ns 
+            }
+            if entity.IsFSharpModule then
+                match entity.TryGetMembersFunctionsAndValues with
+                | xs when xs.Count > 0 ->
+                    yield! traverseMemberFunctionAndValues ns currentParent xs
+                | _ -> ()
 
-                          WithModuleSuffix = 
-                            if entity.IsFSharpModule && hasModuleSuffixAttribute entity then 
-                                currentEntity |> Option.map (fun e -> e.CleanedIdents) 
-                            else parent.WithModuleSuffix
-                          Namespace = ns }
-
-                    if entity.IsFSharpModule then
-                        match entity.TryGetMembersFunctionsAndValues with
-                        | xs when xs.Count > 0 ->
-                            yield! traverseMemberFunctionAndValues ns currentParent xs
-                        | _ -> ()
-
-                    for e in (try entity.NestedEntities :> _ seq with _ -> Seq.empty) do
-                        yield! traverseEntity contentType currentParent e 
-                | _ -> () }
+            for e in (try entity.NestedEntities :> _ seq with _ -> Seq.empty) do
+                yield! traverseEntity contentType currentParent e 
+        | _ -> () 
+    }
 
     let getAssemblySignatureContent contentType (signature: FSharpAssemblySignature) =
-            signature.TryGetEntities()
-            |> Seq.collect (traverseEntity contentType Parent.Empty)
-            |> Seq.distinct
+        signature.TryGetEntities ()
+        |> Seq.collect ^ traverseEntity contentType Parent.Empty
+        |> Seq.distinct
 
     let private getAssemblySignaturesContent contentType (assemblies: FSharpAssembly list) = 
         assemblies 
-        |> Seq.collect (fun asm -> getAssemblySignatureContent contentType asm.Contents)
+        |> Seq.collect ^ fun asm -> getAssemblySignatureContent contentType asm.Contents
         |> Seq.toList
 
     let getAssemblyContent (withCache: ((IAssemblyContentCache -> _) -> _) option) 
@@ -208,7 +239,7 @@ module AssemblyContentProvider =
             let fileWriteTime = FileInfo(fileName).LastWriteTime 
             match withCache with
             | Some withCache ->
-                withCache <| fun cache ->
+                withCache ^ fun cache ->
                     match contentType, cache.TryGet fileName with 
                     | _, Some entry
                     | Public, Some entry when entry.FileWriteTime = fileWriteTime -> entry.Entities
@@ -219,7 +250,7 @@ module AssemblyContentProvider =
             | None -> getAssemblySignaturesContent contentType assemblies
         | assemblies, None -> 
             getAssemblySignaturesContent contentType assemblies
-        |> List.filter (fun entity -> 
+        |> List.filter ^ fun entity -> 
             match contentType, entity.IsPublic with
             | Full, _ | Public, true -> true
-            | _ -> false)
+            | _ -> false

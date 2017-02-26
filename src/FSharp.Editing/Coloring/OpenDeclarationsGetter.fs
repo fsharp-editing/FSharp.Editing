@@ -5,22 +5,26 @@ open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.SourceCodeServices
 open Microsoft.FSharp.Compiler.Range
 open FSharp.Editing
+open FSharp.Editing.UntypedAstUtils
 
-type RawOpenDeclaration =
-    { Idents: Idents
-      Parent: Idents option }
+type RawOpenDeclaration = { 
+    Idents: Idents
+    Parent: Idents option 
+}
 
-type OpenDeclWithAutoOpens =
-    { Declarations: Idents list
-      Parent: Idents option
-      IsUsed: bool }
+type OpenDeclWithAutoOpens = { 
+    Declarations: Idents list
+    Parent: Idents option
+    IsUsed: bool 
+}
 
 [<NoComparison>]
-type OpenDeclaration =
-    { Declarations: OpenDeclWithAutoOpens list
-      DeclarationRange: Range.range
-      ScopeRange: Range.range
-      IsUsed: bool }
+type OpenDeclaration = { 
+    Declarations: OpenDeclWithAutoOpens list
+    DeclarationRange: Range.range
+    ScopeRange: Range.range
+    IsUsed: bool 
+}
 
 [<CompilationRepresentation (CompilationRepresentationFlags.ModuleSuffix)>]
 module OpenDeclWithAutoOpens =

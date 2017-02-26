@@ -55,14 +55,17 @@ module DocumentHighlights =
             let textLine = sourceText.Lines.GetLineFromPosition(position)
             let textLinePos = sourceText.Lines.GetLinePosition(position)
             let fcsTextLineNumber = Line.fromZ textLinePos.Line
-            let! symbol = CommonHelpers.getSymbolAtPosition(documentKey, sourceText, position, filePath, defines, SymbolRangeLookup.Greedy)
+            let! symbol = getSymbolAtPosition(documentKey, sourceText, position, filePath, defines, SymbolRangeLookup.Greedy)
             let! _, _, checkFileResults = checker.ParseAndCheckDocument(filePath, textVersionHash, sourceText.ToString(), options, allowStaleResults = true)
             let! symbolUse = checkFileResults.GetSymbolUseAtLocation(fcsTextLineNumber, symbol.Ident.idRange.EndColumn, textLine.ToString(), symbol.FullIsland)
             let! symbolUses = checkFileResults.GetUsesOfSymbolInFile(symbolUse.Symbol) |> liftAsync
             return 
                 [| for symbolUse in symbolUses do
-                     yield { IsDefinition = symbolUse.IsFromDefinition
-                             TextSpan = CommonRoslynHelpers.FSharpRangeToTextSpan(sourceText, symbolUse.RangeAlternate) } |]
+                    yield { 
+                        IsDefinition = symbolUse.IsFromDefinition
+                        TextSpan = fsharpRangeToTextSpan sourceText symbolUse.RangeAlternate 
+                    } 
+                |]
                 |> fixInvalidSymbolSpans sourceText symbol.Ident.idText
         }
 
