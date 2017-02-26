@@ -90,6 +90,7 @@
     <Compile Include="Common\CompilerLocationUtils.fs" />
     <Compile Include="Common\QuickParse.fs" />
     <Compile Include="Common\Utils.fs" />
+    <Compile Include="Common\Text.fs" />
     <Compile Include="Common\Lexer.fs" />
     <Compile Include="Common\UntypedAstUtils.fs" />
     <Compile Include="Common\TypedAstUtils.fs" />
@@ -98,6 +99,7 @@
     <Compile Include="ProjectSystem\AssemblyContentProvider.fs" />
     <Compile Include="ProjectSystem\OpenDocumentsTracker.fs" />
     <Compile Include="ProjectSystem\ProjectSitesAndFiles.fs" />
+    <Compile Include="ProjectSystem\FSharpWorkspace.fs" />
     <Compile Include="ProjectSystem\LanguageService.fs" />
     <Compile Include="ProjectSystem\SolutionProvider.fs" />
     <Compile Include="Navigation\NavigableItemsCollector.fs" />
