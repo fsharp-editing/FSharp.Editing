@@ -69,7 +69,10 @@ module Collection =
     /// The collections must have the same count, and contain the exact same objects but the match may be in any order.
     let inline assertEquiv<'T, 'U when 'T :> seq<'U>> (expected : 'T) (actual : 'T) =
         try CollectionAssert.AreEquivalent (expected, actual) 
-        with _ -> Diagnostics.Trace.WriteLine (sprintf "Expected: %A, actual: %A" expected actual); reraise()
+        with _ -> 
+            let expectedstr = expected |> Seq.map (fun elem -> sprintf "%A" elem) |> String.concat " "
+            let actualstr   = actual   |> Seq.map (fun elem -> sprintf "%A" elem) |> String.concat " "
+            Diagnostics.Trace.WriteLine (sprintf "Expected: %s, actual: %s" expectedstr actualstr); reraise()
 
     /// Asserts that two collections are not exactly equal.
     let inline assertNotEquiv<'T, 'U when 'T :> seq<'U>> (expected : 'T) (actual : 'T) =

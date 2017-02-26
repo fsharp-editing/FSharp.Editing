@@ -299,25 +299,25 @@ module SourceCodeClassifier =
                         else getCategory symbolUse.SymbolUse
                       WordSpan = span' }
         }
-        |> Seq.groupBy (fun span -> span.WordSpan)
-        |> Seq.map (fun (_, spans) ->
+        |> Seq.groupBy ^ fun span -> span.WordSpan
+        |> Seq.map ^ fun (_, spans) ->
                 match List.ofSeq spans with
                 | [span] -> span
                 | spans -> 
                     spans 
-                    |> List.minBy (fun span -> 
+                    |> List.minBy ^ fun span -> 
                         match span.Category with
                         | Category.Other -> 3
                         | Category.Unused -> 2
                         | Category.Function -> 0 // we prefer Function to hide ReferenceType on some methods in signature files
-                        | _ -> 1))
+                        | _ -> 1
         |> Seq.distinct
 
     /// Index all symbol usages by LineNumber.
     let private getWordSpansByLine (symbolUsesWithSpans: (SymbolUse * WordSpan) []) =
         symbolUsesWithSpans
-        |> Seq.map (fun (_, span) -> span)
-        |> Seq.groupBy (fun span -> span.Line)
+        |> Seq.map ^ fun (_, span) -> span
+        |> Seq.groupBy ^ fun span -> span.Line
         |> Map.ofSeq
 
     /// Returns `CategorizedColumnSpan`s for all symbols, except unused ones.
@@ -333,7 +333,7 @@ module SourceCodeClassifier =
         
         let allSymbolsUsesWithSpans = 
             allSymbolsUses 
-            |> Seq.filter (fun x -> x.IsUsed)
+            |> Seq.filter ^ fun x -> x.IsUsed
             |> attachWordSpans tokensByLine lexer
 
         let wordSpansByLine = getWordSpansByLine allSymbolsUsesWithSpans
@@ -342,14 +342,16 @@ module SourceCodeClassifier =
 
         let printfSpecifiersRanges =
             checkResults.GetFormatSpecifierLocationsAndArity()
-            |> Option.map (fun ranges ->
-                 ranges |> Array.map (fun (r, _) -> 
-                    { Category = Category.Printf
-                      WordSpan = 
-                        { SymbolKind = SymbolKind.Other
-                          Line = r.StartLine
-                          StartCol = r.StartColumn
-                          EndCol = r.EndColumn + 1 }}))
+            |> Option.map ^ fun ranges ->
+                 ranges |> Array.map ^ fun (r, _) -> 
+                    {   Category = Category.Printf
+                        WordSpan = 
+                        {   SymbolKind = SymbolKind.Other
+                            Line = r.StartLine
+                            StartCol = r.StartColumn
+                            EndCol = r.EndColumn 
+                        }
+                    }
             |> Option.getOrElse [||]
 
         spansBasedOnSymbolsUses
