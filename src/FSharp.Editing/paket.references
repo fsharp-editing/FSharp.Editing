@@ -3,3 +3,5 @@ Microsoft.CodeAnalysis.Common
 Microsoft.CodeAnalysis.Workspaces.Common
 Microsoft.CodeAnalysis.Features
 FsPickler
+Microsoft.Extensions.Logging.Abstractions
+Newtonsoft.Json
