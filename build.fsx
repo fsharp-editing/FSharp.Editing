@@ -31,9 +31,9 @@ let summary = "Rich F# language support for editors"
 // (used as a description for NuGet package; line breaks are automatically cleaned up)
 let description = "IDE-agnostic features intended to be used in different F# IDEs and editors."
 // List of author names (for NuGet package)
-let authors = [ "Anh-Dung Phan"; "Vasily Kirichenko"; "Denis Ok" ]
+let authors = [ "Jared Hester"; "Vasily Kirichenko" ]
 // Tags for your project (for NuGet package)
-let tags = "F# fsharp formatting editing highlighting navigation refactoring"
+let tags = "F# fsharp languageService tooling editor formatting editing highlighting navigation refactoring"
 
 // File system information 
 // (<solutionFile>.sln is built during the building process)
@@ -41,7 +41,7 @@ let solutionFile  = "FSharp.Editing"
 
 // Git configuration (used for publishing documentation in gh-pages branch)
 // The profile where the project is posted 
-let gitOwner = "fsprojects"
+let gitOwner = "fsharp-editing"
 let gitHome = "https://github.com/" + gitOwner
 
 // The name of the project on GitHub
@@ -87,8 +87,12 @@ Target "CleanDocs" (fun _ -> CleanDirs ["docs/output"])
 
 Target "Build" (fun _ ->
     // We would like to build only one solution
-    !! (solutionFile + ".sln")
-    |> MSBuildRelease "" "Rebuild"
+    !! (solutionFile + ".sln")   
+    |> MSBuildReleaseExt "" [ 
+            "ToolsVersion", "14.0"  
+            "VisualStudioVersion", "14.0"
+        ]
+        "Rebuild"
     |> ignore
 )
 
