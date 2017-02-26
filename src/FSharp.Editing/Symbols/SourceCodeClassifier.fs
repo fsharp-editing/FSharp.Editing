@@ -5,21 +5,24 @@ open Microsoft.FSharp.Compiler.SourceCodeServices
 open FSharp.Editing
 open FSharp.Editing.Coloring
 
-type WordSpan = 
-    { SymbolKind: SymbolKind
-      Line: int
-      StartCol: int
-      EndCol: int }
-    static member inline Create (kind, line, startCol, endCol) =
-        { SymbolKind = kind
-          Line = line
-          StartCol = startCol
-          EndCol = endCol }
-    static member inline Create (kind, r: Range.range) = 
-        { SymbolKind = kind
-          Line = r.StartLine
-          StartCol = r.StartColumn 
-          EndCol = r.EndColumn }
+type WordSpan = { 
+    SymbolKind: SymbolKind
+    Line: int
+    StartCol: int
+    EndCol: int 
+} with
+    static member inline Create (kind, line, startCol, endCol) = { 
+        SymbolKind = kind
+        Line = line
+        StartCol = startCol
+        EndCol = endCol 
+    }
+    static member inline Create (kind, r: Range.range) = {
+        SymbolKind = kind
+        Line = r.StartLine
+        StartCol = r.StartColumn 
+        EndCol = r.EndColumn 
+    }
     member x.Range = lazy (x.Line, x.StartCol, x.Line, x.EndCol)
 
 [<RequireQualifiedAccess>]
@@ -38,12 +41,13 @@ type Category =
     | Other
     override x.ToString() = sprintf "%A" x
 
-type CategorizedSpan =
-    { Category: Category
-      WordSpan: WordSpan }
+type CategorizedSpan = { 
+    Category: Category
+    WordSpan: WordSpan 
+}
 
 [<AbstractClass>]
-type LexerBase() = 
+type LexerBase () = 
     abstract GetSymbolFromTokensAtLocation: FSharpTokenInfo list * line: int * rightCol: int -> Symbol option
     abstract TokenizeLine: line: int -> FSharpTokenInfo list
     abstract LineCount: int
@@ -106,21 +110,20 @@ module private StringCategorizers =
                 else lineStr, line, 0)
 
         lines
-        |> Seq.collect (fun (str, line, startColumn) ->
-             regex.Matches str 
-             |> Seq.cast<Match> 
-             |> Seq.fold (fun acc (m: Match) -> 
-                if m.Value = "" then acc
-                else
-                  let category =
-                      { Category = category
-                        WordSpan = 
-                          { SymbolKind = SymbolKind.Other
-                            Line = line
-                            StartCol = startColumn + m.Index
-                            EndCol = startColumn + m.Index + m.Length }}
-                  category :: acc
-                ) [])
+        |> Seq.collect ^ fun (str, line, startColumn) ->
+            ([], regex.Matches str |> Seq.cast<Match> )
+            ||> Seq.fold ^ fun acc (m: Match) -> 
+                if m.Value = "" then acc else
+                let category = { 
+                    Category = category
+                    WordSpan = 
+                    {   SymbolKind = SymbolKind.Other
+                        Line = line
+                        StartCol = startColumn + m.Index
+                        EndCol = startColumn + m.Index + m.Length 
+                    }
+                }
+                category :: acc
          
     module EscapedChars =
         let private escapingSymbolsRegex = Regex """\\(n|r|t|b|\\|"|'|u[0-9a-fA-F]{4}|U[0-9a-fA-F]{8})"""

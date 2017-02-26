@@ -75,13 +75,13 @@
   </Target>
   -->
   <ItemGroup>
+    <None Include="paket.references" />
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Utilites.fs" />
     <Compile Include="ProjectSystem.fs" />
     <Compile Include="Context.fs" />
     <Compile Include="Service.fs" />
     <Compile Include="Program.fs" />
-    <None Include="paket.references" />
     <Content Include="App.config">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
