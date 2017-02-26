@@ -9,3 +9,4 @@ Newtonsoft.Json framework: netstandard16
 NETStandard.Library framework: netstandard16
 wire framework: netstandard16
 System.Composition
+Microsoft.Extensions.Options.ConfigurationExtensions

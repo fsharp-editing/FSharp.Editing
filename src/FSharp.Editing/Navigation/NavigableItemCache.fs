@@ -6,7 +6,7 @@ open System.Text
 open System.Threading
 open System.Collections.Concurrent
 open System.Security.Cryptography
-open MBrace.FsPickler
+open Wire
 open Microsoft.CodeAnalysis
 open FSharp.Editing
 
@@ -34,15 +34,15 @@ let cacheFilePath solutionPath =
     root </> solutionHash </> "navigable_items.cache"
 
 let loadFromDisk (cache:ConcurrentDictionary<FilePath, FileNavigableItems>) 
-                    (pickler:BinarySerializer) (solutionPath: FilePath) =
+                 (session:DeserializerSession) (solutionPath: FilePath) =
     protect <| fun _ ->
         cache.Clear ()
         let profiler = Profiler ()
         let filePath = cacheFilePath solutionPath
         let items = profiler.Time "Read from file" <| fun _ ->
             if File.Exists filePath then
-                use file = File.OpenRead filePath
-                let items: FileNavigableItems[] = pickler.Deserialize file
+                use fileStream = File.OpenRead filePath
+                let items: FileNavigableItems[] = session.Serializer.Deserialize<FileNavigableItems[]>(fileStream)
                 items
             else [||]
                 
@@ -63,7 +63,7 @@ let loadFromDisk (cache:ConcurrentDictionary<FilePath, FileNavigableItems>)
 
 
 let saveToDisk  (cache:ConcurrentDictionary<FilePath, FileNavigableItems>) (dirty:bool byref) 
-                (pickler:BinarySerializer) (solutionPath: FilePath) =
+                (session:SerializerSession) (solutionPath: FilePath) =
     if dirty then
         dirty <- false
         protect <| fun _ ->
@@ -72,8 +72,8 @@ let saveToDisk  (cache:ConcurrentDictionary<FilePath, FileNavigableItems>) (dirt
             let items = profiler.Time "Save to file" <| fun _ ->
                 let items = cache.Values |> Seq.toArray
                 Directory.CreateDirectory (Path.GetDirectoryName filePath) |> ignore
-                use file = new FileStream (filePath, FileMode.Create, FileAccess.Write, FileShare.Read)
-                pickler.Serialize (file, items)
+                use fileStream = new FileStream (filePath, FileMode.Create, FileAccess.Write, FileShare.Read)
+                session.Serializer.Serialize(items,fileStream)
                 items
             profiler.Stop ()
             Logging.logInfo ^ sprintf 
@@ -88,15 +88,16 @@ let saveToDisk  (cache:ConcurrentDictionary<FilePath, FileNavigableItems>) (dirt
 type NavigableItemCache (solution:Solution) as navcache =
     let cache = ConcurrentDictionary<FilePath, FileNavigableItems>(StringComparer.Ordinal)
     let mutable dirty = false
-    let pickler = FsPickler.CreateBinarySerializer ()
+    let writeSession = SerializerSession ^ Serializer()
+    let readSession  = DeserializerSession ^ Serializer()
     
     let tryLoadFromFile path = 
         if String.IsNullOrWhiteSpace path then () else 
-        loadFromDisk cache pickler path
+        loadFromDisk cache readSession path
 
     let trySaveToDisk path = 
         if String.IsNullOrWhiteSpace path then () else
-        saveToDisk cache &dirty pickler path
+        saveToDisk cache &dirty writeSession path
 
     do tryLoadFromFile solution.FilePath
 

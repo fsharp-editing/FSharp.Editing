@@ -10,6 +10,7 @@ nuget Microsoft.CodeAnalysis.Common prerelease
 nuget Microsoft.CodeAnalysis.Workspaces.Common prerelease
 nuget Microsoft.CodeAnalysis.Features prerelease
 nuget Microsoft.Extensions.Logging.Abstractions
+nuget Microsoft.Extensions.Options.ConfigurationExtensions
 nuget NETStandard.Library
 nuget NuGet.CommandLine
 nuget SourceLink.SymbolStore

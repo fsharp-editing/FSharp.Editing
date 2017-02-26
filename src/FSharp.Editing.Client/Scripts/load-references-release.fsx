@@ -30,3 +30,4 @@
 #r "../../../packages/System.Security.Cryptography.X509Certificates/lib/net461/System.Security.Cryptography.X509Certificates.dll"
 #r "../../../packages/System.Threading.Thread/lib/net46/System.Threading.Thread.dll"
 #r "../../../packages/System.ValueTuple/lib/netstandard1.0/System.ValueTuple.dll"
+#r "../../FSharp.Editing.Messages/bin/Release/FSharp.Editing.Messages.dll"

@@ -147,7 +147,7 @@ type Atom<'T when 'T: not struct>(value: 'T) =
         let result = Interlocked.CompareExchange<'T>(refCell, f currentValue, currentValue)
         if obj.ReferenceEquals(result, currentValue) then result
         else 
-            Thread.SpinWait 20
+            SpinWait.SpinUntil((fun _ ->false),20) |> ignore
             swap f
         
     member __.Value = !refCell
