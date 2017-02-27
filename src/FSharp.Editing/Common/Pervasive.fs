@@ -12,6 +12,9 @@ let (^) = (<|)
 /// Path.Combine
 let (</>) path1 path2 = Path.Combine (path1, path2)
 
+/// Newline String defined for this Environment
+let envNewLine = System.Environment.NewLine
+
 /// Null coalescing operator, return non null a, otherwise b
 let (?|?) a b = if isNull a then b else a
 

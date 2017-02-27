@@ -52,10 +52,10 @@ and IndentedTextWriter (writer:TextWriter, tabString:string) =
     override __.Flush () = writer.Flush ()
 
     member __.OutputTabs () =
-        if tabsPending then 
-            for i in 0 .. indentLevel-1 do
-                writer.Write tabString
-            tabsPending <- false
+        if not tabsPending then () else
+        for i in 0 .. indentLevel-1 do
+            writer.Write tabString
+        tabsPending <- false
 
     override self.Write (value:bool) = 
         self.OutputTabs (); writer.Write value
@@ -96,77 +96,79 @@ and IndentedTextWriter (writer:TextWriter, tabString:string) =
     override self.Write (format:string, [<ParamArray>] args:obj[]) = 
         self.OutputTabs (); writer.Write (format, args)
 
+    override self.WriteLine (text:string) =
+        self.OutputTabs () 
+        writer.WriteLine text
+        tabsPending <- true
+
     member __.WriteLineNoTabs (text:string) = 
-        writer.Write text
+        writer.WriteLine text
 
     override self.WriteLine () =
         self.OutputTabs  () 
         writer.WriteLine ()
         tabsPending <- true
 
-    override self.WriteLine (text:string) =
-        self.OutputTabs () 
-        writer.WriteLine text
-        tabsPending <- true
+
 
     override self.WriteLine (value:bool) = 
         self.OutputTabs () 
-        writer.Write value
+        writer.WriteLine value
         tabsPending <- true
 
     override self.WriteLine (value:single) = 
         self.OutputTabs () 
-        writer.Write value
+        writer.WriteLine value
         tabsPending <- true
         
     override self.WriteLine (value:double) = 
         self.OutputTabs () 
-        writer.Write value
+        writer.WriteLine value
         tabsPending <- true
         
     override self.WriteLine (value:int) = 
         self.OutputTabs () 
-        writer.Write value
+        writer.WriteLine value
         tabsPending <- true
 
     override self.WriteLine (value:int64) = 
         self.OutputTabs () 
-        writer.Write value
+        writer.WriteLine value
         tabsPending <- true
  
     override self.WriteLine (value:char) = 
         self.OutputTabs () 
-        writer.Write value
+        writer.WriteLine value
         tabsPending <- true
     
     override self.WriteLine (buffer:char[]) = 
         self.OutputTabs () 
-        writer.Write buffer
+        writer.WriteLine buffer
         tabsPending <- true
     
     override self.WriteLine (buffer:char[],index:int,count:int) = 
         self.OutputTabs () 
-        writer.Write (buffer,index,count)
+        writer.WriteLine (buffer,index,count)
         tabsPending <- true
 
     override self.WriteLine (value:obj) = 
         self.OutputTabs ()
-        writer.Write value
+        writer.WriteLine value
         tabsPending <- true
 
     override self.WriteLine (format:string, arg0:obj) = 
         self.OutputTabs () 
-        writer.Write (format,arg0)
+        writer.WriteLine (format,arg0)
         tabsPending <- true
 
     override self.WriteLine (format:string, arg0:obj, arg1:obj) = 
         self.OutputTabs () 
-        writer.Write (format,arg0,arg1)
+        writer.WriteLine (format,arg0,arg1)
         tabsPending <- true
 
     override self.WriteLine (format:string, [<ParamArray>] args:obj[]) = 
         self.OutputTabs () 
-        writer.Write (format, args)
+        writer.WriteLine (format, args)
         tabsPending <- true
 
     member self.InternalOutputTabs () =
