@@ -1,6 +1,5 @@
 namespace FSharp.Editing.Structure
 
-open System.Composition
 open System.Collections.Immutable
 open System.Threading.Tasks
 

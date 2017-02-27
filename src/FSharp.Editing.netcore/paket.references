@@ -10,3 +10,6 @@ NETStandard.Library framework: netstandard16
 wire framework: netstandard16
 System.Composition
 Microsoft.Extensions.Options.ConfigurationExtensions
+System.Runtime.Loader
+System.Runtime.InteropServices
+System.Runtime.Extensions

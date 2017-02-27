@@ -7,3 +7,6 @@ Newtonsoft.Json framework: >= net45
 FSharp.Core framework: >= net45
 wire
 Microsoft.Extensions.Options.ConfigurationExtensions
+System.Runtime.Loader
+System.Runtime.InteropServices
+System.Runtime.Extensions

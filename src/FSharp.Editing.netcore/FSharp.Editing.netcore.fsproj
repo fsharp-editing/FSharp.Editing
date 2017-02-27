@@ -5,6 +5,7 @@
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <!--<FscTaskAssemblyPath>..\..\packages\FSharp.Compiler.Tools\tools</FscTaskAssemblyPath>-->
     <OutputDir>bin\</OutputDir>
+    <DefineConstants>NETCORE</DefineConstants>
   </PropertyGroup>
   <ItemGroup>
     <None    Include="..\FSharp.Editing\Scratchpad.fsx">
@@ -108,6 +109,9 @@
     </Compile>
     <Compile Include="..\FSharp.Editing\Symbols\SourceCodeClassifier.fs">
       <HintPath>"Symbols\SourceCodeClassifier.fs"</HintPath>
+    </Compile>
+    <Compile Include="..\FSharp.Editing\CodeGeneration\IndentedTextWriter.fs">
+      <HintPath>"CodeGeneration\IndentedTextWriter.fs"</HintPath>
     </Compile>
     <Compile Include="..\FSharp.Editing\CodeGeneration\CodeGeneration.fs">
       <HintPath>"CodeGeneration\CodeGeneration.fs"</HintPath>

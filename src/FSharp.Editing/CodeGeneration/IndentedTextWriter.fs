@@ -48,7 +48,7 @@ and IndentedTextWriter (writer:TextWriter, tabString:string) =
             indentLevel <- if v < 0 then 0 else v
 
 
-    override __.Close () = writer.Close ()
+    // override __.Close () = writer.Close ()
     override __.Flush () = writer.Flush ()
 
     member __.OutputTabs () =

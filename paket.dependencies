@@ -18,6 +18,9 @@ nuget Newtonsoft.Json
 nuget Suave
 nuget ExtCore
 nuget System.Composition
+nuget System.Runtime.Extensions
+nuget System.Runtime.InteropServices
+nuget System.Runtime.Loader
 nuget wire
 
 group Test

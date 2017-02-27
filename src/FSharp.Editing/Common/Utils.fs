@@ -7,6 +7,7 @@ open System.Collections.Generic
 open System.Threading
 open System.Threading.Tasks
 open System.Runtime.CompilerServices
+open System.Runtime.InteropServices
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.Text
 open Microsoft.CodeAnalysis.Classification
@@ -17,6 +18,17 @@ open Microsoft.FSharp.Compiler.Layout
 open Microsoft.FSharp.Compiler.PrettyNaming
 open Microsoft.FSharp.Compiler.SourceCodeServices
 open Microsoft.FSharp.Compiler.SourceCodeServices.ItemDescriptionIcons
+
+
+let getOSPlatform () = 
+    if  RuntimeInformation.IsOSPlatform OSPlatform.Linux then OSPlatform.Linux 
+    elif RuntimeInformation.IsOSPlatform OSPlatform.Windows then OSPlatform.Windows
+    else OSPlatform.OSX
+
+let onLinux     () = RuntimeInformation.IsOSPlatform OSPlatform.Linux
+let onWindows   () = RuntimeInformation.IsOSPlatform OSPlatform.Windows
+let onOSX       () = RuntimeInformation.IsOSPlatform OSPlatform.OSX
+
 
 /// Try to run a given function, resorting to a default value if it throws exceptions
 let protectOrDefault f defaultVal =
@@ -555,10 +567,12 @@ module internal SymbolUse =
         | :? FSharpParameter as param -> Some param
         | _ -> None
 
+#if !NETCORE 
     let (|StaticParameter|_|) (symbol : FSharpSymbolUse) =
         match symbol.Symbol with
         | :? FSharpStaticParameter as sp -> Some sp
         | _ -> None
+#endif
 
     let (|UnionCase|_|) (symbol : FSharpSymbolUse) =
         match symbol.Symbol with

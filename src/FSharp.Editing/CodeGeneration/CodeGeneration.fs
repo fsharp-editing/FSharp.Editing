@@ -35,7 +35,6 @@ namespace FSharp.Editing.CodeGeneration
 module internal CodeGenerationUtils =
     open System
     open System.IO
-    open System.CodeDom.Compiler
     open FSharp.Editing
     open Microsoft.FSharp.Compiler.SourceCodeServices.PrettyNaming
     open Microsoft.FSharp.Compiler.Ast

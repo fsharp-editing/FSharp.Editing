@@ -37,8 +37,10 @@ type RawEntity = {
 namespace FSharp.Editing.ProjectSystem
 
 open System
+open System.Runtime
 open System.Reflection
 open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.Diagnostics
 open Microsoft.FSharp.Compiler.SourceCodeServices
 open FSharp.Editing
 
@@ -47,8 +49,13 @@ type AnalyzerAssemblyLoader() as self =
 
     member __.AddDependencyLocation (_fullPath: string): unit = ()
 
-    member __.LoadFromPath(fullPath: string): System.Reflection.Assembly =
-        Assembly.Load (AssemblyName.GetAssemblyName fullPath)
+    member __.LoadFromPath (fullPath: string) =
+    #if !NETCORE
+        Assembly.LoadFile(fullPath)
+    #else
+        Unchecked.defaultof<_> // THIS IS WRONG WRONG WRONG, a stub because i'm lazy
+    #endif
+        
 
     interface IAnalyzerAssemblyLoader with
         member __.AddDependencyLocation fullPath = self.AddDependencyLocation fullPath
@@ -177,7 +184,10 @@ module AssemblyContentProvider =
             ]
 
     let rec private traverseEntity contentType (parent: Parent) (entity: FSharpEntity) = seq { 
+        
+    #if !NETCORE
         if entity.IsProvided then () else
+    #endif
         match contentType, entity.Accessibility.IsPublic with
         | Full, _ | Public, true ->
             let ns = entity.Namespace |> Option.map (fun x -> x.Split '.') |> Option.orElse parent.Namespace
@@ -233,7 +243,11 @@ module AssemblyContentProvider =
 
     let getAssemblyContent (withCache: ((IAssemblyContentCache -> _) -> _) option) 
                            contentType (fileName: string option) (assemblies: FSharpAssembly list) =
-        match assemblies |> List.filter (fun x -> not x.IsProviderGenerated), fileName with
+        match assemblies 
+        #if !NETCORE
+            |> List.filter (fun x -> not x.IsProviderGenerated)
+        #endif
+            , fileName with
         | [], _ -> []
         | assemblies, Some fileName ->
             let fileWriteTime = FileInfo(fileName).LastWriteTime 

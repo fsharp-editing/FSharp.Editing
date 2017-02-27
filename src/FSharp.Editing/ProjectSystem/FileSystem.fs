@@ -2,7 +2,6 @@
 
 open Microsoft.FSharp.Compiler.AbstractIL.Internal.Library
 open System.IO
-open System.ComponentModel.Composition
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.Editing
 open Microsoft.CodeAnalysis.Text
