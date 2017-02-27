@@ -557,3 +557,42 @@ let tryFindRecordDefinitionFromPos (codeGenService: ICodeGenerationService<'Proj
         | _ ->
             return! None
     }
+
+module CodeGeneration =
+    // taken from https://github.com/fsprojects/VisualFSharpPowerTools/blob/64b407050a2e56fa109766f2b7464ee94b4717e0/src/FSharp.Editing.VisualStudio/CodeGeneration/RecordStubGeneratorSmartTagger.fs
+    open FSharp.Editing
+    open Microsoft.FSharp.Compiler.SourceCodeServices
+    open Microsoft.CodeAnalysis.Text
+    
+    /// Check whether the record has been fully defined
+    let shouldGenerateRecordStub (recordExpr: RecordExpr) (entity: FSharpEntity) =
+        let fieldCount = entity.FSharpFields.Count
+        let writtenFieldCount = recordExpr.FieldExprList.Length
+        fieldCount > 0 && writtenFieldCount < fieldCount
+    
+    let handleGenerateRecordStub (snapshot: SourceText) (recordExpr: RecordExpr) (insertionPos: _) defaultBody entity = 
+        let fieldsWritten = recordExpr.FieldExprList
+        let stub = formatRecord
+                        insertionPos
+                        defaultBody
+                        entity
+                        fieldsWritten
+        
+        // (*VSCODE*) let currentLine = snapshot.GetLineFromLineNumber(insertionPos.InsertionPos.Line-1).Start.Position + insertionPos.InsertionPos.Column
+        // (*VSCODE*) buffer.Insert(currentLine, stub) |> ignore
+        let zeroBasedLine = insertionPos.InsertionPos.Line-1 // todo harmonize through function call
+        let textLine = snapshot.Lines.[zeroBasedLine]
+        snapshot.Replace(textLine.Start, 0, stub) |> ignore
+
+    [<NoComparison;NoEquality>]
+    type Suggestion = {
+      text: string
+      invoke: unit -> unit
+    }
+    let getSuggestions (recordExpr, entity, insertionParams, snapshot, defaultBody) =
+        
+        [ 
+            { 
+                  invoke = fun () -> handleGenerateRecordStub snapshot recordExpr insertionParams defaultBody entity
+                  text = (*CONSTANTS!!! recordGenerationCommandName*) "Generate record stubs" }
+        ]
