@@ -3,7 +3,6 @@
 open System
 open System.Linq
 open System.Threading
-open System.Composition
 open System.IO
 open System.Collections.Generic
 open System.Collections.Concurrent
@@ -30,7 +29,6 @@ type LastWriteTime = DateTime
 //
 //    let _projectOptions = ConcurrentDictionary<ProjectId,FSharpProjectOptions>()
 
-[<Export; Shared>]
 type FSharpWorkspace (hostServices:Host.HostServices) as self =
     inherit Workspace (hostServices,Constants.FSharpLanguageName)
     let subscriptions = ResizeArray<IDisposable> ()
@@ -65,7 +63,8 @@ type FSharpWorkspace (hostServices:Host.HostServices) as self =
         documents |> List.iter ^ fun doc -> self.AddDocument doc |> ignore
         true
 
-    new () = new FSharpWorkspace (Host.Mef.DesktopMefHostServices.DefaultServices)
+    // new () = new FSharpWorkspace (Host.Mef.DesktopMefHostServices.DefaultServices)
+    new () = new FSharpWorkspace (Host.Mef.MefHostServices.DefaultHost )
 
 //    new (aggregator:HostServicesAggregator) = new FSharpWorkspace (aggregator.CreateHostServices())
 //    new () = new FSharpWorkspace(FSharpHostService())

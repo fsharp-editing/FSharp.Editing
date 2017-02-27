@@ -1,8 +1,12 @@
-FSharp.Compiler.Service
-Microsoft.CodeAnalysis.Common
-Microsoft.CodeAnalysis.Workspaces.Common
-Microsoft.CodeAnalysis.Features
-FsPickler
+FSharp.Compiler.Service framework: >= net45
+Microsoft.CodeAnalysis.Common framework: >= net45
+Microsoft.CodeAnalysis.Workspaces.Common framework: >= net45
+Microsoft.CodeAnalysis.Features framework: >= net45
 Microsoft.Extensions.Logging.Abstractions
-Newtonsoft.Json
-FSharp.Core
+Newtonsoft.Json framework: >= net45
+FSharp.Core framework: >= net45
+wire
+Microsoft.Extensions.Options.ConfigurationExtensions
+System.Runtime.Loader
+System.Runtime.InteropServices
+System.Runtime.Extensions

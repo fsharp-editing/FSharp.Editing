@@ -12,6 +12,9 @@ let (^) = (<|)
 /// Path.Combine
 let (</>) path1 path2 = Path.Combine (path1, path2)
 
+/// Newline String defined for this Environment
+let envNewLine = System.Environment.NewLine
+
 /// Null coalescing operator, return non null a, otherwise b
 let (?|?) a b = if isNull a then b else a
 
@@ -147,7 +150,7 @@ type Atom<'T when 'T: not struct>(value: 'T) =
         let result = Interlocked.CompareExchange<'T>(refCell, f currentValue, currentValue)
         if obj.ReferenceEquals(result, currentValue) then result
         else 
-            Thread.SpinWait 20
+            SpinWait.SpinUntil((fun _ ->false),20) |> ignore
             swap f
         
     member __.Value = !refCell

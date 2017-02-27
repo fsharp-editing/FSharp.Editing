@@ -3,7 +3,7 @@
 open System
 open System.IO
 open System.Diagnostics
-open System.ComponentModel.Composition
+open System.Runtime.InteropServices
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.Diagnostics
 open Microsoft.CodeAnalysis.Completion
@@ -271,11 +271,11 @@ type LanguageService (workspace:FSharpWorkspace,?backgroundCompilation: bool, ?p
     /// has a name //foo.fsx, and as a result 'Path.GetFullPath' throws in the F#
     /// language service - this fixes the issue by inventing nicer file name.
     let fixFileName path = 
-        if (try Path.GetFullPath path |> ignore; true with _ -> false) then path else 
-        match Environment.OSVersion.Platform with
-        | PlatformID.Unix 
-        | PlatformID.MacOSX -> Environment.GetEnvironmentVariable "HOME"
-        | _ -> Environment.ExpandEnvironmentVariables "%HOMEDRIVE%%HOMEPATH%" </> Path.GetFileName path
+        if (try Path.GetFullPath path |> ignore; true with _ -> false) then path 
+        elif onLinux () || onOSX () then 
+            Environment.GetEnvironmentVariable "HOME"
+        else
+            Environment.ExpandEnvironmentVariables "%HOMEDRIVE%%HOMEPATH%" </> Path.GetFileName path
 
     let files = ConcurrentDictionary<string, FileState>()
   
@@ -366,7 +366,12 @@ type LanguageService (workspace:FSharpWorkspace,?backgroundCompilation: bool, ?p
                     match fscVersion with
                     | FSharpCompilerVersion.FSharp_3_0
                     | FSharpCompilerVersion.FSharp_3_1 ->
-                        let dirs = FSharpEnvironment.getDefaultDirectories (fscVersion, FSharpTargetFramework.NET_4_5)
+                        let dirs = 
+                        #if !NETCORE
+                            FSharpEnvironment.getDefaultDirectories (fscVersion, FSharpTargetFramework.NET_4_5)
+                        #else 
+                            []
+                        #endif 
                         FSharpEnvironment.resolveAssembly dirs "FSharp.Core"
                         |> Option.map ^ fun path -> 
                             let fsharpCoreRef = sprintf "-r:%s" path
@@ -381,7 +386,12 @@ type LanguageService (workspace:FSharpWorkspace,?backgroundCompilation: bool, ?p
                 else 
                 // Add assemblies that may be missing in the standard assembly resolution
                 debug "GetScriptCheckerOptions: Adding missing core assemblies."
-                let dirs = FSharpEnvironment.getDefaultDirectories(fscVersion, FSharpTargetFramework.NET_4_5)
+                let dirs = 
+                #if !NETCORE
+                    FSharpEnvironment.getDefaultDirectories(fscVersion, FSharpTargetFramework.NET_4_5)
+                #else
+                    []
+                #endif
                 { opts with 
                     OtherOptions = 
                     [|  yield! opts.OtherOptions

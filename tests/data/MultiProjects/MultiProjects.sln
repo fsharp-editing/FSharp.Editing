@@ -3,6 +3,11 @@ Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
 VisualStudioVersion = 12.0.21005.1
 MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{45BAD6CB-7EFD-47B0-83EB-D8CEEA3D7197}"
+	ProjectSection(SolutionItems) = preProject
+		..\..\..\paket.dependencies = ..\..\..\paket.dependencies
+	EndProjectSection
+EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Project1", "Project1\Project1.fsproj", "{77AA2E69-FDE6-4163-879F-AA370A036E0E}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Project2", "Project2\Project2.fsproj", "{FBEA1597-C9BF-43AF-9A41-E540FF0ED70E}"

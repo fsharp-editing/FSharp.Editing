@@ -198,7 +198,11 @@ module SourceCodeClassifier =
             | Class -> Category.ReferenceType
             | _, FSharpModule, _ -> Category.Module 
             | _, _, Tuple -> Category.ReferenceType
-            | _, (FSharpType | ProvidedType | ByRef | Array), _ -> Category.ReferenceType
+            | _, (FSharpType 
+                #if !NETCORE
+                    | ProvidedType 
+                #endif
+                    | ByRef | Array), _ -> Category.ReferenceType
             | _ -> Category.Other 
         | _ -> Category.Other 
 
@@ -213,7 +217,11 @@ module SourceCodeClassifier =
             | Class -> Category.ReferenceType
             | (_, FSharpModule, _) -> Category.Module
             | (_, _, Tuple) -> Category.ReferenceType
-            | (_, (FSharpType | ProvidedType | ByRef | Array), _) -> Category.ReferenceType
+            | (_, (FSharpType 
+                #if !NETCORE
+                    | ProvidedType 
+                #endif
+                    | ByRef | Array), _) -> Category.ReferenceType
             | (_, _, Some FunctionType) -> Category.ReferenceType
             | _ -> Category.Other
         | MemberFunctionOrValue f ->

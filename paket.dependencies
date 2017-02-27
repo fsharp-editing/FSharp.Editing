@@ -3,17 +3,25 @@ redirects: on
 
 nuget Fantomas
 nuget FSharp.Compiler.Service content: none 
-nuget FSharp.Core 4.0.0.1
+nuget FSharp.Core 4.1.0
+nuget FSharp.NET.Sdk 1.0.1
 nuget FSharpLint.Core prerelease
-nuget FsPickler
 nuget Microsoft.CodeAnalysis.Common prerelease
 nuget Microsoft.CodeAnalysis.Workspaces.Common prerelease
 nuget Microsoft.CodeAnalysis.Features prerelease
 nuget Microsoft.Extensions.Logging.Abstractions
+nuget Microsoft.Extensions.Options.ConfigurationExtensions
+nuget NETStandard.Library
+nuget NuGet.CommandLine
 nuget SourceLink.SymbolStore
 nuget Newtonsoft.Json
 nuget Suave
 nuget ExtCore
+nuget System.Composition
+nuget System.Runtime.Extensions
+nuget System.Runtime.InteropServices
+nuget System.Runtime.Loader
+nuget wire
 
 group Test
     source http://nuget.org/api/v2
@@ -32,6 +40,7 @@ group Build
     
     nuget canopy
     nuget FAKE
+nuget FSharp.Compiler.Tools
     nuget FSharp.Formatting
     nuget Nuget.CommandLine
     github fsharp/FAKE modules/Octokit/Octokit.fsx

@@ -58,7 +58,7 @@ let insertCasesFromPos caretPos src =
             "" 
         else
             srcLines
-            |> Array.reduce (fun line1 line2 -> line1 + "\n" + line2)
+            |> Array.reduce (fun line1 line2 -> line1 + System.Environment.NewLine + line2)
 
 module ClausesAnalysisTests =
     open TestHelpers.LanguageServiceTestHelper
