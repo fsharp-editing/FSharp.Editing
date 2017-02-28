@@ -110,12 +110,17 @@ module internal FSharpEnvironment =
     let REG_SZ = 1u
 
     let getDefaultRegistryStringValueViaDotNet (subKey: string)  =
+    #if !NETCORE
         Option.ofString
            (try
                 downcast Microsoft.Win32.Registry.GetValue("HKEY_LOCAL_MACHINE\\"+subKey,null,null)
             with e->
                 System.Diagnostics.Debug.Assert(false, sprintf "Failed in GetDefaultRegistryStringValueViaDotNet: %s" (e.ToString()))
                 null)
+    #else 
+        None 
+    #endif
+
 
     open System.Runtime.InteropServices
 
@@ -155,7 +160,10 @@ module internal FSharpEnvironment =
             null)
 
     let is32Bit = IntPtr.Size = 4
-  
+
+
+#if !NETCORE
+
     let tryRegKey(subKey:string) = 
         if is32Bit then
             let s = getDefaultRegistryStringValueViaDotNet(subKey)
@@ -168,6 +176,7 @@ module internal FSharpEnvironment =
             s
         else
             get32BitRegistryStringValueViaPInvoke(subKey) 
+#endif
 
     let internal tryCurrentDomain () = 
         let pathFromCurrentDomain = 
@@ -204,7 +213,7 @@ module internal FSharpEnvironment =
             "/usr/local"
             // otherwise look in the standard place
             "/usr" ]
-
+#if !NETCORE
     let tryWindowsConfig (reqLangVersion: FSharpCompilerVersion) =
         //early termination on Mono, continuing here results in failed pinvokes and reg key failures ~18-35ms
         if Environment.runningOnMono then None else
@@ -228,7 +237,8 @@ module internal FSharpEnvironment =
         | None ->
             debug "Resolution: BinFolderOfDefaultFSharpCore: Probing registry key %s" key2
             tryRegKey key2
-              
+#endif 
+
     let tryUnixConfig() = 
         // On Unix we let you set FSHARP_COMILER_BIN. I've rarely seen this used and its not documented in the install isntructions.
         debug "Resolution: BinFolderOfDefaultFSharpCore: Probing environment variable FSHARP_COMPILER_BIN"
@@ -267,12 +277,13 @@ module internal FSharpEnvironment =
     let binFolderOfDefaultFSharpCompiler(reqLangVersion: FSharpCompilerVersion) = 
     // Check for an app.config setting to redirect the default compiler location
     // Like fsharp-compiler-location
+    #if !NETCORE
         try
             // FSharp.Compiler support setting an appkey for compiler location. I've never seen this used.
             debug "Resolution:BinFolderOfDefaultFSharpCore: Probing app.config"
 //            match tryAppConfig "fsharp-compiler-location" with 
 //            | Some _ as r -> r
-//            | None ->   
+//            | None ->          
             match tryWindowsConfig reqLangVersion with
             | Some _ as r -> r
             | None -> 
@@ -283,7 +294,9 @@ module internal FSharpEnvironment =
             System.Diagnostics.Debug.Assert (false, "Error while determining default location of F# compiler")
             debug "Resolution: BinFolderOfDefaultFSharpCore: error %s" (e.ToString())
             None
-
+    #else 
+        None 
+    #endif
 
     let folderOfDefaultFSharpCore (reqLangVersion: FSharpCompilerVersion, targetFramework) = 
         try 
@@ -297,6 +310,7 @@ module internal FSharpEnvironment =
             // This only works for .NET 2.0 - 4.0. To target Silverlight or Portable you'll need to use a direct reference to
             // the right FSharp.Core.dll.
             let result =
+            #if !NETCORE
                 //early termination on Mono, continuing here results in failed pinvokes and reg key failures ~18-35ms
                 if Environment.runningOnMono then None else
                 match reqLangVersion, targetFramework with
@@ -315,7 +329,9 @@ module internal FSharpEnvironment =
                 | FSharp_4_0, NET_4_5 ->
                     tryRegKey @"Software\Microsoft\.NETFramework\v4.5.22816\AssemblyFoldersEx\F# 4.0 Core Assemblies"
                 | _ -> None
-        
+            #else
+                None 
+            #endif
             match result with 
             | Some _ ->  result 
             | None -> 

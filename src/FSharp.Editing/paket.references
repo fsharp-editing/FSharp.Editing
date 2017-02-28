@@ -1,12 +1,10 @@
-FSharp.Compiler.Service framework: >= net45
-Microsoft.CodeAnalysis.Common framework: >= net45
-Microsoft.CodeAnalysis.Workspaces.Common framework: >= net45
-Microsoft.CodeAnalysis.Features framework: >= net45
-Microsoft.Extensions.Logging.Abstractions
-Newtonsoft.Json framework: >= net45
-FSharp.Core framework: >= net45
+FSharp.Compiler.Service
+Newtonsoft.Json
 wire
-Microsoft.Extensions.Options.ConfigurationExtensions
-System.Runtime.Loader
-System.Runtime.InteropServices
-System.Runtime.Extensions
+FSharp.Core
+System.Xml.XDocument
+Microsoft.CodeAnalysis.Common
+Microsoft.CodeAnalysis.Workspaces.Common
+Microsoft.CodeAnalysis.Features
+Microsoft.Extensions.Logging.Abstractions
+System.Xml.ReaderWriter

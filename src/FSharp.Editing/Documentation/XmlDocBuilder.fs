@@ -93,9 +93,13 @@ module internal XmlDocumentation =
             let trimmedXml = xml.TrimStart([|' ';'\r';'\n'|])
             if trimmedXml.Length > 0 then
                 if trimmedXml.[0] <> '<' then 
+                #if !NETCORE
                     // This code runs for local/within-project xmldoc tooltips, but not for cross-project or .XML - for that see ast.fs in the compiler
                     let escapedXml = System.Security.SecurityElement.Escape(xml)
                     "<summary>" + escapedXml + "</summary>"
+                #else
+                    "<summary>" + xml + "</summary>"
+                #endif
                 else 
                     "<root>" + xml + "</root>"
             else xml
@@ -224,26 +228,26 @@ module internal XmlDocumentation =
 //        do solutionEvents.add_AfterClosing(fun () -> 
 //            xmlCache.Clear(vsToken))
 
-    #if DEBUG // Keep under DEBUG so that it can keep building.
+    // #if DEBUG // Keep under DEBUG so that it can keep building.
 
-        let _AppendTypeParameters (collector: ITaggedTextCollector) (memberData:IVsXMLMemberData3) = 
-            let ok,count = memberData.GetTypeParamCount()
-            if Com.Succeeded(ok) && count > 0 then 
-                for param in 0..count do
-                    let ok,name,text = memberData.GetTypeParamTextAt(param)
-                    if Com.Succeeded(ok) then
-                        EnsureHardLine collector
-                        collector.Add(tagTypeParameter name)
-                        collector.Add(Literals.space)
-                        collector.Add(tagPunctuation "-")
-                        collector.Add(Literals.space)
-                        collector.Add(tagText text)
+    //     let _AppendTypeParameters (collector: ITaggedTextCollector) (memberData:IVsXMLMemberData3) = 
+    //         let ok,count = memberData.GetTypeParamCount()
+    //         if Com.Succeeded(ok) && count > 0 then 
+    //             for param in 0..count do
+    //                 let ok,name,text = memberData.GetTypeParamTextAt(param)
+    //                 if Com.Succeeded(ok) then
+    //                     EnsureHardLine collector
+    //                     collector.Add(tagTypeParameter name)
+    //                     collector.Add(Literals.space)
+    //                     collector.Add(tagPunctuation "-")
+    //                     collector.Add(Literals.space)
+    //                     collector.Add(tagText text)
 
-        let _AppendRemarks (collector: ITaggedTextCollector) (memberData:IVsXMLMemberData3) = 
-            let ok,remarksText = memberData.GetRemarksText()
-            if Com.Succeeded(ok) then 
-                AppendOnNewLine collector remarksText            
-    #endif
+    //     let _AppendRemarks (collector: ITaggedTextCollector) (memberData:IVsXMLMemberData3) = 
+    //         let ok,remarksText = memberData.GetRemarksText()
+    //         if Com.Succeeded(ok) then 
+    //             AppendOnNewLine collector remarksText            
+    // #endif
 
 //        let _AppendReturns (collector: ITaggedTextCollector) (memberData:IVsXMLMemberData3) = 
 //            let ok,returnsText = memberData.GetReturnsText()
@@ -295,21 +299,21 @@ module internal XmlDocumentation =
             /// Append Xml documentation contents into the StringBuilder
             override this.AppendDocumentation
                             ( /// ITaggedTextCollector to add to
-                              sink: ITaggedTextCollector,
+                              _sink: ITaggedTextCollector,
                               /// Name of the library file
                               filename:string,
                               /// Signature of the comment
-                              signature:string,
+                              _signature:string,
                               /// Whether to show exceptions
-                              showExceptions:bool,
+                              _showExceptions:bool,
                               /// Whether to show parameters and return
-                              showParameters:bool,
+                              _showParameters:bool,
                               /// Name of parameter
-                              paramName:string option                            
+                              _paramName:string option                            
                              ) = 
                 try     
                     match GetMemberIndexOfAssembly(filename) with
-                    | Some(index) ->
+                    | Some(_index) ->
 //                        let _,idx = index.ParseMemberSignature(signature)
 //                        if idx <> 0u then
 //                            let ok,xml = index.GetMemberXML(idx)

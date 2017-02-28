@@ -13,9 +13,13 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{9B0032
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{BF60BC93-E09B-4E5F-9D85-95A519479D54}"
 	ProjectSection(SolutionItems) = preProject
+		.travis.yml = .travis.yml
 		appveyor.yml = appveyor.yml
+		build.cmd = build.cmd
 		build.fsx = build.fsx
+		build.sh = build.sh
 		CONTRIBUTING.md = CONTRIBUTING.md
+		global.json = global.json
 		paket.dependencies = paket.dependencies
 		paket.lock = paket.lock
 		README.md = README.md

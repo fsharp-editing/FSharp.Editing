@@ -916,7 +916,7 @@ type FSharpLanguageService (workspace:FSharpWorkspace,?backgroundCompilation: bo
                     }
     }
 
-    member x.GetAllEntitiesInProjectAndReferencedAssemblies (projectOptions: FSharpProjectOptions, fileName, source, withCache) =
+    member x.GetAllEntitiesInProjectAndReferencedAssemblies (projectOptions: FSharpProjectOptions, fileName, source, ?withCache) =
         async {
             let! checkResults = x.ParseAndCheckFileInProject (projectOptions, fileName, source, AllowStaleResults.No)
             return Some [ 

@@ -2,138 +2,66 @@
   <PropertyGroup>
     <AssemblyName>FSharp.Editing</AssemblyName>
     <TargetFramework>netstandard1.6</TargetFramework>
+    <PackageTargetFallback>portable-net45+win8+wp8+wpa81</PackageTargetFallback>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <!--<FscTaskAssemblyPath>..\..\packages\FSharp.Compiler.Tools\tools</FscTaskAssemblyPath>-->
     <OutputDir>bin\</OutputDir>
     <DefineConstants>NETCORE</DefineConstants>
   </PropertyGroup>
-  <ItemGroup>
-    <None    Include="..\FSharp.Editing\Scratchpad.fsx">
-      <HintPath>"Scratchpad.fsx"</HintPath>
-    </None>
-    <Content Include="..\FSharp.Editing\FSharp.Editing.netcore.references">
-      <HintPath>"FSharp.Editing.netcore.references"</HintPath>
-    </Content> 
-    <Compile Include="..\FSharp.Editing\AssemblyInfo.fs">
-      <HintPath>"FSharp.Editing\AssemblyInfo.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Common\Pervasive.fs">
-      <HintPath>"Common\Pervasive.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Common\Extensions.fs">
-      <HintPath>"Common\Extensions.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Common\Logging.fs">
-      <HintPath>"Common\Logging.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Common\Constants.fs">
-      <HintPath>"Common\Constants.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Common\CompilerLocationUtils.fs">
-      <HintPath>"Common\CompilerLocationUtils.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Common\QuickParse.fs">
-      <HintPath>"Common\QuickParse.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Common\Utils.fs">
-      <HintPath>"Common\Utils.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Common\Text.fs">
-      <HintPath>"Common\Text.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Common\Lexer.fs">
-      <HintPath>"Common\Lexer.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Common\UntypedAstUtils.fs">
-      <HintPath>"Common\UntypedAstUtils.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Common\TypedAstUtils.fs">
-      <HintPath>"Common\TypedAstUtils.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Common\XmlDocParser.fs">
-      <HintPath>"Common\XmlDocParser.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Common\IdentifierUtils.fs">
-      <HintPath>"Common\IdentifierUtils.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\ProjectSystem\AssemblyContentProvider.fs">
-      <HintPath>"ProjectSystem\AssemblyContentProvider.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\ProjectSystem\OpenDocumentsTracker.fs">
-      <HintPath>"ProjectSystem\OpenDocumentsTracker.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\ProjectSystem\ProjectSitesAndFiles.fs">
-      <HintPath>"ProjectSystem\ProjectSitesAndFiles.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\ProjectSystem\FSharpWorkspace.fs">
-      <HintPath>"ProjectSystem\FSharpWorkspace.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\ProjectSystem\FileSystem.fs">
-      <HintPath>"ProjectSystem\FileSystem.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\ProjectSystem\LanguageService.fs">
-      <HintPath>"ProjectSystem\LanguageService.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\ProjectSystem\SolutionProvider.fs">
-      <HintPath>"ProjectSystem\SolutionProvider.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Navigation\NavigableItemsCollector.fs">
-      <HintPath>"Navigation\NavigableItemsCollector.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Navigation\NavigateToIndex.fs">
-      <HintPath>"Navigation\NavigateToIndex.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Navigation\NavigableItemCache.fs">
-      <HintPath>"Navigation\NavigableItemCache.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Navigation\NavigateToItem.fs">
-      <HintPath>"Navigation\NavigateToItem.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Coloring\DepthParser.fs">
-      <HintPath>"Coloring\DepthParser.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Coloring\OpenDeclarationsGetter.fs">
-      <HintPath>"Coloring\OpenDeclarationsGetter.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Coloring\UnopenedNamespacesResolver.fs">
-      <HintPath>"Coloring\UnopenedNamespacesResolver.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Coloring\HighlightUsageInFile.fs">
-      <HintPath>"Coloring\HighlightUsageInFile.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Coloring\PrintfSpecifiersUsageGetter.fs">
-      <HintPath>"Coloring\PrintfSpecifiersUsageGetter.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Coloring\DocumentHighlights.fs">
-      <HintPath>"Coloring\DocumentHighlights.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Symbols\SourceCodeClassifier.fs">
-      <HintPath>"Symbols\SourceCodeClassifier.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\CodeGeneration\IndentedTextWriter.fs">
-      <HintPath>"CodeGeneration\IndentedTextWriter.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\CodeGeneration\CodeGeneration.fs">
-      <HintPath>"CodeGeneration\CodeGeneration.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\CodeGeneration\SignatureGenerator.fs">
-      <HintPath>"CodeGeneration\SignatureGenerator.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\CodeGeneration\UnionPatternMatchCaseGenerator.fs">
-      <HintPath>"CodeGeneration\UnionPatternMatchCaseGenerator.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\CodeGeneration\InterfaceStubGenerator.fs">
-      <HintPath>"CodeGeneration\InterfaceStubGenerator.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\CodeGeneration\RecordStubGenerator.fs">
-      <HintPath>"CodeGeneration\RecordStubGenerator.fs"</HintPath>
-    </Compile>
-    <Compile Include="..\FSharp.Editing\Structure\BlockStructure.fs">
-      <HintPath>"Structure\BlockStructure.fs"</HintPath>
-    </Compile>
-    <Content Include="..\FSharp.Editing\app.config">
-      <HintPath>"app.config"</HintPath>
-    </Content>
+  <ItemGroup>           
+    <None    Include="..\FSharp.Editing\paket.references"                                 HintPath="paket.references"                                            />
+    <None    Include="..\FSharp.Editing\Scratchpad.fsx"                                   HintPath="Scratchpad.fsx"                                              />
+    <Compile Include="..\FSharp.Editing\AssemblyInfo.fs"                                  HintPath="AssemblyInfo.fs"                                           />
+    <Compile Include="..\FSharp.Editing\Common\Pervasive.fs"                              HintPath="Common\Pervasive.fs"                                      />
+    <Compile Include="..\FSharp.Editing\Common\Extensions.fs"                             HintPath="Common\Extensions.fs"                                             />
+    <Compile Include="..\FSharp.Editing\Common\Logging.fs"                                HintPath="Common\Logging.fs"                                            />
+    <Compile Include="..\FSharp.Editing\Common\Constants.fs"                              HintPath="Common\Constants.fs"                                            />
+    <Compile Include="..\FSharp.Editing\Common\CompilerLocationUtils.fs"                  HintPath="Common\CompilerLocationUtils.fs"                                    />
+    <Compile Include="..\FSharp.Editing\Common\QuickParse.fs"                             HintPath="Common\QuickParse.fs"                                         />
+    <Compile Include="..\FSharp.Editing\Common\Utils.fs"                                  HintPath="Common\Utils.fs"                                           />
+    <Compile Include="..\FSharp.Editing\Common\Text.fs"                                   HintPath="Common\Text.fs"                                            />
+    <Compile Include="..\FSharp.Editing\Common\Lexer.fs"                                  HintPath="Common\Lexer.fs"                                             />
+    <Compile Include="..\FSharp.Editing\Common\UntypedAstUtils.fs"                        HintPath="Common\UntypedAstUtils.fs"                                 />
+    <Compile Include="..\FSharp.Editing\Common\TypedAstUtils.fs"                          HintPath="Common\TypedAstUtils.fs"                                             />
+    <Compile Include="..\FSharp.Editing\Common\IdentifierUtils.fs"                        HintPath="Common\IdentifierUtils.fs"                                     />
+    <Compile Include="..\FSharp.Editing\ProjectSystem\AssemblyContentProvider.fs"         HintPath="ProjectSystem\AssemblyContentProvider.fs"              />
+    <Compile Include="..\FSharp.Editing\ProjectSystem\OpenDocumentsTracker.fs"            HintPath="ProjectSystem\OpenDocumentsTracker.fs"                                    />
+    <Compile Include="..\FSharp.Editing\ProjectSystem\ProjectConfig.fs"                   HintPath="ProjectSystem\ProjectConfig.fs"                                                    />
+    <Compile Include="..\FSharp.Editing\ProjectSystem\ProjectSitesAndFiles.fs"            HintPath="ProjectSystem\ProjectSitesAndFiles.fs"                            />
+    <Compile Include="..\FSharp.Editing\ProjectSystem\FSharpWorkspace.fs"                 HintPath="ProjectSystem\FSharpWorkspace.fs"                                     />
+    <Compile Include="..\FSharp.Editing\ProjectSystem\FileSystem.fs"                      HintPath="ProjectSystem\FileSystem.fs"                                            />
+    <Compile Include="..\FSharp.Editing\ProjectSystem\LanguageService.fs"                 HintPath="ProjectSystem\LanguageService.fs"                                       />
+    <Compile Include="..\FSharp.Editing\ProjectSystem\SolutionProvider.fs"                HintPath="ProjectSystem\SolutionProvider.fs"                                  />
+    <Compile Include="..\FSharp.Editing\ProjectSystem\FileSystemWatcher.fs"               HintPath="ProjectSystem\FileSystemWatcher.fs"                               />
+    <Compile Include="..\FSharp.Editing\Navigation\NavigableItemsCollector.fs"            HintPath="Navigation\NavigableItemsCollector.fs"                               />
+    <Compile Include="..\FSharp.Editing\Navigation\NavigateToIndex.fs"                    HintPath="Navigation\NavigateToIndex.fs"                                  />
+    <Compile Include="..\FSharp.Editing\Navigation\NavigableItemCache.fs"                 HintPath="Navigation\NavigableItemCache.fs"                                   />
+    <Compile Include="..\FSharp.Editing\Navigation\NavigateToItem.fs"                     HintPath="Navigation\NavigateToItem.fs"                               />
+    <Compile Include="..\FSharp.Editing\Navigation\GoToDefinition.fs"                     HintPath="Navigation\GoToDefinition.fs"                                     />
+    <Compile Include="..\FSharp.Editing\Navigation\GoToSignature.fs"                      HintPath="Navigation\GoToSignature.fs"                                 />
+    <Compile Include="..\FSharp.Editing\Navigation\GoToImplementation.fs"                 HintPath="Navigation\GoToImplementation.fs"                               />
+    <Compile Include="..\FSharp.Editing\Navigation\GoToDeclaration.fs"                    HintPath="Navigation\GoToDeclaration.fs"                                         />
+    <Compile Include="..\FSharp.Editing\Navigation\NavigateToReferenceSource.fs"          HintPath="Navigation\NavigateToReferenceSource.fs"                            />
+    <Compile Include="..\FSharp.Editing\Navigation\NavigateToMetadata.fs"                 HintPath="Navigation\NavigateToMetadata.fs"                             />
+    <Compile Include="..\FSharp.Editing\Coloring\DepthParser.fs"                          HintPath="Coloring\DepthParser.fs"                                        />
+    <Compile Include="..\FSharp.Editing\Coloring\OpenDeclarationsGetter.fs"               HintPath="Coloring\OpenDeclarationsGetter.fs"                               />
+    <Compile Include="..\FSharp.Editing\Coloring\UnopenedNamespacesResolver.fs"           HintPath="Coloring\UnopenedNamespacesResolver.fs"                               />
+    <Compile Include="..\FSharp.Editing\Coloring\HighlightUsageInFile.fs"                 HintPath="Coloring\HighlightUsageInFile.fs"                                         />
+    <Compile Include="..\FSharp.Editing\Coloring\PrintfSpecifiersUsageGetter.fs"          HintPath="Coloring\PrintfSpecifiersUsageGetter.fs"                                />             
+    <Compile Include="..\FSharp.Editing\Coloring\DocumentHighlights.fs"                   HintPath="Coloring\DocumentHighlights.fs"                                         />              
+    <Compile Include="..\FSharp.Editing\Symbols\SymbolHelpers.fs"                         HintPath="Symbols\SymbolHelpers.fs"                                             />              
+    <Compile Include="..\FSharp.Editing\Symbols\SourceCodeClassifier.fs"                  HintPath="Symbols\SourceCodeClassifier.fs"                                              />
+    <Compile Include="..\FSharp.Editing\CodeGeneration\IndentedTextWriter.fs"             HintPath="CodeGeneration\IndentedTextWriter.fs"                               />
+    <Compile Include="..\FSharp.Editing\CodeGeneration\CodeGeneration.fs"                 HintPath="CodeGeneration\CodeGeneration.fs"                                             />
+    <Compile Include="..\FSharp.Editing\CodeGeneration\SignatureGenerator.fs"             HintPath="CodeGeneration\SignatureGenerator.fs"                                 />
+    <Compile Include="..\FSharp.Editing\CodeGeneration\UnionPatternMatchCaseGenerator.fs" HintPath="CodeGeneration\UnionPatternMatchCaseGenerator.fs"                                        />
+    <Compile Include="..\FSharp.Editing\CodeGeneration\InterfaceStubGenerator.fs"         HintPath="CodeGeneration\InterfaceStubGenerator.fs"                                       />
+    <Compile Include="..\FSharp.Editing\CodeGeneration\RecordStubGenerator.fs"            HintPath="CodeGeneration\RecordStubGenerator.fs"                                                   />
+    <Compile Include="..\FSharp.Editing\Structure\BlockStructure.fs"                      HintPath="Structure\BlockStructure.fs"                                                 />
+    <Content Include="..\FSharp.Editing\app.config"                                       HintPath="app.config"                                                                 />
+    <Compile Include="..\FSharp.Editing\Documentation\XmlDocParser.fs"                    HintPath="Documentation\XmlDocParser.fs"                                                    />
+    <Compile Include="..\FSharp.Editing\Documentation\XmlDocBuilder.fs"                   HintPath="Documentation\XmlDocBuilder.fs"                                                             />
+    <Compile Include="..\FSharp.Editing\Documentation\XmlDocGenerator.fs"                 HintPath="Documentation\XmlDocGenerator.fs"                                                 />
   </ItemGroup>
   <!--<Import Project="..\..\.paket\Paket.Restore.targets" />-->
   <Import Project="..\..\.paket\Paket.Restore.targets" />

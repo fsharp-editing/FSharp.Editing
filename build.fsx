@@ -3,6 +3,7 @@
 // --------------------------------------------------------------------------------------
 
 #r @"packages/build/FAKE/tools/FakeLib.dll"
+#r "System.IO.Compression.FileSystem"
 
 open Fake
 open Fake.Git
@@ -11,7 +12,6 @@ open Fake.ReleaseNotesHelper
 open System
 open System.IO
 open System.Xml
-open Fake.Testing
 
 // Information about the project are used
 //  - for version and project name in generated AssemblyInfo file
@@ -47,6 +47,11 @@ let gitHome = "https://github.com/" + gitOwner
 // The name of the project on GitHub
 let gitName = "FSharp.Editing"
 let cloneUrl = "https://github.com/fsprojects/FSharp.Editing.git"
+
+
+let (^) = (<|)
+let buildDir = "bin"
+let tempDir = "temp"
 
 // Read additional information from the release notes document
 Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
@@ -106,6 +111,8 @@ Target "BuildTests" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Run the unit tests using test runner
 
+open Fake.Testing
+
 Target "UnitTests" (fun _ ->
     [@"tests/FSharp.Editing.Tests/bin/Release/FSharp.Editing.Tests.dll"]
     |> NUnit3 (fun p ->
@@ -119,6 +126,109 @@ Target "UnitTests" (fun _ ->
                 ResultSpecs = ["TestResults.xml"] }
         if isAppVeyorBuild then { param with Where = "cat != AppVeyorLongRunning" } else param)
 )
+
+
+let dotnetcliVersion = "1.0.0-rc4-004911"
+
+let dotnetSDKPath = System.Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) </> "dotnetcore" |> FullName
+
+let dotnetExePath =
+    dotnetSDKPath </> (if isWindows then "dotnet.exe" else "dotnet")
+    |> FullName
+
+
+
+Target "InstallDotNetCore" (fun _ ->
+    let correctVersionInstalled = 
+        try if FileInfo(dotnetExePath |> Path.GetFullPath).Exists then
+                let processResult = 
+                    ExecProcessAndReturnMessages (fun info ->  
+                    info.FileName <- dotnetExePath
+                    info.WorkingDirectory <- Environment.CurrentDirectory
+                    info.Arguments <- "--version") (TimeSpan.FromMinutes 30.)
+                processResult.Messages |> separated "" = dotnetcliVersion
+            else false
+        with  _ -> false
+
+    if correctVersionInstalled then tracefn "dotnetcli %s already installed" dotnetcliVersion else
+    CleanDir dotnetSDKPath
+    let archiveFileName = 
+        if isLinux then
+            sprintf "dotnet-dev-ubuntu-x64.%s.tar.gz" dotnetcliVersion
+        else if Fake.EnvironmentHelper.isMacOS then
+            sprintf "dotnet-dev-osx-x64.%s.tar.gz" dotnetcliVersion
+        else
+            sprintf "dotnet-dev-win-x64.%s.zip" dotnetcliVersion
+    let downloadPath = 
+            sprintf "https://dotnetcli.azureedge.net/dotnet/Sdk/%s/%s" dotnetcliVersion archiveFileName
+    let localPath = Path.Combine(dotnetSDKPath, archiveFileName)
+
+    tracefn "Installing '%s' to '%s'" downloadPath localPath
+        
+    use webclient = new Net.WebClient()
+    webclient.DownloadFile(downloadPath, localPath)
+
+    if isLinux || isMacOS then
+        let assertExitCodeZero x =
+            if x = 0 then () else
+            failwithf "Command failed with exit code %i" x
+
+        Shell.Exec("tar", sprintf """-xvf "%s" -C "%s" """ localPath dotnetSDKPath)
+        |> assertExitCodeZero
+    else  
+        global.System.IO.Compression.ZipFile.ExtractToDirectory(localPath, dotnetSDKPath)
+        
+        tracefn "dotnet cli path - %s" dotnetSDKPath
+        System.IO.Directory.EnumerateFiles dotnetSDKPath
+        |> Seq.iter (fun path -> tracefn " - %s" path)
+        System.IO.Directory.EnumerateDirectories dotnetSDKPath
+        |> Seq.iter (fun path -> tracefn " - %s%c" path System.IO.Path.DirectorySeparatorChar)
+
+    let oldPath = System.Environment.GetEnvironmentVariable("PATH")
+    System.Environment.SetEnvironmentVariable("PATH", sprintf "%s%s%s" dotnetSDKPath (System.IO.Path.PathSeparator.ToString()) oldPath)
+)
+
+
+let assertExitCodeZero x = if x = 0 then () else failwithf "Command failed with exit code %i" x
+
+let runCmdIn workDir exe = 
+    Printf.ksprintf ^ fun args -> 
+        tracefn "%s %s" exe args
+        Shell.Exec(exe, args, workDir) |> assertExitCodeZero
+
+/// Execute a dotnet cli command
+let dotnet workDir = runCmdIn workDir "dotnet"
+
+Target "DotnetRestoreTools" ^ fun _ ->
+    DotNetCli.Restore ^ fun c ->
+        { c with Project = currentDirectory</>"tools"</> "tools.fsproj";ToolPath = dotnetExePath  }
+
+
+let netcoreFiles = !! "src/*.netcore/*.fsproj" |> Seq.toList
+
+Target "DotnetRestore" ^ fun _ ->
+    try netcoreFiles |> Seq.iter ^ fun proj ->
+            DotNetCli.Restore ^ fun c ->
+                { c with Project = proj; ToolPath = dotnetExePath }
+    with ex ->  traceError ex.Message
+
+Target "DotnetBuild" ^ fun _ ->
+    netcoreFiles |> Seq.iter ^ fun proj ->
+        DotNetCli.Build ^ fun c ->
+            { c with Project = proj; ToolPath = dotnetExePath }
+    
+
+Target "DotnetPackage" ^ fun _ ->
+    netcoreFiles |> Seq.iter ^ fun proj ->
+        DotNetCli.Pack ^ fun c ->
+            { c with
+                Project = proj
+                ToolPath = dotnetExePath
+                AdditionalArgs = [(sprintf "-o %s" currentDirectory </> tempDir </> "dotnetcore"); (sprintf "/p:Version=%s" release.NugetVersion)]
+            }
+
+
+
 
 // --------------------------------------------------------------------------------------
 // Build a NuGet package
@@ -162,85 +272,11 @@ Target "ReleaseDocs" (fun _ ->
     Branches.push tempDocsDir
 )
 
-#load "paket-files/build/fsharp/FAKE/modules/Octokit/Octokit.fsx"
-open Octokit
 
-let readString prompt echo : string =
-    let rec loop cs =
-        let key = Console.ReadKey(not echo)
-        match key.Key with
-        | ConsoleKey.Backspace -> 
-            match cs with [] -> loop [] | _::cs -> loop cs
-        | ConsoleKey.Enter -> cs
-        | _ -> loop (key.KeyChar :: cs)
-
-    printf "%s" prompt
-    let input =
-        loop []
-        |> List.rev
-        |> Array.ofList
-        |> fun cs -> String cs
-    if not echo then printfn ""
-    input
-
-#r @"packages/build/Selenium.WebDriver/lib/net40/WebDriver.dll"
-#r @"packages/build/canopy/lib/canopy.dll"
-
-Target "Release" (fun _ ->
-    StageAll ""
-    Git.Commit.Commit "" (sprintf "Bump version to %s" release.NugetVersion)
-    Branches.push ""
-
-    Branches.tag "" release.NugetVersion
-    Branches.pushTag "" "origin" release.NugetVersion
-
-    // let user = readString "Username: " true
-    // let pw = readString "Password: " false
-
-    // // release on github
-    // createClient user pw
-    // |> createDraft gitOwner gitName release.NugetVersion (release.SemVer.PreRelease <> None) release.Notes 
-    // |> uploadFile "./bin/FSharpVSPowerTools.vsix"
-    // |> releaseDraft
-    // |> Async.RunSynchronously
-)
-
+Target "Main"  DoNothing
 Target "ReleaseAll"  DoNothing
+Target "BuildBoth"  DoNothing
 
-// --------------------------------------------------------------------------------------
-// Run main targets by default. Invoke 'build <Target>' to override
-
-Target "Main" DoNothing
-
-Target "All" DoNothing
-
-Target "TravisCI" (fun _ -> 
-  [ "src/FSharp.Editing/FSharp.Editing.fsproj"
-    "tests/FSharp.Editing.Tests/FSharp.Editing.Tests.fsproj"
-  ]
-  |> MSBuildRelease "" "Rebuild"
-  |> ignore
-  
-  let additionalFiles = 
-    ["./packages/FSharp.Core/lib/net40/FSharp.Core.sigdata";
-     "./packages/FSharp.Core/lib/net40/FSharp.Core.optdata";
-     "./packages/FSharp.Core/lib/net40/FSharp.Core.xml";]
-  CopyTo "tests/FSharp.Editing.Tests/bin/Release" additionalFiles
-
-  ["tests/FSharp.Editing.Tests/bin/Release/FSharp.Editing.Tests.dll"]
-  |> NUnit3 (fun p ->
-    let param =
-        { p with
-            ShadowCopy = false
-            TimeOut = TimeSpan.FromMinutes 20.
-            Framework = NUnit3Runtime.Mono40
-            Domain = NUnit3DomainModel.MultipleDomainModel 
-            Workers = Some 1
-            ResultSpecs = ["TestResults.xml"]      
-        }
-    if Environment.OSVersion.Platform = PlatformID.Win32NT then param else { param with Where = "cat != IgnoreOnUnix" }
-  )
-)
 
 "Clean"
   =?> ("BuildVersion", isAppVeyorBuild)
@@ -251,20 +287,26 @@ Target "TravisCI" (fun _ ->
   ==> "Main"
 
 "Clean"
-  ==> "AssemblyInfo"
-  ==> "TravisCI"
+  ==> "InstallDotNetCore"
+  ==> "DotnetRestore"
+  ==> "DotnetBuild"
+  ==> "DotnetPackage"
 
-"Release"
-  ==> "PublishNuGet"
-  ==> "ReleaseAll"
 
-"Main"
-  ==> "All"
+"Build" ==> "DotnetBuild" ==> "BuildBoth"
 
-"Main" 
-  ==> "CleanDocs"
-  ==> "GenerateDocs"
-  ==> "ReleaseDocs"
-  ==> "Release"
+//
+//"Release"
+//  ==> "PublishNuGet"
+//  ==> "ReleaseAll"
+//
+//"Main"
+//  ==> "All"
+//
+//"Main" 
+//  ==> "CleanDocs"
+//  ==> "GenerateDocs"
+//  ==> "ReleaseDocs"
+//  ==> "Release"
 
-RunTargetOrDefault "Main"
+RunTargetOrDefault "BuildBoth"

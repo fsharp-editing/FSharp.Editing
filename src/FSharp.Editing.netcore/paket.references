@@ -1,15 +1,17 @@
 FSharp.NET.Sdk
-FSharp.Core framework: netstandard16
-FSharp.Compiler.Service framework: netstandard16
-Microsoft.CodeAnalysis.Common framework: netstandard16
-Microsoft.CodeAnalysis.Workspaces.Common framework: netstandard16
-Microsoft.CodeAnalysis.Features framework: netstandard16
-Microsoft.Extensions.Logging.Abstractions framework: netstandard16
-Newtonsoft.Json framework: netstandard16
-NETStandard.Library framework: netstandard16
-wire framework: netstandard16
+FSharp.Core
+FSharp.Compiler.Service
+wire
+Newtonsoft.Json
+System.Xml.XDocument
+Microsoft.CodeAnalysis.Common
+Microsoft.CodeAnalysis.Workspaces.Common
+Microsoft.CodeAnalysis.Features
+NETStandard.Library
 System.Composition
-Microsoft.Extensions.Options.ConfigurationExtensions
-System.Runtime.Loader
-System.Runtime.InteropServices
 System.Runtime.Extensions
+System.Runtime.InteropServices
+System.Runtime.Loader
+Microsoft.Extensions.Options.ConfigurationExtensions
+Microsoft.Extensions.Logging.Abstractions
+Microsoft.Win32.Registry.AccessControl

@@ -1,6 +1,7 @@
 ﻿namespace FSharp.Editing
 
 open System
+open System.IO
 open System.Reflection
 open Microsoft.CodeAnalysis
 open Microsoft.FSharp.Compiler.SourceCodeServices
@@ -257,30 +258,36 @@ module AssemblyContent =
         |> Seq.collect ^ fun asm -> getAssemblySignatureContent contentType asm.Contents
         |> Seq.toList
 
-    let getAssemblyContent (withCache: (IAssemblyContentCache -> _) -> _)  
+    
+    open System.IO 
+
+    let getAssemblyContent (withCache: ((IAssemblyContentCache -> _) -> _) option) 
                            contentType (fileName: string option) (assemblies: FSharpAssembly list) =
         match assemblies 
         #if !NETCORE
             |> List.filter (fun x -> not x.IsProviderGenerated)
-        #endif
+        #endif    
             , fileName with
         | [], _ -> []
         | assemblies, Some fileName ->
-            let fileWriteTime = IO.FileInfo(fileName).LastWriteTime 
-            withCache ^ fun cache ->
-                match contentType, cache.TryGet fileName with 
-                | _, Some entry
-                | Public, Some entry when entry.FileWriteTime = fileWriteTime -> entry.Entities
-                | _ ->
-                    let entities = getAssemblySignaturesContent contentType assemblies
-                    cache.Set fileName { FileWriteTime = fileWriteTime; ContentType = contentType; Entities = entities }
-                    entities
+            let fileWriteTime = FileInfo(fileName).LastWriteTime 
+            match withCache with
+            | Some withCache ->
+                withCache <| fun cache ->
+                    match contentType, cache.TryGet fileName with 
+                    | _, Some entry
+                    | Public, Some entry when entry.FileWriteTime = fileWriteTime -> entry.Entities
+                    | _ ->
+                        let entities = getAssemblySignaturesContent contentType assemblies
+                        cache.Set fileName { FileWriteTime = fileWriteTime; ContentType = contentType; Entities = entities }
+                        entities
+            | None -> getAssemblySignaturesContent contentType assemblies
         | assemblies, None -> 
             getAssemblySignaturesContent contentType assemblies
-        |> List.filter ^ fun entity -> 
+        |> List.filter (fun entity -> 
             match contentType, entity.IsPublic with
             | Full, _ | Public, true -> true
-            | _ -> false
+            | _ -> false)
 
 //[<Export(typeof<AssemblyContentProvider>); Composition.Shared>]
 type internal AssemblyContentProvider () =
@@ -303,4 +310,4 @@ type internal AssemblyContentProvider () =
 
           for fileName, signatures in assembliesByFileName do
               let contentType = Public // it's always Public for now since we don't support InternalsVisibleTo attribute yet
-              yield! AssemblyContent.getAssemblyContent (entityCache.Locking) contentType fileName signatures ]
+              yield! AssemblyContent.getAssemblyContent (Some entityCache.Locking) contentType fileName signatures ]
