@@ -1,5 +1,10 @@
 ﻿namespace FSharp.Editing.Documentation
 
+
+
+open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.Text
+
 open FSharp.Editing
 
 /// Represent an Xml documentation block in source code
@@ -15,14 +20,14 @@ module internal XmlDocParsing =
         | NamePatPairs(xs, _) -> List.map snd xs
 
     let rec digNamesFrom = function
-        | SynPat.Named(_innerPat,id,_isTheThisVar,_access,_range) -> [id.idText]
-        | SynPat.Typed(pat,_type,_range) -> digNamesFrom pat
-        | SynPat.Attrib(pat,_attrs,_range) -> digNamesFrom pat
-        | SynPat.LongIdent(_lid,_idOpt,_typDeclsOpt,ConstructorPats pats,_access,_range) -> 
+        | SynPat.Named (_innerPat,id,_isTheThisVar,_access,_range) -> [id.idText]
+        | SynPat.Typed (pat,_type,_range) -> digNamesFrom pat
+        | SynPat.Attrib (pat,_attrs,_range) -> digNamesFrom pat
+        | SynPat.LongIdent (_lid,_idOpt,_typDeclsOpt,ConstructorPats pats,_access,_range) -> 
             pats |> List.collect digNamesFrom 
-        | SynPat.Tuple(pats,_range) -> pats |> List.collect digNamesFrom 
+        | SynPat.Tuple (pats,_range) -> pats |> List.collect digNamesFrom 
         | SynPat.StructTuple(pats,_range) -> pats |> List.collect digNamesFrom
-        | SynPat.Paren(pat,_range) -> digNamesFrom pat
+        | SynPat.Paren (pat,_range) -> digNamesFrom pat
         | SynPat.OptionalVal (id, _) -> [id.idText]
         | SynPat.Or _           // no one uses ors in fun decls
         | SynPat.Ands _         // no one uses ands in fun decls
@@ -159,33 +164,70 @@ module internal XmlDocParsing =
                 return []
         }
 
-module XmlDocComment =
-    let private ws (s: string, pos) = 
-        let res = s.TrimStart()
-        Some (res, pos + (s.Length - res.Length))
+//module XmlDocComment =
+//    
+//
+//
+//
+//    let private ws (s: string, pos) :(string * int) option = 
+//        let res = s.TrimStart()
+//        Some (res, pos + (s.Length - res.Length))
+//
+//    let private str (prefix: string) (s: string, pos) :(string * int) option =
+//        match s.StartsWith prefix with
+//        | true -> 
+//            let res = s.Substring prefix.Length
+//            Some (res, pos + (s.Length - res.Length))
+//        | _ -> None
+//
+//    let private eol (s: string, pos):(string * 'a) option = 
+//        match s with
+//        | "" -> Some ("", pos)
+//        | _ -> None
+//
+//    let inline private (>=>) f g = f >> Option.bind g
+//    
+//    // if it's a blank XML comment with trailing "<", returns Some (index of the "<"), otherwise returns None
+//    let isBlank (s: string) : int option =
+//        let parser = ws >=> str "///" >=> ws >=> str "<" >=> eol
+//        let res = parser (s.TrimEnd(), 0) |> Option.map snd |> Option.map (fun x -> x - 1)
+//        res
 
-    let private str (prefix: string) (s: string, pos) =
-        match s.StartsWith prefix with
-        | true -> 
-            let res = s.Substring prefix.Length
-            Some (res, pos + (s.Length - res.Length))
-        | _ -> None
-
-    let private eol (s: string, pos) = 
-        match s with
-        | "" -> Some ("", pos)
-        | _ -> None
-
-    let inline private (>=>) f g = f >> Option.bind g
+module XmlDocComment = 
     
+    let private ws (tl:TextLine, pos:int) : (TextLine * int) option  = 
+        let res = tl.TrimStart ()
+        Some (res, pos + (tl.Length - res.Length))
+
+    let private str (prefix:TextLine) (tl:TextLine,pos:int) : (TextLine * int) option  =
+        match tl.StartsWith prefix with
+        | true -> 
+            let res = tl.SubSection prefix.Length
+            Some (res, pos + (tl.Length - res.Length))
+        | _ -> None
+
+    let private eol (tl: TextLine, pos):(TextLine * 'a) option = 
+        if TextLine.isEmpty tl then  
+            Some (TextLine(), pos)
+        else None
+            
+    let inline private (>=>) f g = f >> Option.bind g
+
     // if it's a blank XML comment with trailing "<", returns Some (index of the "<"), otherwise returns None
-    let isBlank (s: string) =
-        let parser = ws >=> str "///" >=> ws >=> str "<" >=> eol
-        let res = parser (s.TrimEnd(), 0) |> Option.map snd |> Option.map (fun x -> x - 1)
+    let isBlank (tl:TextLine) =
+        let parser = ws >=> str (TextLine.From "///") >=> ws >=> str (TextLine.From "<") >=> eol
+        let res = parser (tl.TrimEnd(), 0) |> Option.map snd |> Option.map (fun x -> x - 1)
         res
+
+
+
+
+// TODO - reimplement this functionality using textlines and sourceText
+//    let isBlank (line:TextLine) =
 
 module XmlDocParser =
     /// Get the list of Xml documentation from current source code
     let getXmlDocables (sourceCodeOfTheFile, input) =
         let sourceCodeLinesOfTheFile = String.getLines sourceCodeOfTheFile
         XmlDocParsing.getXmlDocablesImpl (sourceCodeLinesOfTheFile, input)
+
