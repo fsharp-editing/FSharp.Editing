@@ -36,6 +36,7 @@ type FSharpWorkspace (hostServices:Host.HostServices) as self =
     let eventStream = workspaceChange.Publish
     let documentTimeStamps = ConcurrentDictionary<DocumentId, LastWriteTime> ()
     let transientDocuments = ConcurrentDictionary<FilePath, DocumentId list> (StringComparer.OrdinalIgnoreCase)
+    let _documentIdCache = Dictionary<FilePath, DocumentId> (StringComparer.OrdinalIgnoreCase)
     let transientDocumentIds = HashSet<DocumentId> ()
     let lockObj = obj ()
 
@@ -107,6 +108,22 @@ type FSharpWorkspace (hostServices:Host.HostServices) as self =
         else
             tryAddTransientDocument bufferChange.FileName bufferChange.NewText |> ignore
     }
+
+
+//    member self.OnAddDocument (args:WorkspaceChangeEventArgs) =
+//        match args.Kind with
+//        || WorkspaceChangeKind.DocumentAdded -> 
+//            let docId = args.DocumentId 
+//            let doc = self.TryGetDocument
+//
+//            if documentIdCache.ContainsKey 
+//            
+//            documentIdCache.TryAdd 
+//            (   doc.Name
+//            ,   docId
+//            ,   (fun _name docId -> docId)
+//            )
+
 
     member self.OnWorkspaceChanged (args:WorkspaceChangeEventArgs) =
         let filename =
@@ -180,6 +197,11 @@ type FSharpWorkspace (hostServices:Host.HostServices) as self =
 //            arg.
 //        base.OnSolutionAdded solution
 //        base.UpdateReferencesAfterAdd()
+//        self.CurrentSolution
+
+//    member self.GetProjectOptionsFromFileName (filePath:string) =
+//        documentIdCache.GetOrAdd(filePath, fun filePath -> filePath)
+//        documentIdCache.
 //        self.CurrentSolution
 
 

@@ -522,10 +522,14 @@ type private FileState =
     | BeingChecked
     | Cancelled
 
-// --------------------------------------------------------------------------------------
-// Language service 
 
+
+   // ----------------------------------------------------------------------------------//
+  //  F# LANGUAGE SERVICE                                                              //
+ //-----------------------------------------------------------------------------------//
 /// Provides functionality for working with the F# interactive checker running in background
+
+
 type FSharpLanguageService (workspace:FSharpWorkspace,?backgroundCompilation: bool, ?projectCacheSize: int) =
     let fileSystem = WorkspaceFileSystem workspace 
 
@@ -614,6 +618,11 @@ type FSharpLanguageService (workspace:FSharpWorkspace,?backgroundCompilation: bo
 
     new ([<Optional>] backgroundCompilation: bool, [<Optional>] projectCacheSize: int) = 
         FSharpLanguageService (new FSharpWorkspace (), backgroundCompilation,projectCacheSize)
+
+
+
+    member __.Workspace = workspace
+
 
     member __.OnFileChanged filePath = 
         files.AddOrUpdate (filePath, NeedChecking, (fun _ oldState -> 

@@ -838,11 +838,8 @@ and internal writeMember ctx (mem: FSharpMemberOrFunctionOrValue) =
 and internal writeDocs writer docs getXmlDocSig xmlDocBySig =
     let xmlDocs =
         if Seq.isEmpty docs then            
-            getXmlDocSig()
-            |> xmlDocBySig
-            :> seq<_>
+            getXmlDocSig ()|> xmlDocBySig :> seq<_>
         else docs :> seq<_>
-
     xmlDocs
     |> Seq.collect String.getLines
     |> Seq.iter (fun line -> writer.WriteLine("/// {0}", line.TrimStart()))
@@ -850,13 +847,13 @@ and internal writeDocs writer docs getXmlDocSig xmlDocBySig =
 and internal writeActivePattern ctx (case: FSharpActivePatternCase) =
     let group = case.Group
     writeDocs ctx.Writer case.XmlDoc (fun _ -> case.XmlDocSig) ctx.GetXmlDocBySignature
-    ctx.Writer.Write("val (|")
+    ctx.Writer.Write "val (|"
     for name in group.Names do
-        ctx.Writer.Write("{0}|", name)
+        ctx.Writer.Write ("{0}|", name)
     if not group.IsTotal then
-        ctx.Writer.Write("_|")
-    ctx.Writer.Write(")")
-    ctx.Writer.Write(" : ")
+        ctx.Writer.Write "_|"
+    ctx.Writer.Write ")"
+    ctx.Writer.Write " : "
     ctx.Writer.WriteLine("{0}", formatType ctx group.OverallType)
 
 let formatSymbol getXmlDocBySignature indentation displayContext openDeclarations (symbol: FSharpSymbol) filterer blankLines =
@@ -908,14 +905,12 @@ let [<Literal>] private tempFileName = "tmp"
 let getFileNameFromSymbol (symbol: FSharpSymbol) =    
     let fileName =        
         match symbol with
-        | MemberFunctionOrValue mem ->
-            mem.LogicalEnclosingEntity.TryGetFullName()
+        | MemberFunctionOrValue mem -> mem.LogicalEnclosingEntity.TryGetFullName()
         | UnionCase uc ->
             match uc.ReturnType with
-            | TypeWithDefinition entity ->
-                entity.TryGetFullName()
+            | TypeWithDefinition entity -> entity.TryGetFullName ()
             | _ -> None
-        | Field (field, _) -> field.DeclaringEntity.TryGetFullName()
+        | Field (field, _) -> field.DeclaringEntity.TryGetFullName ()
         | _ -> Option.attempt(fun _ -> symbol.FullName)
         |> Option.getOrElse tempFileName
 

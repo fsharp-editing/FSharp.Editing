@@ -4,6 +4,8 @@ open System
 open System.Diagnostics
 open FSharp.Editing
 open FSharp.Editing.UntypedAstUtils
+open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.Text
 open Microsoft.FSharp.Compiler.Ast
 open Microsoft.FSharp.Compiler.Range
 open Microsoft.FSharp.Compiler.SourceCodeServices
