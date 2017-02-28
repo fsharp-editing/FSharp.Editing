@@ -128,10 +128,10 @@
     <Compile Include="CodeGeneration\InterfaceStubGenerator.fs" />
     <Compile Include="CodeGeneration\RecordStubGenerator.fs" />
     <Compile Include="Structure\BlockStructure.fs" />
-    <Content Include="app.config" />
     <Compile Include="Documentation\XmlDocParser.fs" />
     <Compile Include="Documentation\XmlDocBuilder.fs" />
     <Compile Include="Documentation\XmlDocGenerator.fs" />
+    <Content Include="app.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
