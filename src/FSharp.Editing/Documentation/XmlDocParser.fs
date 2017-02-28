@@ -1,4 +1,6 @@
-﻿namespace FSharp.Editing
+﻿namespace FSharp.Editing.Documentation
+
+open FSharp.Editing
 
 /// Represent an Xml documentation block in source code
 type XmlDocable =
