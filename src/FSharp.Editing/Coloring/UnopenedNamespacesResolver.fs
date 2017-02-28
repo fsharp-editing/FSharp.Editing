@@ -83,6 +83,10 @@ module Entity =
                             Namespace = ns
                             Name = match restIdents with [|_|] -> "" | _ -> String.concat "." restIdents }) 
 
+open Microsoft.FSharp.Compiler
+open Microsoft.FSharp.Compiler.Ast
+
+
 type ScopeKind =
     | Namespace
     | TopModule
@@ -93,11 +97,9 @@ type ScopeKind =
 
 type InsertContext =
     { ScopeKind: ScopeKind
-      Pos: Point<FCS> }
+      Pos: Range.pos }
 
 module ParsedInput =
-    open Microsoft.FSharp.Compiler
-    open Microsoft.FSharp.Compiler.Ast
 
     type private EndLine = int
         
@@ -380,8 +382,11 @@ module ParsedInput =
         { Idents: Idents
           Kind: ScopeKind }
 
+    open Microsoft.FSharp.Compiler.Range
+
+
     let tryFindInsertionContext (currentLine: int) (ast: ParsedInput) = 
-        let result: (Scope * Point<FCS>) option ref = ref None
+        let result: (Scope * pos) option ref = ref None
         let ns: string[] option ref = ref None
         let modules = ResizeArray<Idents * EndLine * Col>()  
 
@@ -394,7 +399,7 @@ module ParsedInput =
             if line <= currentLine then
                 match !result with
                 | None -> 
-                    result := Some ({ Idents = longIdentToIdents scope; Kind = kind }, Point.make line col)
+                    result := Some ({ Idents = longIdentToIdents scope; Kind = kind }, Pos.fromZ line col)
                 | Some (oldScope, oldPos) ->
                     match kind, oldScope.Kind with
                     | (Namespace | NestedModule | TopModule), OpenDeclaration
@@ -405,7 +410,7 @@ module ParsedInput =
                                         | [] -> oldScope.Idents 
                                         | _ -> longIdentToIdents scope
                                     Kind = kind },
-                                  Point.make line col)
+                                  Pos.fromZ line col)
                     | _ -> ()
 
         let getMinColumn (decls: SynModuleDecls) =
@@ -471,12 +476,11 @@ module ParsedInput =
         | ParsedInput.SigFile _ -> ()
         | ParsedInput.ImplFile input -> walkImplFileInput input
 
-        let res =
-            maybe {
-                let! scope, pos = !result
-                let ns = !ns |> Option.map longIdentToIdents
-                return scope, ns, { pos with Line = pos.Line + 1 }
-            }
+        let res = maybe {
+            let! scope, pos = !result
+            let ns = !ns |> Option.map longIdentToIdents
+            return scope, ns, Pos.fromZ (pos.Line+1) pos.Column
+        }
         //debug "[UnopenedNamespaceResolver] Ident, line, col = %A, AST = %A" (!result) ast
         //printfn "[UnopenedNamespaceResolver] Ident, line, col = %A, AST = %A" (!result) ast
         let modules = 
@@ -492,17 +496,18 @@ module ParsedInput =
             | Some (scope, ns, pos) -> 
                 Entity.tryCreate(ns, scope.Idents, partiallyQualifiedName, requiresQualifiedAccessParent, 
                                  autoOpenParent, entityNamespace, entity)
-                |> Array.map (fun e ->
+                |> Array.map ^ fun e ->
                     e,
-                    match modules |> List.filter (fun (m, _, _) -> entity |> Array.startsWith m ) with
+                    match modules |> List.filter ^fun (m, _, _) -> entity |> Array.startsWith m with
                     | [] -> { ScopeKind = scope.Kind; Pos = pos }
                     | (_, endLine, startCol) :: _ ->
                         //printfn "All modules: %A, Win module: %A" modules m
                         let scopeKind =
                             match scope.Kind with
-                            | TopModule -> NestedModule
-                            | x -> x
-                        { ScopeKind = scopeKind; Pos = Point.make (endLine + 1) startCol })
+                            | TopModule -> NestedModule | x -> x
+                        {   ScopeKind = scopeKind
+                            Pos = Pos.fromZ (endLine+1) startCol 
+                        }
 
 type IInsertContextDocument<'T> =
     abstract GetLineStr: 'T * line:int -> string
@@ -537,7 +542,7 @@ module InsertContext =
                 else 1  
             | _ -> ctx.Pos.Line
 
-        { ctx.Pos with Line = line }
+        Range.Pos.fromZ line ctx.Pos.Column
 
     /// <summary>
     /// Inserts open declaration into abstract document. 

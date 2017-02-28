@@ -11,6 +11,7 @@ open System.IO
 open NUnit.Framework
 open TestHelpers.LanguageServiceTestHelper
 open FSharp.Editing
+open FSharp.Editing.Documentation
 
 [<Literal>]
 let dataFolderName = __SOURCE_DIRECTORY__ + "/../data/"
@@ -20,7 +21,7 @@ let fileName = dataFolder.``XmlDocSampleFile.fs``
 let input = File.ReadAllText(fileName)
 open FSharp.Editing.ProjectSystem
 let workspace = new FSharpWorkspace ()
-let languageService = LanguageService workspace
+let languageService = FSharpLanguageService workspace
 let output = 
     lazy
         async {

@@ -1,6 +1,9 @@
 namespace FSharp.Editing.Coloring
 
 open FSharp.Editing
+open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.Text
+
 
 module Symbols = 
     open System.IO
@@ -26,10 +29,10 @@ module HighlightUsageInFile =
     type HighlightUsageInFileResult =
         | UsageInFile of FSharpSymbol * LongIdent * FSharpSymbolUse array
 
-    let findUsageInFile (currentLine: CurrentLine<FCS>) (symbol: Symbol) (getCheckResults: GetCheckResults) = 
+    let findUsageInFile file (currentLine: TextLine ) (symbol: Symbol) (getCheckResults: GetCheckResults) = 
         asyncMaybe {
-            let! parseAndCheckResults = getCheckResults currentLine.File
-            let! _ = parseAndCheckResults.GetSymbolUseAtLocation (currentLine.EndLine+1, symbol.RightColumn, currentLine.Line, [symbol.Text])
-            let! (symbol, ident, refs) = parseAndCheckResults.GetUsesOfSymbolInFileAtLocation (currentLine.EndLine, symbol.RightColumn, currentLine.Line, symbol.Text)
+            let! parseAndCheckResults = getCheckResults file
+            let! _ = parseAndCheckResults.GetSymbolUseAtLocation (currentLine.LineNumber, symbol.RightColumn, currentLine.ToString(), [symbol.Text])
+            let! (symbol, ident, refs) = parseAndCheckResults.GetUsesOfSymbolInFileAtLocation (currentLine.LineNumber, symbol.RightColumn, currentLine.ToString(), symbol.Text)
             return UsageInFile (symbol, ident, Symbols.filterSymbolUsesDuplicates refs)
         }

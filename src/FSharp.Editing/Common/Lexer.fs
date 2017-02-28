@@ -4,6 +4,7 @@ open FSharp.Editing
 
 open System.Diagnostics
 open Microsoft.FSharp.Compiler
+open Microsoft.FSharp.Compiler.Range
 open Microsoft.FSharp.Compiler.SourceCodeServices
 open Microsoft.FSharp.Compiler.PrettyNaming
 
@@ -20,7 +21,11 @@ type Symbol =
       LeftColumn: int
       RightColumn: int
       Text: string }
-    member x.Range : Range<FCS> = { Start = Point.make x.Line x.LeftColumn; End = Point.make x.Line x.RightColumn }
+    member x.Range : range = 
+        Range.mkRange  x.Text
+            (Pos.fromZ x.Line x.LeftColumn)
+            (Pos.fromZ x.Line x.RightColumn)
+    
 
 [<RequireQualifiedAccess>]
 type SymbolLookupKind =
@@ -35,10 +40,9 @@ type internal DraftToken =
     static member inline Create kind token = 
         { Kind = kind; Token = token; RightColumn = token.LeftColumn + token.FullMatchedLength - 1 }
 
-type SourceCode = string
 type Defines = string list
 type LineIndex = int
-type QueryLexState = SourceCode -> Defines -> LineIndex -> FSharpTokenizerLexState
+type QueryLexState = string -> Defines -> LineIndex -> FSharpTokenizerLexState
 
 module Lexer =
     /// Get the array of all lex states in current source
@@ -80,7 +84,7 @@ module Lexer =
             lexStates.[line]
 
     /// Return all tokens of current line
-    let tokenizeLine source (args: string[]) line lineStr (queryLexState: QueryLexState) =
+    let tokenizeLine (source:string) (args: string[]) line lineStr (queryLexState: QueryLexState) =
         let defines =
             args |> Seq.choose (fun s -> if s.StartsWith "--define:" then Some s.[9..] else None)
                  |> Seq.toList
@@ -211,9 +215,9 @@ module Lexer =
             debug "Getting lex symbols failed with %O" e
             None
 
-    let getSymbolAtPoint point lookupKind args queryLexState =
-        getSymbol point.Document point.Point.Line point.Point.Column point.Line lookupKind args queryLexState
-
+//    let getSymbolAtPoint point lookupKind args queryLexState =
+//        getSymbol point.Document point.Point.Line point.Point.Column point.Line lookupKind args queryLexState
+//
 
     
 

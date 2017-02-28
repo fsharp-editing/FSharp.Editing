@@ -107,40 +107,43 @@ let memoize f =
 type FileName = string
 type FilePath = string
 
-[<Measure>] type FCS
-
-type Point<[<Measure>]'t> = { Line : int; Column : int }
-type Range<[<Measure>]'t> = { Start : Point<'t>; End: Point<'t> }
-
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Point =
-    let make line column : Point<'t> = { Line = line; Column = column }
-
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module Range =
-    let make startLine startColumn endLine endColumn : Range<'t> =
-        { Start = Point.make startLine startColumn
-          End = Point.make endLine endColumn }
-    
-type CurrentLine<[<Measure>]'t> = 
-    { Line: string
-      File: FileName; Range: Range<'t> }
-    member x.EndLine = x.Range.End.Line 
-
-[<NoComparison>]
-type PointInDocument<[<Measure>]'t> = 
-    { Point: Point<'t>
-      Line: string
-      Document: string
-      File: FileName }
-    member x.LineIndex = x.Point.Line
-    member x.ColumnIndex = x.Point.Column
-    member x.CurrentLine : Lazy<CurrentLine<'t>> = 
-        lazy
-          { Line = x.Line
-            File = x.File
-            Range = Range.make x.LineIndex x.ColumnIndex x.LineIndex x.Line.Length }
-
+//
+//[<RequireQualifiedAccess>]
+//module Point =
+//    open Microsoft.FSharp.Compiler.Range
+//    
+//    let inline make0idx line column = Pos.fromZ line column
+//    let inline make1idx line column = Pos.fromZ line column |> Pos.toZ
+//
+//[<RequireQualifiedAccess>]
+//module Range =
+//    open Microsoft.FSharp.Compiler
+//
+//    let make startLine startColumn endLine endColumn  =
+//        Range.    
+//
+//        { Start = Point.make startLine startColumn
+//          End = Point.make endLine endColumn }
+//    
+//type CurrentLine<[<Measure>]'t> = 
+//    { Line: string
+//      File: FileName; Range: Range<'t> }
+//    member x.EndLine = x.Range.End.Line 
+//
+//[<NoComparison>]
+//type PointInDocument<[<Measure>]'t> = 
+//    { Point: Point<'t>
+//      Line: string
+//      Document: string
+//      File: FileName }
+//    member x.LineIndex = x.Point.Line
+//    member x.ColumnIndex = x.Point.Column
+//    member x.CurrentLine : Lazy<CurrentLine<'t>> = 
+//        lazy
+//          { Line = x.Line
+//            File = x.File
+//            Range = Range.make x.LineIndex x.ColumnIndex x.LineIndex x.Line.Length }
+//
 
 type Atom<'T when 'T: not struct>(value: 'T) = 
     let refCell = ref value

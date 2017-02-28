@@ -12,7 +12,7 @@ let sourceFiles = [| fileName |]
 let framework = FSharpCompilerVersion.FSharp_3_1
 open FSharp.Editing.ProjectSystem
 let workspace = new FSharpWorkspace ()
-let languageService = LanguageService workspace
+let languageService = FSharpLanguageService workspace
                                                     
 let opts source = 
     let opts = 

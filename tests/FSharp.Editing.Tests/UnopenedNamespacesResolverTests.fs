@@ -305,7 +305,7 @@ open FSharp.Editing
 let file = "/File.fs"
 open FSharp.Editing.ProjectSystem
 let workspace = new FSharpWorkspace ()
-let languageService = LanguageService workspace
+let languageService = FSharpLanguageService workspace
 
 type Source = string
 

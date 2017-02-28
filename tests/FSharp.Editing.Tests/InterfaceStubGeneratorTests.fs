@@ -25,7 +25,7 @@ let source = File.ReadAllText(fileName)
 let projectFileName = Path.ChangeExtension(fileName, ".fsproj")
 open FSharp.Editing.ProjectSystem
 let workspace = new FSharpWorkspace ()
-let languageService = LanguageService workspace
+let languageService = FSharpLanguageService workspace
 let opts = languageService.GetProjectCheckerOptions(projectFileName, [| fileName |], TestHelpers.LanguageServiceTestHelper.args, [||]) 
 
 #if INTERACTIVE

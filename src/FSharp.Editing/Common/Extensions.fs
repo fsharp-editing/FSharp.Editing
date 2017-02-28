@@ -21,6 +21,9 @@ open FSharp.Editing
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Option =
 
+    let guard (x: bool) : Option<unit> =
+        if x then Some() else None
+
     let inline orElseWith ifNoneThunk option = match option with None -> ifNoneThunk () | Some _ -> option
 
     let inline ofNull value =
@@ -78,29 +81,42 @@ module Option =
     
 
 
-// Async helper functions copied from https://github.com/jack-pappas/ExtCore/blob/master/ExtCore/ControlCollections.Async.fs
+
 [<RequireQualifiedAccess>]
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module Async =
+
+    let startAsyncAsTask cancellationToken computation =
+        let computation =
+            async {
+                try
+                    return! computation
+                with e ->
+                    Assert.Exception(e)
+                    return Unchecked.defaultof<_>
+            }
+        Async.StartAsTask(computation, TaskCreationOptions.None, cancellationToken)
+
+
+    let startAsyncUnitAsTask cancellationToken (computation:Async<unit>) = 
+        startAsyncAsTask cancellationToken computation  :> Task
+
+    
     /// Transforms an Async value using the specified function.
-    [<CompiledName("Map")>]
-    let map (mapping : 'T -> 'U) (value : Async<'T>) : Async<'U> =
-        async {
-            // Get the input value.
-            let! x = value
-            // Apply the mapping function and return the result.
-            return mapping x
-        }
+    let map (mapping : 'T -> 'U) (value : Async<'T>) : Async<'U> = async {
+        // Get the input value.
+        let! x = value
+        // Apply the mapping function and return the result.
+        return mapping x
+    }
 
     // Transforms an Async value using the specified Async function.
-    [<CompiledName("Bind")>]
-    let bind (binding : 'T -> Async<'U>) (value : Async<'T>) : Async<'U> =
-        async {
-            // Get the input value.
-            let! x = value
-            // Apply the binding function and return the result.
-            return! binding x
-        }
+    let bind (binding : 'T -> Async<'U>) (value : Async<'T>) : Async<'U> = async {
+        // Get the input value.
+        let! x = value
+        // Apply the binding function and return the result.
+        return! binding x
+    }
 
     [<RequireQualifiedAccess>]    
     module Array =
@@ -288,6 +304,22 @@ type TextSpan with
     static member CompareTo (a:TextSpan,b:TextSpan) = a.CompareTo b
 
 type SourceText with
+    
+    member self.Text with get () = self.ToString()
+
+    member self.GetNthLine  (lineNum:int) : TextLine =
+        self.Lines.[lineNum]
+
+    member self.TryGetNthLine (lineNum:int) : TextLine option =
+        if lineNum < 0 || lineNum >= self.Lines.Count then None else Some self.Lines.[lineNum]
+
+
+
+
+    member self.GetLineAtPosition (position:LinePosition) =
+        self.Lines.GetPosition position
+        |> self.Lines.GetLineFromPosition
+
 
     member self.GetBytes () = 
         self.ToString() |> self.Encoding.GetBytes    
@@ -1009,6 +1041,8 @@ module String =
             strArr.[0] <- Char.ToLower c
             String (strArr)
 
+    let inline contains (target : string) (str : string) = str.Contains target
+    let inline equalsIgnoreCase (str1 : string) (str2 : string) = str1.Equals(str2, StringComparison.OrdinalIgnoreCase)
 
     let extractTrailingIndex (str: string) =
         match str with
@@ -1044,39 +1078,36 @@ module String =
         elif value.Contains pattern then
             Some()
         else None
-    
-    open System.IO
 
-    let getLines (str: string) =
+    let getLines (str : string) =
         use reader = new StringReader(str)
-        [|
-        let line = ref (reader.ReadLine())
-        while isNotNull (!line) do
-            yield !line
-            line := reader.ReadLine()
-        if str.EndsWith("\n") then
-            // last trailing space not returned
-            // http://stackoverflow.com/questions/19365404/stringreader-omits-trailing-linebreak
-            yield String.Empty
-        |]
+        [| let line = ref (reader.ReadLine())
+           while isNotNull (!line) do
+               yield !line
+               line := reader.ReadLine()
+           if str.EndsWith "\n" then
+               // last trailing space not returned
+               // http://stackoverflow.com/questions/19365404/stringreader-omits-trailing-linebreak
+               yield String.Empty |]
 
-    let getNonEmptyLines (str: string) =
+    let getNonEmptyLines (str : string) =
         use reader = new StringReader(str)
-        [|
-        let line = ref (reader.ReadLine())
-        while isNotNull (!line) do
-            if (!line).Length > 0 then
-                yield !line
-            line := reader.ReadLine()
-        |]
+        [| let line = ref (reader.ReadLine())
+           while isNotNull (!line) do
+               if (!line).Length > 0 then yield !line
+               line := reader.ReadLine() |]
+
+    /// match strings with ordinal ignore case
+    let inline equalsIC (str1:string) (str2:string) = str1.Equals(str2,StringComparison.OrdinalIgnoreCase)
 
     /// Parse a string to find the first nonempty line
     /// Return null if the string was null or only contained empty lines
-    let firstNonEmptyLine (str: string) =
-        use reader = new StringReader (str)
-        let rec loop (line:string) =
-            if isNull line then None 
-            elif  line.Length > 0 then Some line
+    let firstNonEmptyLine (str : string) =
+        use reader = new StringReader(str)
+
+        let rec loop (line : string) =
+            if isNull line then None
+            elif line.Length > 0 then Some line
             else loop (reader.ReadLine())
         loop (reader.ReadLine())
 

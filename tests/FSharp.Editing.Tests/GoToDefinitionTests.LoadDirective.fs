@@ -13,7 +13,7 @@ type dataFolder = FSharp.Management.FileSystem<dataFolderName>
 
 open FSharp.Editing.ProjectSystem
 let workspace = new FSharpWorkspace ()
-let languageService = LanguageService workspace
+let languageService = FSharpLanguageService workspace
 
 
 let canonicalizeFilename filename = Path.GetFullPathSafe filename //(new FileInfo(filename)).FullName

@@ -37,6 +37,7 @@ type RawEntity = {
 namespace FSharp.Editing.ProjectSystem
 
 open System
+open System.Collections.Generic
 open System.Runtime
 open System.Reflection
 open Microsoft.CodeAnalysis
@@ -117,19 +118,34 @@ type Parent = {
             |> Option.map ^ fun fullDisplayName ->
                 (fullName, fullDisplayName.Split '.' |> removeGenericParamsCount |> removeModuleSuffix)
 
-module AssemblyContentProvider =
-    open System.IO
 
-    type AssemblyContentCacheEntry = { 
-        FileWriteTime: DateTime 
-        ContentType: AssemblyContentType 
-        Entities: RawEntity list 
-    }
+type AssemblyContentCacheEntry = { 
+    FileWriteTime: DateTime 
+    ContentType: AssemblyContentType 
+    Entities: RawEntity list 
+}
 
-    [<NoComparison; NoEquality>]
-    type IAssemblyContentCache =
-        abstract TryGet: AssemblyPath -> AssemblyContentCacheEntry option
-        abstract Set: AssemblyPath -> AssemblyContentCacheEntry -> unit
+[<NoComparison; NoEquality>]
+type IAssemblyContentCache =
+    abstract TryGet: AssemblyPath -> AssemblyContentCacheEntry option
+    abstract Set: AssemblyPath -> AssemblyContentCacheEntry -> unit
+
+
+
+type EntityCache() =
+    let dic = Dictionary<AssemblyPath, AssemblyContentCacheEntry>()
+    interface IAssemblyContentCache with
+        member __.TryGet assembly =
+            match dic.TryGetValue assembly with
+            | true, entry -> Some entry
+            | _ -> None
+        member __.Set assembly entry = dic.[assembly] <- entry
+
+    member __.Clear() = dic.Clear()
+    member x.Locking f = lock dic <| fun _ -> f (x :> IAssemblyContentCache)
+
+
+module AssemblyContent =
 
     let private createEntity ns (parent: Parent) (entity: FSharpEntity) =
         parent.FormatEntityFullName entity
@@ -241,7 +257,7 @@ module AssemblyContentProvider =
         |> Seq.collect ^ fun asm -> getAssemblySignatureContent contentType asm.Contents
         |> Seq.toList
 
-    let getAssemblyContent (withCache: ((IAssemblyContentCache -> _) -> _) option) 
+    let getAssemblyContent (withCache: (IAssemblyContentCache -> _) -> _)  
                            contentType (fileName: string option) (assemblies: FSharpAssembly list) =
         match assemblies 
         #if !NETCORE
@@ -250,21 +266,41 @@ module AssemblyContentProvider =
             , fileName with
         | [], _ -> []
         | assemblies, Some fileName ->
-            let fileWriteTime = FileInfo(fileName).LastWriteTime 
-            match withCache with
-            | Some withCache ->
-                withCache ^ fun cache ->
-                    match contentType, cache.TryGet fileName with 
-                    | _, Some entry
-                    | Public, Some entry when entry.FileWriteTime = fileWriteTime -> entry.Entities
-                    | _ ->
-                        let entities = getAssemblySignaturesContent contentType assemblies
-                        cache.Set fileName { FileWriteTime = fileWriteTime; ContentType = contentType; Entities = entities }
-                        entities
-            | None -> getAssemblySignaturesContent contentType assemblies
+            let fileWriteTime = IO.FileInfo(fileName).LastWriteTime 
+            withCache ^ fun cache ->
+                match contentType, cache.TryGet fileName with 
+                | _, Some entry
+                | Public, Some entry when entry.FileWriteTime = fileWriteTime -> entry.Entities
+                | _ ->
+                    let entities = getAssemblySignaturesContent contentType assemblies
+                    cache.Set fileName { FileWriteTime = fileWriteTime; ContentType = contentType; Entities = entities }
+                    entities
         | assemblies, None -> 
             getAssemblySignaturesContent contentType assemblies
         |> List.filter ^ fun entity -> 
             match contentType, entity.IsPublic with
             | Full, _ | Public, true -> true
             | _ -> false
+
+//[<Export(typeof<AssemblyContentProvider>); Composition.Shared>]
+type internal AssemblyContentProvider () =
+    let entityCache = EntityCache()
+
+    member x.GetAllEntitiesInProjectAndReferencedAssemblies (fileCheckResults: FSharpCheckFileResults) =
+        [ yield! AssemblyContent.getAssemblySignatureContent AssemblyContentType.Full fileCheckResults.PartialAssemblySignature
+          // FCS sometimes returns several FSharpAssembly for single referenced assembly. 
+          // For example, it returns two different ones for Swensen.Unquote; the first one 
+          // contains no useful entities, the second one does. Our cache prevents to process
+          // the second FSharpAssembly which results with the entities containing in it to be 
+          // not discovered.
+          let assembliesByFileName =
+              fileCheckResults.ProjectContext.GetReferencedAssemblies()
+              |> Seq.groupBy (fun asm -> asm.FileName)
+              |> Seq.map (fun (fileName, asms) -> fileName, List.ofSeq asms)
+              |> Seq.toList
+              |> List.rev // if mscorlib.dll is the first then FSC raises exception when we try to
+                          // get Content.Entities from it.
+
+          for fileName, signatures in assembliesByFileName do
+              let contentType = Public // it's always Public for now since we don't support InternalsVisibleTo attribute yet
+              yield! AssemblyContent.getAssemblyContent (entityCache.Locking) contentType fileName signatures ]

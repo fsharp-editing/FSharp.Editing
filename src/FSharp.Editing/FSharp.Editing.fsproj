@@ -36,11 +36,11 @@
     <Tailcalls>true</Tailcalls>
     <OutputPath>bin\Release\</OutputPath>
     <DefineConstants>TRACE</DefineConstants>
-    <WarningLevel>5</WarningLevel>
+    <WarningLevel>3</WarningLevel>
     <DocumentationFile>bin\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
     <OtherFlags>--warnon:1182</OtherFlags>
     <NoWarn>52</NoWarn>
-    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <TreatWarningsAsErrors>false</TreatWarningsAsErrors>
     <WarningsAsErrors>
     </WarningsAsErrors>
   </PropertyGroup>
@@ -93,10 +93,10 @@
     <Compile Include="Common\Lexer.fs" />
     <Compile Include="Common\UntypedAstUtils.fs" />
     <Compile Include="Common\TypedAstUtils.fs" />
-    <Compile Include="Common\XmlDocParser.fs" />
     <Compile Include="Common\IdentifierUtils.fs" />
     <Compile Include="ProjectSystem\AssemblyContentProvider.fs" />
     <Compile Include="ProjectSystem\OpenDocumentsTracker.fs" />
+    <Compile Include="ProjectSystem\ProjectConfig.fs" />
     <Compile Include="ProjectSystem\ProjectSitesAndFiles.fs" />
     <Compile Include="ProjectSystem\FSharpWorkspace.fs" />
     <Compile Include="ProjectSystem\FileSystem.fs" />
@@ -119,6 +119,7 @@
     <Compile Include="Coloring\HighlightUsageInFile.fs" />
     <Compile Include="Coloring\PrintfSpecifiersUsageGetter.fs" />
     <Compile Include="Coloring\DocumentHighlights.fs" />
+    <Compile Include="Symbols\SymbolHelpers.fs" />
     <Compile Include="Symbols\SourceCodeClassifier.fs" />
     <Compile Include="CodeGeneration\IndentedTextWriter.fs" />
     <Compile Include="CodeGeneration\CodeGeneration.fs" />
@@ -128,6 +129,9 @@
     <Compile Include="CodeGeneration\RecordStubGenerator.fs" />
     <Compile Include="Structure\BlockStructure.fs" />
     <Content Include="app.config" />
+    <Compile Include="Documentation\XmlDocParser.fs" />
+    <Compile Include="Documentation\XmlDocBuilder.fs" />
+    <Compile Include="Documentation\XmlDocGenerator.fs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core, Version=$(TargetFSharpCoreVersion), Culture=neutral, PublicKeyToken=b03f5f7f11d50a3a">
