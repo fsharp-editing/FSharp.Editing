@@ -303,6 +303,26 @@ type TextSpan with
     /// Compares two instances of Microsoft.CodeAnalysis.Text.TextSpan
     static member CompareTo (a:TextSpan,b:TextSpan) = a.CompareTo b
 
+
+type TextLine with
+
+    member self.GetPosition (c:char) =
+        let text = self.Text.ToString()
+        match text.IndexOf c with
+        | -1 -> None
+        | x ->  Some (LinePosition (self.LineNumber,x))
+
+    member __.Contains (pos:int)  =
+        __.Start <= pos && pos <= __.End
+
+        
+    member self.InsertString (pos, str:string) =
+        let chg = TextChange(TextSpan(pos,0),str)
+        let moddedLine = self.Text.WithChanges(chg)
+        TextLine.FromSpan(moddedLine,TextSpan.FromBounds(self.Start,self.Start+ moddedLine.Length))
+
+
+
 type SourceText with
     
     member self.Text with get () = self.ToString()
@@ -313,16 +333,15 @@ type SourceText with
     member self.TryGetNthLine (lineNum:int) : TextLine option =
         if lineNum < 0 || lineNum >= self.Lines.Count then None else Some self.Lines.[lineNum]
 
-
-
-
     member self.GetLineAtPosition (position:LinePosition) =
         self.Lines.GetPosition position
         |> self.Lines.GetLineFromPosition
 
-
     member self.GetBytes () = 
         self.ToString() |> self.Encoding.GetBytes    
+
+
+
 
 
 type Document with
@@ -1029,6 +1048,7 @@ module Array =
 [<RequireQualifiedAccess>]
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
 module String =
+
     let inline toCharArray (str:string) = str.ToCharArray()
 
     let lowerCaseFirstChar (str: string) =
@@ -1041,7 +1061,9 @@ module String =
             strArr.[0] <- Char.ToLower c
             String (strArr)
 
+
     let inline contains (target : string) (str : string) = str.Contains target
+
     let inline equalsIgnoreCase (str1 : string) (str2 : string) = str1.Equals(str2, StringComparison.OrdinalIgnoreCase)
 
     let extractTrailingIndex (str: string) =
@@ -1110,6 +1132,97 @@ module String =
             elif line.Length > 0 then Some line
             else loop (reader.ReadLine())
         loop (reader.ReadLine())
+
+
+    /// reutrns -1 if the entire line is whitespace
+    let firstNonWhitespaceOffset (line:string) =
+        [ 0 .. line.Length-1 ] 
+        |> Seq.tryFind ^ fun idx -> Char.IsWhiteSpace( line.[idx])
+        |> Option.getOrElse -1
+
+
+    let getLeadingWhitespace (line:string) =
+        match firstNonWhitespaceOffset line with
+        | x when x <= -1 -> String.Empty
+        | offset -> line.Substring( 0,offset)
+
+
+    let getFirstLineText (text:string) =
+        let lineBreak = text.IndexOf envNewLine
+        if lineBreak < 0 then text else text.Substring (0,lineBreak+1)
+
+
+    let getLastLineText (text:string) =
+        let lineBreak = text.LastIndexOf envNewLine
+        if lineBreak < 0 then text else text.Substring (lineBreak+1)
+
+
+
+    let convertTabToSpace (tabSize:int) (initialColumn:int) (endPosition:int) (textSnippet:string) : int =
+        if tabSize <= 0 then invalidArgf "tabsize" "tabsize must be 1 or higher, was '%i' " tabSize
+        if endPosition < 0 || endPosition  > textSnippet.Length then 
+            invalidArgf "endPosition" "endPosition must be within the bounds of the textSnippet"
+        let rec loop col idx =
+            if idx = endPosition then col - initialColumn 
+            elif textSnippet.[idx] = '\t' then
+                loop (col + tabSize - col % tabSize) (idx+1)
+            else loop col (idx+1)
+        loop initialColumn 0
+
+
+    let getColumnFromLineOffset (tabSize:int) (endPosition:int) (textSnippet:string) : int =
+        if tabSize <= 0 then invalidArgf "tabsize" "tabsize must be 1 or higher, was '%i' " tabSize
+        if endPosition < 0 || endPosition  > textSnippet.Length then 
+            invalidArgf "endPosition" "endPosition must be within the bounds of the textSnippet"
+
+        convertTabToSpace tabSize 0 endPosition   textSnippet 
+
+
+    let getTextColumn (initialColumn:int) (tabsize:int) (text:string) =
+        let lineText = getLastLineText text
+        if text <> lineText then 
+            getColumnFromLineOffset tabsize lineText.Length text
+        else
+            (convertTabToSpace tabsize initialColumn text.Length text) + initialColumn
+
+
+    let indexOf (predicate: char -> bool) (text:string) =
+        if String.IsNullOrEmpty text then -1 else
+        text.ToCharArray() |> Array.tryFindIndex predicate 
+        |> Option.getOrElse -1
+     
+     
+    let containsLineBreak (text:string)  = 
+        text.ToCharArray() 
+        |> Array.exists (function '\n'|'\r' -> true | _ -> false)
+
+
+  
+    let getNumberOfLineBreaks (text:string)  = 
+        let mutable lineBreaks = 0
+        for i=0 to text.Length-1 do
+            if text.[i] = '\n' then 
+                incr &lineBreaks
+            elif text.[i] == '\r' then
+                if i+1 = text.Length || text.[i+1] <> '\n' then
+                    incr &lineBreaks
+        lineBreaks
+
+
+    let containsTab (text:string)  = 
+        text.ToCharArray() 
+        |> Array.exists (function '\t' -> true | _ -> false)
+
+
+    let getLineOffsetFromColumn (tabSize:int) (column:int) (line:string) : int =
+        let mutable currentColumn = 0
+        [ 0 .. line.Length-1 ] |> List.tryPick ^ fun x ->
+            if currentColumn >= column then Some x 
+            elif line.[i] = '\t' then 
+                currentColumn <- tabSize - (currentColumn % tabSize); None
+            else incr &currentColumn; None
+        |> Option.getOrElse line.Length
+
 
 
 open System.Text
