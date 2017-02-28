@@ -277,14 +277,356 @@ module Dict =
         dict
 
 
-
-
-
 type Path with
 
     static member GetFullPathSafe path = try Path.GetFullPath path with _ -> path
 
     static member GetFileNameSafe path = try Path.GetFileName path with _ -> path
+
+
+[<RequireQualifiedAccess>]
+[<CompilationRepresentation (CompilationRepresentationFlags.ModuleSuffix)>]
+module Array =
+    let inline private checkNonNull argName arg = 
+        match box arg with 
+        | null -> nullArg argName 
+        | _ -> ()
+
+    /// Optimized arrays equality. ~100x faster than `array1 = array2` on strings.
+    /// ~2x faster for floats
+    /// ~0.8x slower for ints
+    let inline areEqual (xs: 'T []) (ys: 'T []) =
+        match xs, ys with
+        | null, null -> true
+        | [||], [||] -> true
+        | null, _ | _, null -> false
+        | _ when xs.Length <> ys.Length -> false
+        | _ ->
+            let mutable break' = false
+            let mutable i = 0
+            let mutable result = true
+            while i < xs.Length && not break' do
+                if xs.[i] <> ys.[i] then 
+                    break' <- true
+                    result <- false
+                i <- i + 1
+            result
+
+    /// check if subArray is found in the wholeArray starting 
+    /// at the provided index
+    let inline isSubArray (subArray: 'T []) (wholeArray:'T []) index = 
+        if isNull subArray || isNull wholeArray then false
+        elif subArray.Length = 0 then true
+        elif subArray.Length > wholeArray.Length then false
+        elif subArray.Length = wholeArray.Length then areEqual subArray wholeArray else
+        let rec loop subidx idx =
+            if subidx = subArray.Length then true 
+            elif subArray.[subidx] = wholeArray.[idx] then loop (subidx+1) (idx+1) 
+            else false
+        loop 0 index
+
+    /// Returns true if one array has another as its subset from index 0.
+    let startsWith (prefix: _ []) (whole: _ []) =
+        isSubArray prefix whole 0
+
+    /// Returns true if one array has trailing elements equal to another's.
+    let endsWith (suffix: _ []) (whole: _ []) =
+        isSubArray suffix whole (whole.Length-suffix.Length)
+
+    /// Returns a new array with an element replaced with a given value.
+    let replace index value (array: _ []) =
+        checkNonNull "array" array
+        if index >= array.Length then raise (IndexOutOfRangeException "index")
+        let res = Array.copy array
+        res.[index] <- value
+        res
+
+    /// Returns all heads of a given array.
+    /// For [|1;2;3|] it returns [|[|1; 2; 3|]; [|1; 2|]; [|1|]|]
+    let heads (array: 'T []) =
+        checkNonNull "array" array
+        let res = Array.zeroCreate<'T[]> array.Length
+        for i = array.Length - 1 downto 0 do
+            res.[i] <- array.[0..i]
+        res
+
+    /// Fold over the array passing the index and element at that index to a folding function
+    let foldi (folder: 'State -> int -> 'T -> 'State) (state: 'State) (array: 'T []) =
+        checkNonNull "array" array
+        if array.Length = 0 then state else
+        let folder = OptimizedClosures.FSharpFunc<_,_,_,_>.Adapt folder
+        let mutable state:'State = state
+        let len = array.Length
+        for i = 0 to len - 1 do
+            state <- folder.Invoke (state, i, array.[i])
+        state
+
+    /// pass an array byref to reverse it in place
+    let revInPlace (array: 'T []) =
+        checkNonNull "array" array
+        if areEqual array [||] then () else
+        let arrlen, revlen = array.Length-1, array.Length/2 - 1
+        for idx in 0 .. revlen do
+            let t1 = array.[idx] 
+            let t2 = array.[arrlen-idx]
+            array.[idx] <- t2
+            array.[arrlen-idx] <- t1
+
+    /// Map all elements of the array that satisfy the predicate
+    let filterMap predicate mapfn (array: 'T [])  =
+        checkNonNull "array" array
+        if array.Length = 0 then [||] else
+        let result = Array.zeroCreate array.Length
+        let mutable count = 0
+        for elm in array do
+            if predicate elm then 
+               result.[count] <- mapfn elm
+               count <- count + 1
+        if count = 0 then [||] else
+        result.[0..count-1]
+
+    /// <summary>
+    /// Splits the collection into two (2) collections, containing the elements for which the given function returns
+    /// <c>Choice1Of2</c> or <c>Choice2Of2</c>, respectively.
+    /// </summary>
+    /// <param name="partitioner"></param>
+    /// <param name="array"></param>
+    /// <returns></returns>
+    /// <remarks>
+    /// This function is similar to Array.partition, but it allows the returned collections to have different types.
+    /// </remarks>
+    let mapPartition (partitioner : 'T -> Choice<'U1, 'U2>) array : 'U1[] * 'U2[] =
+        // Preconditions
+        checkNonNull "array" array
+        
+        // OPTIMIZATION : If the input array is empty, immediately return empty results.
+        if Array.isEmpty array then
+            Array.empty, Array.empty
+        else
+            // Use ResizeArrays to hold the mapped values.
+            let resultList1 = ResizeArray ()
+            let resultList2 = ResizeArray ()
+    
+            // Partition the array, adding each element to the ResizeArray
+            // specific by the partition function.
+            array
+            |> Array.iter (fun el ->
+                match partitioner el with
+                | Choice1Of2 value ->
+                    resultList1.Add value
+                | Choice2Of2 value ->
+                    resultList2.Add value)
+    
+            // Convert the ResizeArrays to arrays and return them.
+            resultList1.ToArray (),
+            resultList2.ToArray ()
+
+    let splitByChunks (chunkSizes : int[]) (arr : 'T[]) =
+        let rec loop (chunks : int[]) (arr : 'T[]) acc =
+            match chunks, arr with
+            | [||], _ 
+            | _, [||] -> acc
+            | _ ->
+                let chunk = min chunks.[0] arr.Length
+                loop chunks.[1 .. ] arr.[chunk .. ] (arr.[0..(chunk-1)] :: acc)
+
+        loop chunkSizes arr []
+        |> Array.ofList
+        |> Array.rev
+
+    let toShortHexString (bytes: byte[]) =
+        let length = bytes.Length
+        let chars = Array.zeroCreate length
+        for i in 0..length/2-1 do
+            let b1 = byte (bytes.[i] >>> 4)
+            chars.[i * 2] <- if b1 > 9uy then char (b1 + 87uy) else char (b1 + 0x30uy)
+            let b2 = byte (bytes.[i] &&& 0xFuy)
+            chars.[i * 2 + 1] <- if b2 > 9uy then char (b2 + 87uy) else char (b2 + 0x30uy)
+        String chars
+
+
+
+
+
+[<RequireQualifiedAccess>]
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module String =
+
+    let inline toCharArray (str:string) = str.ToCharArray()
+
+    let lowerCaseFirstChar (str: string) =
+        if String.IsNullOrEmpty str 
+         || Char.IsLower(str, 0) then str else 
+        let strArr = toCharArray str
+        match Array.tryHead strArr with
+        | None -> str
+        | Some c  -> 
+            strArr.[0] <- Char.ToLower c
+            String (strArr)
+
+
+    let inline contains (target : string) (str : string) = str.Contains target
+
+    let inline equalsIgnoreCase (str1 : string) (str2 : string) = str1.Equals(str2, StringComparison.OrdinalIgnoreCase)
+
+    let extractTrailingIndex (str: string) =
+        match str with
+        | null -> null, None
+        | _ ->
+            let charr = str.ToCharArray() 
+            Array.revInPlace charr
+            let digits = Array.takeWhile Char.IsDigit charr
+            Array.revInPlace digits
+            String digits
+            |> function
+               | "" -> str, None
+               | index -> str.Substring (0, str.Length - index.Length), Some (int index)
+
+    /// Remove all trailing and leading whitespace from the string
+    /// return null if the string is null
+    let trim (value: string) = if isNull value then null else value.Trim()
+    
+    /// Splits a string into substrings based on the strings in the array separators
+    let split options (separator: string []) (value: string) = 
+        if isNull value  then null else value.Split(separator, options)
+
+    let (|StartsWith|_|) pattern value =
+        if String.IsNullOrWhiteSpace value then
+            None
+        elif value.StartsWith pattern then
+            Some()
+        else None
+
+    let (|Contains|_|) pattern value =
+        if String.IsNullOrWhiteSpace value then
+            None
+        elif value.Contains pattern then
+            Some()
+        else None
+
+    let getLines (str : string) =
+        use reader = new StringReader(str)
+        [| let line = ref (reader.ReadLine())
+           while isNotNull (!line) do
+               yield !line
+               line := reader.ReadLine()
+           if str.EndsWith "\n" then
+               // last trailing space not returned
+               // http://stackoverflow.com/questions/19365404/stringreader-omits-trailing-linebreak
+               yield String.Empty |]
+
+    let getNonEmptyLines (str : string) =
+        use reader = new StringReader(str)
+        [| let line = ref (reader.ReadLine())
+           while isNotNull (!line) do
+               if (!line).Length > 0 then yield !line
+               line := reader.ReadLine() |]
+
+    /// match strings with ordinal ignore case
+    let inline equalsIC (str1:string) (str2:string) = str1.Equals(str2,StringComparison.OrdinalIgnoreCase)
+
+    /// Parse a string to find the first nonempty line
+    /// Return null if the string was null or only contained empty lines
+    let firstNonEmptyLine (str : string) =
+        use reader = new StringReader(str)
+
+        let rec loop (line : string) =
+            if isNull line then None
+            elif line.Length > 0 then Some line
+            else loop (reader.ReadLine())
+        loop (reader.ReadLine())
+
+
+    /// reutrns -1 if the entire line is whitespace
+    let getfirstNonWhitespaceOffset (line:string) =
+        [ 0 .. line.Length-1 ] 
+        |> Seq.tryFind ^ fun idx -> Char.IsWhiteSpace( line.[idx])
+        |> Option.getOrElse -1
+
+
+    let getLeadingWhitespace (line:string) =
+        match getfirstNonWhitespaceOffset line with
+        | x when x <= -1 -> String.Empty
+        | offset -> line.Substring( 0,offset)
+
+
+    let getFirstLineText (text:string) =
+        let lineBreak = text.IndexOf envNewLine
+        if lineBreak < 0 then text else text.Substring (0,lineBreak+1)
+
+
+    let getLastLineText (text:string) =
+        let lineBreak = text.LastIndexOf envNewLine
+        if lineBreak < 0 then text else text.Substring (lineBreak+1)
+
+
+
+    let convertTabToSpace (tabSize:int) (initialColumn:int) (endPosition:int) (textSnippet:string) : int =
+        if tabSize <= 0 then invalidArgf "tabsize" "tabsize must be 1 or higher, was '%i' " tabSize
+        if endPosition < 0 || endPosition  > textSnippet.Length then 
+            invalidArgf "endPosition" "endPosition must be within the bounds of the textSnippet"
+        let rec loop col idx =
+            if idx = endPosition then col - initialColumn 
+            elif textSnippet.[idx] = '\t' then
+                loop (col + tabSize - col % tabSize) (idx+1)
+            else loop col (idx+1)
+        loop initialColumn 0
+
+
+    let getColumnFromLineOffset (tabSize:int) (endPosition:int) (textSnippet:string) : int =
+        if tabSize <= 0 then invalidArgf "tabsize" "tabsize must be 1 or higher, was '%i' " tabSize
+        if endPosition < 0 || endPosition  > textSnippet.Length then 
+            invalidArgf "endPosition" "endPosition must be within the bounds of the textSnippet"
+
+        convertTabToSpace tabSize 0 endPosition   textSnippet 
+
+
+    let getTextColumn (initialColumn:int) (tabsize:int) (text:string) =
+        let lineText = getLastLineText text
+        if text <> lineText then 
+            getColumnFromLineOffset tabsize lineText.Length text
+        else
+            (convertTabToSpace tabsize initialColumn text.Length text) + initialColumn
+
+
+    let indexOf (predicate: char -> bool) (text:string) =
+        if String.IsNullOrEmpty text then -1 else
+        text.ToCharArray() |> Array.tryFindIndex predicate 
+        |> Option.getOrElse -1
+     
+     
+    let containsLineBreak (text:string)  = 
+        text.ToCharArray() 
+        |> Array.exists (function '\n'|'\r' -> true | _ -> false)
+
+
+  
+    let getNumberOfLineBreaks (text:string)  = 
+        let mutable lineBreaks = 0
+        for i=0 to text.Length-1 do
+            if text.[i] = '\n' then 
+                incr &lineBreaks
+            elif text.[i] == '\r' then
+                if i+1 = text.Length || text.[i+1] <> '\n' then
+                    incr &lineBreaks
+        lineBreaks
+
+
+    let containsTab (text:string)  = 
+        text.ToCharArray() 
+        |> Array.exists (function '\t' -> true | _ -> false)
+
+
+    let getLineOffsetFromColumn (tabSize:int) (column:int) (line:string) : int =
+        let mutable currentColumn = 0
+        [ 0 .. line.Length-1 ] |> List.tryPick ^ fun x ->
+            if currentColumn >= column then Some x 
+            elif line.[x] = '\t' then 
+                currentColumn <- tabSize - (currentColumn % tabSize); None
+            else incr &currentColumn; None
+        |> Option.getOrElse line.Length
+
+
 
 
 
@@ -297,30 +639,6 @@ type Path with
 (*  =================================== *)
 (*   Microsoft.CodeAnalysis Extensions  *)
 (*  =================================== *)
-
-
-type TextSpan with
-    /// Compares two instances of Microsoft.CodeAnalysis.Text.TextSpan
-    static member CompareTo (a:TextSpan,b:TextSpan) = a.CompareTo b
-
-
-type TextLine with
-
-    member self.GetPosition (c:char) =
-        let text = self.Text.ToString()
-        match text.IndexOf c with
-        | -1 -> None
-        | x ->  Some (LinePosition (self.LineNumber,x))
-
-    member __.Contains (pos:int)  =
-        __.Start <= pos && pos <= __.End
-
-        
-    member self.InsertString (pos, str:string) =
-        let chg = TextChange(TextSpan(pos,0),str)
-        let moddedLine = self.Text.WithChanges(chg)
-        TextLine.FromSpan(moddedLine,TextSpan.FromBounds(self.Start,self.Start+ moddedLine.Length))
-
 
 
 type SourceText with
@@ -339,6 +657,114 @@ type SourceText with
 
     member self.GetBytes () = 
         self.ToString() |> self.Encoding.GetBytes    
+
+
+    member self.SubTextBetween(start,finish)  =
+        self.GetSubText (TextSpan(start,finish-start))
+
+
+
+type TextSpan with
+    /// Compares two instances of Microsoft.CodeAnalysis.Text.TextSpan
+    static member CompareTo (a:TextSpan,b:TextSpan) = a.CompareTo b
+
+
+
+
+(*  ====================================== *)
+(*   Microsoft.CodeAnalysis.Text.TextLine  *)
+(*  ====================================== *)
+
+
+
+type TextLine with
+
+    static member isEmpty (tl:TextLine) = 
+        TextLine() = tl
+
+
+    static member From (text:string) =
+        TextLine.FromSpan(SourceText.From(text),TextSpan(0,text.Length))
+
+    
+
+    member self.Length = self.End - self.Start
+
+    member self.GetPosition (c:char) =
+        let text = self.Text.ToString()
+        match text.IndexOf c with
+        | -1 -> None
+        | x ->  Some (LinePosition (self.LineNumber,x))
+
+    member __.Contains (pos:int)  =
+        __.Start <= pos && pos <= __.End
+
+        
+    member self.InsertString (pos, str:string) =
+        let chg = TextChange(TextSpan(pos,0),str)
+        let moddedLine = self.Text.WithChanges(chg)
+        TextLine.FromSpan(moddedLine,TextSpan.FromBounds(self.Start,self.Start+ moddedLine.Length))
+
+
+    /// Returns the first non-whitespace position on the given line as an offset
+    /// from the start of the line, or null if the line is empty or contains only
+    /// whitespace.
+    member  self.GetFirstNonWhitespaceOffset () : int=
+          self.ToString () |> String.getfirstNonWhitespaceOffset
+ 
+    
+    /// returns -1 if there is not whitespace
+    member self.GetFirstNonWhitespacePosition () =
+        let pos = self.GetFirstNonWhitespaceOffset()
+        if pos <> -1 then self.Start + pos else -1
+
+
+    member self.GetLeadingWhitespace () =
+        self.ToString() |> String.getLeadingWhitespace
+
+
+
+    member self.GetLastNonWhitespaceOffset () : int =
+        let text = self.ToString()
+        [text.Length-1 ..  0]
+        |> Seq.tryFind (fun idx -> Char.IsWhiteSpace text.[idx])
+        |> Option.getOrElse -1            
+
+
+
+
+    member self.TrimStart () =
+        let idx = self.GetFirstNonWhitespaceOffset() 
+        TextLine.FromSpan(self.Text,TextSpan(idx,self.Length-idx))
+
+
+
+    member self.TrimEnd () =
+        let idx = self.GetLastNonWhitespaceOffset() 
+        TextLine.FromSpan(self.Text,TextSpan(0,idx))
+
+
+
+
+    member self.StartsWith (prefix:string) =
+        let idx = self.GetFirstNonWhitespaceOffset()
+        if idx = -1 then false else
+        let slice = self.Text.SubTextBetween(idx, prefix.Length-1)
+        slice.ToString() = prefix
+
+
+    member self.StartsWith (prefix:TextLine) =
+        let prefix = prefix.Text.ToString() 
+        let body = self.Text.ToString() 
+        body.StartsWith prefix
+
+
+
+    member self.SubSection (start,length) =
+        TextLine.FromSpan(self.Text,TextSpan(start,length))
+
+    member self.SubSection start =
+        TextLine.FromSpan(self.Text,TextSpan(start,self.Length-start))
 
 
 
@@ -564,10 +990,29 @@ type ProjectInfo with
         toFSharpProjectOptions workspace self
 
 
+
+    /// Converts a CodeAnalysis Project into FSharpProjectOptions for the FSharp.Compiler.Service
+    member self.ToFSharpProjectOptionsAsync (workspace:'a :> Workspace) = async {
+        return! toFSharpProjectOptionsAsync workspace self 
+    }
+    
+
 type Project with
     /// Converts a CodeAnalysis Project into FSharpProjectOptions for the FSharp.Compiler.Service
     member self.ToFSharpProjectOptions (workspace:'a :> Workspace) : FSharpProjectOptions =
-        self.ToProjectInfo().ToFSharpProjectOptions workspace
+        self.ToProjectInfo() |>  toFSharpProjectOptions workspace 
+
+    
+    
+    /// Converts a CodeAnalysis Project into FSharpProjectOptions for the FSharp.Compiler.Service
+    member self.ToFSharpProjectOptionsAsync (workspace:'a :> Workspace) = async {
+        let! projectInfo = self.ToProjectInfoAsync()
+        return! 
+            toFSharpProjectOptionsAsync workspace projectInfo 
+    }
+    
+
+
 
 
 type Workspace with
@@ -880,348 +1325,7 @@ module List =
                 | h::t -> loop (idx+1) (f.Invoke(s,idx,h)) t
             loop 0 state xs
 
-[<RequireQualifiedAccess>]
-[<CompilationRepresentation (CompilationRepresentationFlags.ModuleSuffix)>]
-module Array =
-    let inline private checkNonNull argName arg = 
-        match box arg with 
-        | null -> nullArg argName 
-        | _ -> ()
 
-    /// Optimized arrays equality. ~100x faster than `array1 = array2` on strings.
-    /// ~2x faster for floats
-    /// ~0.8x slower for ints
-    let inline areEqual (xs: 'T []) (ys: 'T []) =
-        match xs, ys with
-        | null, null -> true
-        | [||], [||] -> true
-        | null, _ | _, null -> false
-        | _ when xs.Length <> ys.Length -> false
-        | _ ->
-            let mutable break' = false
-            let mutable i = 0
-            let mutable result = true
-            while i < xs.Length && not break' do
-                if xs.[i] <> ys.[i] then 
-                    break' <- true
-                    result <- false
-                i <- i + 1
-            result
-
-    /// check if subArray is found in the wholeArray starting 
-    /// at the provided index
-    let inline isSubArray (subArray: 'T []) (wholeArray:'T []) index = 
-        if isNull subArray || isNull wholeArray then false
-        elif subArray.Length = 0 then true
-        elif subArray.Length > wholeArray.Length then false
-        elif subArray.Length = wholeArray.Length then areEqual subArray wholeArray else
-        let rec loop subidx idx =
-            if subidx = subArray.Length then true 
-            elif subArray.[subidx] = wholeArray.[idx] then loop (subidx+1) (idx+1) 
-            else false
-        loop 0 index
-
-    /// Returns true if one array has another as its subset from index 0.
-    let startsWith (prefix: _ []) (whole: _ []) =
-        isSubArray prefix whole 0
-
-    /// Returns true if one array has trailing elements equal to another's.
-    let endsWith (suffix: _ []) (whole: _ []) =
-        isSubArray suffix whole (whole.Length-suffix.Length)
-
-    /// Returns a new array with an element replaced with a given value.
-    let replace index value (array: _ []) =
-        checkNonNull "array" array
-        if index >= array.Length then raise (IndexOutOfRangeException "index")
-        let res = Array.copy array
-        res.[index] <- value
-        res
-
-    /// Returns all heads of a given array.
-    /// For [|1;2;3|] it returns [|[|1; 2; 3|]; [|1; 2|]; [|1|]|]
-    let heads (array: 'T []) =
-        checkNonNull "array" array
-        let res = Array.zeroCreate<'T[]> array.Length
-        for i = array.Length - 1 downto 0 do
-            res.[i] <- array.[0..i]
-        res
-
-    /// Fold over the array passing the index and element at that index to a folding function
-    let foldi (folder: 'State -> int -> 'T -> 'State) (state: 'State) (array: 'T []) =
-        checkNonNull "array" array
-        if array.Length = 0 then state else
-        let folder = OptimizedClosures.FSharpFunc<_,_,_,_>.Adapt folder
-        let mutable state:'State = state
-        let len = array.Length
-        for i = 0 to len - 1 do
-            state <- folder.Invoke (state, i, array.[i])
-        state
-
-    /// pass an array byref to reverse it in place
-    let revInPlace (array: 'T []) =
-        checkNonNull "array" array
-        if areEqual array [||] then () else
-        let arrlen, revlen = array.Length-1, array.Length/2 - 1
-        for idx in 0 .. revlen do
-            let t1 = array.[idx] 
-            let t2 = array.[arrlen-idx]
-            array.[idx] <- t2
-            array.[arrlen-idx] <- t1
-
-    /// Map all elements of the array that satisfy the predicate
-    let filterMap predicate mapfn (array: 'T [])  =
-        checkNonNull "array" array
-        if array.Length = 0 then [||] else
-        let result = Array.zeroCreate array.Length
-        let mutable count = 0
-        for elm in array do
-            if predicate elm then 
-               result.[count] <- mapfn elm
-               count <- count + 1
-        if count = 0 then [||] else
-        result.[0..count-1]
-
-    /// <summary>
-    /// Splits the collection into two (2) collections, containing the elements for which the given function returns
-    /// <c>Choice1Of2</c> or <c>Choice2Of2</c>, respectively.
-    /// </summary>
-    /// <param name="partitioner"></param>
-    /// <param name="array"></param>
-    /// <returns></returns>
-    /// <remarks>
-    /// This function is similar to Array.partition, but it allows the returned collections to have different types.
-    /// </remarks>
-    let mapPartition (partitioner : 'T -> Choice<'U1, 'U2>) array : 'U1[] * 'U2[] =
-        // Preconditions
-        checkNonNull "array" array
-        
-        // OPTIMIZATION : If the input array is empty, immediately return empty results.
-        if Array.isEmpty array then
-            Array.empty, Array.empty
-        else
-            // Use ResizeArrays to hold the mapped values.
-            let resultList1 = ResizeArray ()
-            let resultList2 = ResizeArray ()
-    
-            // Partition the array, adding each element to the ResizeArray
-            // specific by the partition function.
-            array
-            |> Array.iter (fun el ->
-                match partitioner el with
-                | Choice1Of2 value ->
-                    resultList1.Add value
-                | Choice2Of2 value ->
-                    resultList2.Add value)
-    
-            // Convert the ResizeArrays to arrays and return them.
-            resultList1.ToArray (),
-            resultList2.ToArray ()
-
-    let splitByChunks (chunkSizes : int[]) (arr : 'T[]) =
-        let rec loop (chunks : int[]) (arr : 'T[]) acc =
-            match chunks, arr with
-            | [||], _ 
-            | _, [||] -> acc
-            | _ ->
-                let chunk = min chunks.[0] arr.Length
-                loop chunks.[1 .. ] arr.[chunk .. ] (arr.[0..(chunk-1)] :: acc)
-
-        loop chunkSizes arr []
-        |> Array.ofList
-        |> Array.rev
-
-    let toShortHexString (bytes: byte[]) =
-        let length = bytes.Length
-        let chars = Array.zeroCreate length
-        for i in 0..length/2-1 do
-            let b1 = byte (bytes.[i] >>> 4)
-            chars.[i * 2] <- if b1 > 9uy then char (b1 + 87uy) else char (b1 + 0x30uy)
-            let b2 = byte (bytes.[i] &&& 0xFuy)
-            chars.[i * 2 + 1] <- if b2 > 9uy then char (b2 + 87uy) else char (b2 + 0x30uy)
-        String chars
-
-
-
-
-
-
-[<RequireQualifiedAccess>]
-[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module String =
-
-    let inline toCharArray (str:string) = str.ToCharArray()
-
-    let lowerCaseFirstChar (str: string) =
-        if String.IsNullOrEmpty str 
-         || Char.IsLower(str, 0) then str else 
-        let strArr = toCharArray str
-        match Array.tryHead strArr with
-        | None -> str
-        | Some c  -> 
-            strArr.[0] <- Char.ToLower c
-            String (strArr)
-
-
-    let inline contains (target : string) (str : string) = str.Contains target
-
-    let inline equalsIgnoreCase (str1 : string) (str2 : string) = str1.Equals(str2, StringComparison.OrdinalIgnoreCase)
-
-    let extractTrailingIndex (str: string) =
-        match str with
-        | null -> null, None
-        | _ ->
-            let charr = str.ToCharArray() 
-            Array.revInPlace charr
-            let digits = Array.takeWhile Char.IsDigit charr
-            Array.revInPlace digits
-            String digits
-            |> function
-               | "" -> str, None
-               | index -> str.Substring (0, str.Length - index.Length), Some (int index)
-
-    /// Remove all trailing and leading whitespace from the string
-    /// return null if the string is null
-    let trim (value: string) = if isNull value then null else value.Trim()
-    
-    /// Splits a string into substrings based on the strings in the array separators
-    let split options (separator: string []) (value: string) = 
-        if isNull value  then null else value.Split(separator, options)
-
-    let (|StartsWith|_|) pattern value =
-        if String.IsNullOrWhiteSpace value then
-            None
-        elif value.StartsWith pattern then
-            Some()
-        else None
-
-    let (|Contains|_|) pattern value =
-        if String.IsNullOrWhiteSpace value then
-            None
-        elif value.Contains pattern then
-            Some()
-        else None
-
-    let getLines (str : string) =
-        use reader = new StringReader(str)
-        [| let line = ref (reader.ReadLine())
-           while isNotNull (!line) do
-               yield !line
-               line := reader.ReadLine()
-           if str.EndsWith "\n" then
-               // last trailing space not returned
-               // http://stackoverflow.com/questions/19365404/stringreader-omits-trailing-linebreak
-               yield String.Empty |]
-
-    let getNonEmptyLines (str : string) =
-        use reader = new StringReader(str)
-        [| let line = ref (reader.ReadLine())
-           while isNotNull (!line) do
-               if (!line).Length > 0 then yield !line
-               line := reader.ReadLine() |]
-
-    /// match strings with ordinal ignore case
-    let inline equalsIC (str1:string) (str2:string) = str1.Equals(str2,StringComparison.OrdinalIgnoreCase)
-
-    /// Parse a string to find the first nonempty line
-    /// Return null if the string was null or only contained empty lines
-    let firstNonEmptyLine (str : string) =
-        use reader = new StringReader(str)
-
-        let rec loop (line : string) =
-            if isNull line then None
-            elif line.Length > 0 then Some line
-            else loop (reader.ReadLine())
-        loop (reader.ReadLine())
-
-
-    /// reutrns -1 if the entire line is whitespace
-    let firstNonWhitespaceOffset (line:string) =
-        [ 0 .. line.Length-1 ] 
-        |> Seq.tryFind ^ fun idx -> Char.IsWhiteSpace( line.[idx])
-        |> Option.getOrElse -1
-
-
-    let getLeadingWhitespace (line:string) =
-        match firstNonWhitespaceOffset line with
-        | x when x <= -1 -> String.Empty
-        | offset -> line.Substring( 0,offset)
-
-
-    let getFirstLineText (text:string) =
-        let lineBreak = text.IndexOf envNewLine
-        if lineBreak < 0 then text else text.Substring (0,lineBreak+1)
-
-
-    let getLastLineText (text:string) =
-        let lineBreak = text.LastIndexOf envNewLine
-        if lineBreak < 0 then text else text.Substring (lineBreak+1)
-
-
-
-    let convertTabToSpace (tabSize:int) (initialColumn:int) (endPosition:int) (textSnippet:string) : int =
-        if tabSize <= 0 then invalidArgf "tabsize" "tabsize must be 1 or higher, was '%i' " tabSize
-        if endPosition < 0 || endPosition  > textSnippet.Length then 
-            invalidArgf "endPosition" "endPosition must be within the bounds of the textSnippet"
-        let rec loop col idx =
-            if idx = endPosition then col - initialColumn 
-            elif textSnippet.[idx] = '\t' then
-                loop (col + tabSize - col % tabSize) (idx+1)
-            else loop col (idx+1)
-        loop initialColumn 0
-
-
-    let getColumnFromLineOffset (tabSize:int) (endPosition:int) (textSnippet:string) : int =
-        if tabSize <= 0 then invalidArgf "tabsize" "tabsize must be 1 or higher, was '%i' " tabSize
-        if endPosition < 0 || endPosition  > textSnippet.Length then 
-            invalidArgf "endPosition" "endPosition must be within the bounds of the textSnippet"
-
-        convertTabToSpace tabSize 0 endPosition   textSnippet 
-
-
-    let getTextColumn (initialColumn:int) (tabsize:int) (text:string) =
-        let lineText = getLastLineText text
-        if text <> lineText then 
-            getColumnFromLineOffset tabsize lineText.Length text
-        else
-            (convertTabToSpace tabsize initialColumn text.Length text) + initialColumn
-
-
-    let indexOf (predicate: char -> bool) (text:string) =
-        if String.IsNullOrEmpty text then -1 else
-        text.ToCharArray() |> Array.tryFindIndex predicate 
-        |> Option.getOrElse -1
-     
-     
-    let containsLineBreak (text:string)  = 
-        text.ToCharArray() 
-        |> Array.exists (function '\n'|'\r' -> true | _ -> false)
-
-
-  
-    let getNumberOfLineBreaks (text:string)  = 
-        let mutable lineBreaks = 0
-        for i=0 to text.Length-1 do
-            if text.[i] = '\n' then 
-                incr &lineBreaks
-            elif text.[i] == '\r' then
-                if i+1 = text.Length || text.[i+1] <> '\n' then
-                    incr &lineBreaks
-        lineBreaks
-
-
-    let containsTab (text:string)  = 
-        text.ToCharArray() 
-        |> Array.exists (function '\t' -> true | _ -> false)
-
-
-    let getLineOffsetFromColumn (tabSize:int) (column:int) (line:string) : int =
-        let mutable currentColumn = 0
-        [ 0 .. line.Length-1 ] |> List.tryPick ^ fun x ->
-            if currentColumn >= column then Some x 
-            elif line.[i] = '\t' then 
-                currentColumn <- tabSize - (currentColumn % tabSize); None
-            else incr &currentColumn; None
-        |> Option.getOrElse line.Length
 
 
 

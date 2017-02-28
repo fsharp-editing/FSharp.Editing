@@ -30,6 +30,9 @@ let inline (|&|) (pred1:'a->bool) (pred2:'a->bool)  =
 /// If arg is null raise an `ArgumentNullException` with the argname
 let inline checkNullArg arg argName = if isNull arg then nullArg argName
 
+/// Throw a System.InvalidArgument exception with a Printf message
+let invalidArgf arg msg =  Printf.kprintf (invalidArg arg) msg
+
 
 /// obj.ReferenceEquals
 let inline (==) a b = obj.ReferenceEquals(a, b)
@@ -43,6 +46,14 @@ let inline debug msg = Printf.kprintf Debug.WriteLine msg
 Debug.Listeners.Add(new TextWriterTraceListener(System.Console.Out)) |> ignore
 Debug.AutoFlush <- true
 #endif
+
+
+let inline incr (counter: ^a byref) = 
+    counter <- LanguagePrimitives.GenericOne< ^a> + counter
+
+let inline decr (counter: ^a byref) = 
+    counter <- counter - LanguagePrimitives.GenericOne< ^a> 
+
 
 let inline fail msg = Printf.kprintf Debug.Fail msg
 let inline isNotNull v = not ^ isNull v

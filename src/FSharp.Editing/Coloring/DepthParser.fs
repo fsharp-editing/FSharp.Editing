@@ -380,7 +380,7 @@ module DepthParser =
                     // approximate the 'no other tokens on line' info thusly (only check that expr is first thing on this line):
                     if sc = m then // && ec = len el then // would fail on comments, trailing whitespace, etc
                         q.Add(Start r) |> ignore
-            let curLine, curCol, curDepth = ref 1, ref 0, ref 0  // lines are 1-based
+            let mutable curLine, curCol, curDepth = 1, 0, 0  // lines are 1-based
             let mindentStack = ResizeArray<int * int>() // numCharsIndent, semanticDepth
             mindentStack.Add(0,0)
             let results = ResizeArray()
@@ -400,36 +400,36 @@ module DepthParser =
                 q.Remove(min) |> ignore
                 // yield spans
                 let line, col = min.Info
-                if line = !curLine then
+                if line = curLine then
                     // ... only line
-                    add(!curLine, !curCol, col, !curDepth)
+                    add(curLine, curCol, col, curDepth)
                 else
                     // ...first line
-                    add(!curLine, !curCol, (max !curCol (len !curLine)), !curDepth)
+                    add(curLine, curCol, (max curCol (len curLine)), curDepth)
                     // ...rest of lines
                     let curDent = fst mindentStack.[mindentStack.Count-1]
-                    let n = ref (!curLine + 1)
-                    while !n <= line do
+                    let mutable n = (curLine + 1)
+                    while n <= line do
                         // indents
                         for (a,d),(b,_) in Seq.pairwise mindentStack do
                             if a<>b then
-                                add(!n, a, b, d)
+                                add(n, a, b, d)
                         // tokens from this line
-                        if !n < line then
-                            add(!n, curDent, (max curDent (len !n)), !curDepth)
+                        if n < line then
+                            add(n, curDent, (max curDent (len n)), curDepth)
                         else
-                            add(!n, curDent, col, !curDepth)  // TODO any chance col > len line?
-                        incr n
+                            add(n, curDent, col, curDepth)  // TODO any chance col > len line?
+                        incr &n
                 // update
-                curLine := line
-                curCol := col
+                curLine <- line
+                curCol <- col
                 match min with
                 | Start((_,_,_,_,m) as r) -> 
                     q.Add(End r) |> ignore
-                    incr curDepth
-                    mindentStack.Add(m, !curDepth)
+                    incr &curDepth
+                    mindentStack.Add(m, curDepth)
                 | End _ ->
-                    decr curDepth
+                    decr &curDepth
                     mindentStack.RemoveAt(mindentStack.Count-1)
             return Seq.toArray results
         }
