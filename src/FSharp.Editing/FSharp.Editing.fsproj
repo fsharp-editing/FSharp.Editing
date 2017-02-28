@@ -102,10 +102,17 @@
     <Compile Include="ProjectSystem\FileSystem.fs" />
     <Compile Include="ProjectSystem\LanguageService.fs" />
     <Compile Include="ProjectSystem\SolutionProvider.fs" />
+    <Compile Include="ProjectSystem\FileSystemWatcher.fs" />
     <Compile Include="Navigation\NavigableItemsCollector.fs" />
     <Compile Include="Navigation\NavigateToIndex.fs" />
     <Compile Include="Navigation\NavigableItemCache.fs" />
     <Compile Include="Navigation\NavigateToItem.fs" />
+    <Compile Include="Navigation\GoToDefinition.fs" />
+    <Compile Include="Navigation\GoToSignature.fs" />
+    <Compile Include="Navigation\GoToImplementation.fs" />
+    <Compile Include="Navigation\GoToDeclaration.fs" />
+    <Compile Include="Navigation\NavigateToReferenceSource.fs" />
+    <Compile Include="Navigation\NavigateToMetadata.fs" />
     <Compile Include="Coloring\DepthParser.fs" />
     <Compile Include="Coloring\OpenDeclarationsGetter.fs" />
     <Compile Include="Coloring\UnopenedNamespacesResolver.fs" />
