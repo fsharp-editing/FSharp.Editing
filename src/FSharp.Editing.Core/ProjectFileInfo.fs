@@ -77,11 +77,12 @@ type OutputType =
 /// and the configuration info to create a FSharpProjectOptions
 [<NoComparison>]
 type ProjectFileInfo = {
-    ProjectId                 : ProjectId
+//    ProjectId                 : ProjectId
     ProjectGuid               : Guid option
     Name                      : string option
     ProjectFilePath           : string
-    TargetFramework           : FrameworkName option
+//    TargetFramework           : FrameworkName option
+    TargetFramework           : string option
     FrameworkVersion          : string option
     AssemblyName              : string
     OutputPath                : string
@@ -122,32 +123,32 @@ module ProjectFileInfo =
                 ,   isGenerated = false
                 )
 
-    let createSrcDocInfos (projectFileInfo:ProjectFileInfo) =
+    let createSrcDocInfos projectId (projectFileInfo:ProjectFileInfo) =
         createSrcDocs  projectFileInfo.ProjectDirectory
-                    projectFileInfo.ProjectId
+                    projectId
                     projectFileInfo.CompileFiles
                     SourceCodeKind.Regular
 
-    let createScriptDocInfos (projectFileInfo:ProjectFileInfo) =
+    let createScriptDocInfos projectId (projectFileInfo:ProjectFileInfo) =
         createSrcDocs projectFileInfo.ProjectDirectory
-                    projectFileInfo.ProjectId
+                    projectId
                     projectFileInfo.ScriptFiles
                     SourceCodeKind.Script
 
-    let createOtherDocInfos (projectFileInfo:ProjectFileInfo) =
+    let createOtherDocInfos projectId (projectFileInfo:ProjectFileInfo) =
         projectFileInfo.OtherFiles |> Seq.map ^ fun path ->
             let fullpath = Path.Combine(projectFileInfo.ProjectDirectory,path)
             DocumentInfo.Create
-                (   DocumentId.CreateNewId projectFileInfo.ProjectId
+                (   DocumentId.CreateNewId projectId
                 ,   Path.GetFileNameWithoutExtension path
                 ,   filePath = fullpath
                 ,   loader = FileTextLoader(fullpath,Text.Encoding.UTF8)
                 ,   isGenerated = false
                 )
 
-    let createAdditionalDocuments projectFileInfo =
-        Seq.append  (createScriptDocInfos projectFileInfo)
-                    (createOtherDocInfos  projectFileInfo)
+    let createAdditionalDocuments projectId projectFileInfo =
+        Seq.append  (createScriptDocInfos projectId projectFileInfo)
+                    (createOtherDocInfos  projectId projectFileInfo)
 
     let createAnalyzerReferences (projectFileInfo:ProjectFileInfo) =
         if projectFileInfo.Analyzers.Length = 0 then Seq.empty else
@@ -171,8 +172,14 @@ module ProjectFileInfo =
 
         let _projDict = workspace.ProjectDictionary()
 
+        let projectId = 
+            match projectFileInfo.ProjectGuid with
+            | Some guid -> ProjectId.CreateFromSerialized (guid, projectFileInfo.ProjectFilePath)
+            | None -> ProjectId.CreateNewId projectFileInfo.ProjectFilePath
+            
+
         ProjectInfo.Create
-            (   id                  = projectFileInfo.ProjectId
+            (   id                  = projectId
             ,   version             = VersionStamp.Create()
             ,   name                = defaultArg projectFileInfo.Name String.Empty
             ,   assemblyName        = projectFileInfo.AssemblyName
@@ -188,8 +195,8 @@ module ProjectFileInfo =
             ,   projectReferences   = projectRefs
             ,   metadataReferences  = seq[]
             ,   analyzerReferences  = createAnalyzerReferences projectFileInfo
-            ,   documents           = createSrcDocInfos projectFileInfo
-            ,   additionalDocuments = createAdditionalDocuments projectFileInfo
+            ,   documents           = createSrcDocInfos projectId projectFileInfo
+            ,   additionalDocuments = createAdditionalDocuments projectId projectFileInfo
             //,   compilationOptions=
             //,   parseOptions=
             //,   isSubmission=

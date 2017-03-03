@@ -12,6 +12,7 @@ open FSharp.Control
 open Microsoft.FSharp.Compiler
 open Microsoft.FSharp.Compiler.SourceCodeServices
 open FSharp.Editing
+open FSharp.Editing.ProjectSystem.HostServices
 
 
 
@@ -83,8 +84,11 @@ type FSharpWorkspace (hostServices:Host.HostServices) as self =
         documents |> List.iter ^ fun doc -> self.AddDocument doc |> ignore
         true
 
-    // new () = new FSharpWorkspace (Host.Mef.DesktopMefHostServices.DefaultServices)
-    new () = new FSharpWorkspace (Host.Mef.MefHostServices.DefaultHost )
+    new (aggregator:HostServicesAggregator) =  
+        new FSharpWorkspace (aggregator.CreateHostServices())
+
+    new () = 
+        new FSharpWorkspace (FSharpHostService())
 
 //    new (aggregator:HostServicesAggregator) = new FSharpWorkspace (aggregator.CreateHostServices())
 //    new () = new FSharpWorkspace(FSharpHostService())

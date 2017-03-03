@@ -84,6 +84,7 @@
     <Compile Include="ProjectSystem\OpenDocumentsTracker.fs" />
     <Compile Include="ProjectSystem\ProjectConfig.fs" />
     <Compile Include="ProjectSystem\ProjectSitesAndFiles.fs" />
+    <Compile Include="ProjectSystem\HostServices.fs" />
     <Compile Include="ProjectSystem\FSharpWorkspace.fs" />
     <Compile Include="ProjectSystem\FileSystem.fs" />
     <Compile Include="ProjectSystem\LanguageService.fs" />

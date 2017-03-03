@@ -359,9 +359,9 @@ let create (projectFilePath:string) =
         projectInstance.TryGetPropertyValue Property.ProjectGuid
         |> Option.bind PropertyConverter.toGuid
 
-    let projectId =
-        defaultArg  (projectGuid |> Option.map ^ fun x -> ProjectId.CreateFromSerialized x)
-                    (ProjectId.CreateNewId())
+//    let projectId =
+//        defaultArg  (projectGuid |> Option.map ^ fun x -> ProjectId.CreateFromSerialized x)
+//                    (ProjectId.CreateNewId())
 
     let defineConstants =
         projectInstance.GetPropertyValue Property.DefineConstants
@@ -371,7 +371,7 @@ let create (projectFilePath:string) =
     let projectName     = projectInstance.TryGetPropertyValue Property.ProjectName
     let assemblyName    = projectInstance.GetPropertyValue Property.AssemblyName
     let targetPath      = projectInstance.GetPropertyValue Property.TargetPath
-    let targetFramework = projectInstance.TryGetPropertyValue Property.TargetFrameworkMoniker |> Option.map FrameworkName
+    let targetFramework = projectInstance.TryGetPropertyValue Property.TargetFrameworkMoniker //|> Option.map FrameworkName
     let assemblyKeyFile = projectInstance.TryGetPropertyValue Property.AssemblyOriginatorKeyFile
     let signAssembly    = PropertyConverter.toBoolean <| projectInstance.GetPropertyValue Property.SignAssembly
     let outputType      = OutputType.Parse <| projectInstance.GetPropertyValue Property.OutputType
@@ -379,7 +379,7 @@ let create (projectFilePath:string) =
 
     {   ProjectFilePath           = projectFilePath
         ProjectGuid               = projectGuid
-        ProjectId                 = projectId
+//        ProjectId                 = projectId
         Name                      = projectName
         TargetFramework           = targetFramework
         FrameworkVersion          = fxVer

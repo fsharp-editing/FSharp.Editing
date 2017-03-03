@@ -4,6 +4,7 @@
 #load "../ProjectSystem/OpenDocumentsTracker.fs"
       "../ProjectSystem/ProjectConfig.fs"
       "../ProjectSystem/ProjectSitesAndFiles.fs"
+      "../ProjectSystem/HostServices.fs"
       "../ProjectSystem/FSharpWorkspace.fs"
       "../ProjectSystem/FileSystem.fs"
       "../ProjectSystem/LanguageService.fs"

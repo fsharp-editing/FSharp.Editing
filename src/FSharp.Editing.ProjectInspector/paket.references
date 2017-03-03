@@ -4,6 +4,4 @@ Microsoft.Build.Runtime
 FSharp.Compiler.Service
 Microsoft.CodeAnalysis.Common
 Microsoft.CodeAnalysis.Workspaces.Common
-Wire
-System.Runtime.Serialization.Json
 Newtonsoft.Json
