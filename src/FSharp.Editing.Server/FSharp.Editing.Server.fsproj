@@ -11,16 +11,17 @@
     <TargetFrameworkVersion>v4.6.2</TargetFrameworkVersion>
     <TargetFSharpCoreVersion>4.4.0.0</TargetFSharpCoreVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
-    <Name>FSharp.Editing.Server</Name>
-    <ReleaseVersion>0.0.1</ReleaseVersion>
+    <Name>FSharp.Editing.Server</Name>    
     <TargetFrameworkProfile />
+    <OutputPath>$(SolutionDir)\build\$(Configuration)\</OutputPath>
+    <DocumentationFile>$(SolutionDir)\build\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
   </PropertyGroup>
+  
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
     <DebugType>full</DebugType>
     <Optimize>false</Optimize>
     <Tailcalls>false</Tailcalls>
-    <OutputPath>bin\Debug\</OutputPath>
     <DefineConstants>DEBUG;TRACE</DefineConstants>
     <WarningLevel>5</WarningLevel>
     <DocumentationFile>
@@ -31,7 +32,7 @@
     <DebugType>pdbonly</DebugType>
     <Optimize>true</Optimize>
     <Tailcalls>true</Tailcalls>
-    <OutputPath>bin\Release\</OutputPath>
+
     <DefineConstants>TRACE</DefineConstants>
     <WarningLevel>5</WarningLevel>
     <DocumentationFile>

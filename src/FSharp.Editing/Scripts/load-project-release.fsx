@@ -10,6 +10,7 @@
       "../ProjectSystem/LanguageService.fs"
       "../ProjectSystem/SolutionProvider.fs"
       "../ProjectSystem/FileSystemWatcher.fs"
+      "../ProjectSystem/SolutionFileInfo.fs"
       "../Navigation/NavigableItemsCollector.fs"
       "../Navigation/NavigateToIndex.fs"
       "../Navigation/NavigableItemCache.fs"

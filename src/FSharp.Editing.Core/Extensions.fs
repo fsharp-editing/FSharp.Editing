@@ -1007,7 +1007,15 @@ module Reflection =
 
     let (?<-) (o: obj) name value = o.GetType().GetProperty(name).SetValue(o, value, null)
 
+
+[<RequireQualifiedAccess>]
 module File =
     open System.IO
 
     let tryGetLastWriteTime file = Option.attempt (fun _ -> FileInfo(file).LastWriteTimeUtc)
+
+
+[<RequireQualifiedAccess>]
+module Directory =
+
+    let fromPath path = (FileInfo path).Directory.FullName

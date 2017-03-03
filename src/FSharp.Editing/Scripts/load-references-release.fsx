@@ -57,7 +57,6 @@
 #r "../../../packages/System.Xml.XPath/lib/net46/System.Xml.XPath.dll"
 #r "../../../packages/System.Xml.XPath.XDocument/lib/net46/System.Xml.XPath.XDocument.dll"
 #r "../../../packages/Wire/lib/net45/Wire.dll"
-#r "../../FSharp.Editing.Core/bin/Release/FSharp.Editing.Core.dll"
 #r "../../../packages/FSharp.Compiler.Service/lib/net45/FSharp.Compiler.Service.MSBuild.v12.dll"
 #r "../../../packages/System.Reflection.TypeExtensions/lib/net46/System.Reflection.TypeExtensions.dll"
 #r "../../../../../../../../Program Files (x86)/Reference Assemblies/Microsoft/Framework/.NETFramework/v4.6.1/Facades/System.Xml.ReaderWriter.dll"
@@ -66,3 +65,4 @@
 #r "../../../packages/System.Runtime.Serialization.Primitives/lib/net46/System.Runtime.Serialization.Primitives.dll"
 #r "../../../packages/System.Threading.ThreadPool/lib/net46/System.Threading.ThreadPool.dll"
 #r "../../../../../../../../Program Files (x86)/Reference Assemblies/Microsoft/Framework/.NETFramework/v4.6.1/Facades/System.Runtime.Serialization.Primitives.dll"
+#r "../../../build/Release/FSharp.Editing.Core.dll"
