@@ -3,6 +3,7 @@
 open System
 open System.IO
 open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.Diagnostics
 open System.Runtime.Versioning
 open FSharp.Editing
 
@@ -49,7 +50,7 @@ type OutputType =
     /// Build a module that can be added to another assembly (.netmodule)
     | Module
 
-    override self.ToString() = self |> function
+    override self.ToString () = self |> function
         | Exe     -> Constants.Exe
         | Winexe  -> Constants.Winexe
         | Library -> Constants.Library
@@ -106,3 +107,97 @@ type ProjectFileInfo = {
     member self.ProjectDirectory = Path.GetDirectoryName self.ProjectFilePath
 
 
+[<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
+module ProjectFileInfo =
+
+    let private createSrcDocs directory projectId filePaths srcCodeKind =
+        filePaths |> Seq.map ^ fun path ->
+            let fullpath = Path.Combine(directory,path)
+            DocumentInfo.Create
+                (   DocumentId.CreateNewId projectId
+                ,   Path.GetFileNameWithoutExtension path
+                ,   sourceCodeKind = srcCodeKind
+                ,   filePath = fullpath
+                ,   loader = FileTextLoader(fullpath,Text.Encoding.UTF8)
+                ,   isGenerated = false
+                )
+
+    let createSrcDocInfos (projectFileInfo:ProjectFileInfo) =
+        createSrcDocs  projectFileInfo.ProjectDirectory
+                    projectFileInfo.ProjectId
+                    projectFileInfo.CompileFiles
+                    SourceCodeKind.Regular
+
+    let createScriptDocInfos (projectFileInfo:ProjectFileInfo) =
+        createSrcDocs projectFileInfo.ProjectDirectory
+                    projectFileInfo.ProjectId
+                    projectFileInfo.ScriptFiles
+                    SourceCodeKind.Script
+
+    let createOtherDocInfos (projectFileInfo:ProjectFileInfo) =
+        projectFileInfo.OtherFiles |> Seq.map ^ fun path ->
+            let fullpath = Path.Combine(projectFileInfo.ProjectDirectory,path)
+            DocumentInfo.Create
+                (   DocumentId.CreateNewId projectFileInfo.ProjectId
+                ,   Path.GetFileNameWithoutExtension path
+                ,   filePath = fullpath
+                ,   loader = FileTextLoader(fullpath,Text.Encoding.UTF8)
+                ,   isGenerated = false
+                )
+
+    let createAdditionalDocuments projectFileInfo =
+        Seq.append  (createScriptDocInfos projectFileInfo)
+                    (createOtherDocInfos  projectFileInfo)
+
+    let createAnalyzerReferences (projectFileInfo:ProjectFileInfo) =
+        if projectFileInfo.Analyzers.Length = 0 then Seq.empty else
+        projectFileInfo.Analyzers |> Seq.map ^ fun path ->
+            AnalyzerFileReference(path,AnalyzerAssemblyLoader())
+            :> AnalyzerReference
+
+    /// Converts into the Microsoft.CodeAnalysis ProjectInfo used by workspaces
+    // TODO -
+    //  change the internals to a recusive generation of projectInfo for all project references
+    //  without creating duplicate projects
+    let toProjectInfo (workspace:'a when 'a :> Workspace) (projectFileInfo : ProjectFileInfo) =
+
+        let projectRefs =
+                let projIds, paths = (workspace :> Workspace).GetProjectIdsFromPaths projectFileInfo.ProjectReferences
+                // TODO - this is a temporary impl, projectInfos need to be generated for the paths to projects
+                // that aren't contained in the workspace
+                Seq.append
+                    [ for projId in projIds -> ProjectReference projId ]
+                    [ for path in paths -> ProjectReference ^ ProjectId.CreateNewId(path) ]
+
+        let _projDict = workspace.ProjectDictionary()
+
+        ProjectInfo.Create
+            (   id                  = projectFileInfo.ProjectId
+            ,   version             = VersionStamp.Create()
+            ,   name                = defaultArg projectFileInfo.Name String.Empty
+            ,   assemblyName        = projectFileInfo.AssemblyName
+            ,   language            = Constants.FSharpLanguageName
+            ,   filePath            = projectFileInfo.ProjectFilePath
+            ,   outputFilePath      = projectFileInfo.OutputPath
+            (*  - TODO -
+                Correctly adding projectreferences is going to be an issue
+                ProjectReference is created using a project id, which means a collection of
+                projectFileInfos should be passed to this function to prevent the creation
+                of duplicate projectfile infos for referenced projects that have different ids
+            *)
+            ,   projectReferences   = projectRefs
+            ,   metadataReferences  = seq[]
+            ,   analyzerReferences  = createAnalyzerReferences projectFileInfo
+            ,   documents           = createSrcDocInfos projectFileInfo
+            ,   additionalDocuments = createAdditionalDocuments projectFileInfo
+            //,   compilationOptions=
+            //,   parseOptions=
+            //,   isSubmission=
+            //,   hostObjectType=
+            )
+
+//
+//    open Microsoft.FSharp.Compiler.SourceCodeServices
+//
+//    let toFSharpProjectOptions (workspace:'a when 'a :> Workspace) (projectFileInfo:ProjectFileInfo) : FSharpProjectOptions =
+//        (projectFileInfo |> toProjectInfo workspace).ToFSharpProjectOptions workspace

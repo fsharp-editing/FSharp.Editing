@@ -1,9 +1,7 @@
 // Warning: generated file; your changes could be lost when a new file is generated.
 #I __SOURCE_DIRECTORY__
 #load "load-references-release.fsx"
-#load "../ProjectSystem/ProjectFileInfo.fs"
-      "../ProjectSystem/MSBuildEvaluation.fs"
-      "../ProjectSystem/OpenDocumentsTracker.fs"
+#load "../ProjectSystem/OpenDocumentsTracker.fs"
       "../ProjectSystem/ProjectConfig.fs"
       "../ProjectSystem/ProjectSitesAndFiles.fs"
       "../ProjectSystem/FSharpWorkspace.fs"

@@ -72,7 +72,7 @@ let main argv =
 //    
 //    p.WaitForExit()
 //    printfn "%A" json
-//    let info = JsonConvert.DeserializeObject<ProjectFileInfo>(json)
+    let info = JsonConvert.DeserializeObject<ProjectFileInfo>(json)
 //    
 //    
 
@@ -93,12 +93,12 @@ let main argv =
 
 //    printfn "%A\n\n" info
 
-//    let fsls = FSharp.Editing.LanguageService()
-//    let projinfo = ProjectFileInfo.toProjectInfo fsls.Workspace info
-//    let proj = fsls.Workspace.AddProject projinfo
-//
-//    fsls.Workspace.CurrentSolution.Projects
-//    |> Seq.iter (fun x -> printfn "%s - %s" x.Name x.AssemblyName)
+    let fsls = FSharp.Editing.LanguageService()
+    let projinfo = FSharp.Editing.ProjectSystem.ProjectFileInfo.toProjectInfo fsls.Workspace info
+    let proj = fsls.Workspace.AddProject projinfo
+
+    fsls.Workspace.CurrentSolution.Projects
+    |> Seq.iter (fun x -> printfn "%s - %s" x.Name x.AssemblyName)
     p.WaitForExit()
     Console.ReadLine()|> ignore
 
