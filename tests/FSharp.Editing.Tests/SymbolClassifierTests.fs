@@ -11,7 +11,7 @@ let sourceFiles = [| fileName |]
 let framework = FSharpCompilerVersion.FSharp_3_1
 open FSharp.Editing.ProjectSystem
 let workspace = new FSharpWorkspace ()
-let languageService = FSharpLanguageService workspace
+let languageService = LanguageService workspace
 
 type private Cat = Category
 

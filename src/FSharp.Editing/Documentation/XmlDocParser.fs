@@ -11,7 +11,7 @@ open FSharp.Editing
 type XmlDocable =
     | XmlDocable of int * int * string list
 
-module internal XmlDocParsing =
+module XmlDocParsing =
     open Microsoft.FSharp.Compiler.Range
     open Microsoft.FSharp.Compiler.Ast
         

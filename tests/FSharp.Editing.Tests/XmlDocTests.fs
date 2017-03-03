@@ -21,7 +21,7 @@ let fileName = dataFolder.``XmlDocSampleFile.fs``
 let input = File.ReadAllText(fileName)
 open FSharp.Editing.ProjectSystem
 let workspace = new FSharpWorkspace ()
-let languageService = FSharpLanguageService workspace
+let languageService = LanguageService workspace
 let output = 
     lazy
         async {

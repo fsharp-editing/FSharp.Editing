@@ -33,7 +33,7 @@ type SymbolLookupKind =
     | ByRightColumn
     | ByLongIdent
 
-type internal DraftToken =
+type DraftToken =
     { Kind: SymbolKind
       Token: FSharpTokenInfo 
       RightColumn: int }

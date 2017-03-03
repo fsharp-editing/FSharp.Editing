@@ -15,7 +15,7 @@ open FSharp.Editing.ProjectSystem
 
 // Exposes FSharpChecker as MEF export
 //[<Export(typeof<FSharpCheckerProvider>); Composition.Shared>]
-type internal FSharpCheckerProvider 
+type FSharpCheckerProvider 
     //[<ImportingConstructor>]
     (
         //analyzerService: DiagnosticAnalyzer
@@ -43,34 +43,34 @@ type internal FSharpCheckerProvider
 
     member this.Checker = checker.Value
 
-
-module LanguageService =
-
-    let entityCache = EntityCache()
-
-
-    let getSymbolUsing (kind:SymbolLookupKind) (position: LinePosition) (source:SourceText) (config:ProjectSettings) = maybe {
-            let args = config.CompilerOptions
-            let line = source.GetLineAtPosition position
-            let! symbol = 
-                Lexer.getSymbol (source.ToString()) position.Line position.Character  
-                                (line.Text.ToString()) kind args Lexer.queryLexState 
-            return 
-                fsharpRangeToTextSpan source symbol.Range, symbol
-        }
-
-
-    let getSymbol position source config =
-        getSymbolUsing SymbolLookupKind.Fuzzy position source config
-
-
-    let getLongIdentSymbol position source config =
-        getSymbolUsing SymbolLookupKind.ByLongIdent position source config
-
-    let tokenizeLine (source:SourceText)  (args:string[])  lineNum = maybe {
-            let! line = source.TryGetNthLine lineNum
-            return Lexer.tokenizeLine source.Text args lineNum (line.ToString())  Lexer.queryLexState
-    }
+//
+//module LanguageService =
+//
+//    let entityCache = EntityCache()
+//
+//
+//    let getSymbolUsing (kind:SymbolLookupKind) (position: LinePosition) (source:SourceText) (config:ProjectSettings) = maybe {
+//            let args = config.CompilerOptions
+//            let line = source.GetLineAtPosition position
+//            let! symbol = 
+//                Lexer.getSymbol (source.ToString()) position.Line position.Character  
+//                                (line.Text.ToString()) kind args Lexer.queryLexState 
+//            return 
+//                fsharpRangeToTextSpan source symbol.Range, symbol
+//        }
+//
+//
+//    let getSymbol position source config =
+//        getSymbolUsing SymbolLookupKind.Fuzzy position source config
+//
+//
+//    let getLongIdentSymbol position source config =
+//        getSymbolUsing SymbolLookupKind.ByLongIdent position source config
+//
+//    let tokenizeLine (source:SourceText)  (args:string[])  lineNum = maybe {
+//            let! line = source.TryGetNthLine lineNum
+//            return Lexer.tokenizeLine source.Text args lineNum (line.ToString())  Lexer.queryLexState
+//    }
 
 //
 //    let parseFileInProject fileName (config:ProjectSettings) = asyncMaybe {
@@ -530,7 +530,7 @@ type private FileState =
 /// Provides functionality for working with the F# interactive checker running in background
 
 
-type FSharpLanguageService (workspace:FSharpWorkspace,?backgroundCompilation: bool, ?projectCacheSize: int) =
+type LanguageService (workspace:FSharpWorkspace,?backgroundCompilation: bool, ?projectCacheSize: int,?msbuildEnabled:bool) =
     let fileSystem = WorkspaceFileSystem workspace 
 
     do Shim.FileSystem <- fileSystem :> IFileSystem
@@ -546,6 +546,7 @@ type FSharpLanguageService (workspace:FSharpWorkspace,?backgroundCompilation: bo
             projectCacheSize = defaultArg projectCacheSize 50, 
             keepAllBackgroundResolutions = false,
             keepAssemblyContents = false,
+            msbuildEnabled = defaultArg msbuildEnabled false,
             ImplicitlyStartBackgroundWork = defaultArg backgroundCompilation true)
   
     let checkerAsync (f: FSharpChecker -> Async<'a>) = 
@@ -616,9 +617,8 @@ type FSharpLanguageService (workspace:FSharpWorkspace,?backgroundCompilation: bo
         return results
     }
 
-    new ([<Optional>] backgroundCompilation: bool, [<Optional>] projectCacheSize: int) = 
-        FSharpLanguageService (new FSharpWorkspace (), backgroundCompilation,projectCacheSize)
-
+    new (?backgroundCompilation: bool, ?projectCacheSize: int,?msbuildEnabled) = 
+        LanguageService (new FSharpWorkspace (),defaultArg backgroundCompilation true,defaultArg projectCacheSize 50,defaultArg msbuildEnabled false)
 
 
     member __.Workspace = workspace

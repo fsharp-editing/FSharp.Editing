@@ -29,7 +29,7 @@ open FSharp.Editing.CodeGeneration.UnionPatternMatchCaseGenerator
 open CodeGenerationTestInfrastructure
 open FSharp.Editing.ProjectSystem
 let workspace = new FSharpWorkspace ()
-let languageService = FSharpLanguageService workspace
+let languageService = LanguageService workspace
 
 let tryFindUnionDefinition codeGenService (pos: pos) (document: IDocument) =
     tryFindUnionDefinitionFromPos codeGenService (projectOptions document.FullName) pos document

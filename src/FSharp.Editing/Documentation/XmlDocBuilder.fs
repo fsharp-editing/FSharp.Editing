@@ -1,5 +1,4 @@
-﻿
-namespace FSharp.Editing.Documentation
+﻿namespace FSharp.Editing.Documentation
 
 
 open System
@@ -7,19 +6,24 @@ open System.Text
 open System.Collections.Generic
 open System.Text.RegularExpressions
 open Internal.Utilities.Collections
+open Microsoft.CodeAnalysis
+open Microsoft.CodeAnalysis.Classification
+open Microsoft.CodeAnalysis.Completion
 open Microsoft.FSharp.Compiler.SimpleSourceCodeServices
+open Microsoft.FSharp.Compiler.SourceCodeServices
 open Microsoft.FSharp.Compiler.SourceCodeServices
 open Microsoft.FSharp.Compiler.Layout
 open Microsoft.FSharp.Compiler.Layout.TaggedTextOps
 open FSharp.Editing
 
-type internal ITaggedTextCollector =
+
+type ITaggedTextCollector =
     abstract Add: text: TaggedText -> unit
     abstract EndsWithLineBreak: bool
     abstract IsEmpty: bool
     abstract StartXMLDoc: unit -> unit
 
-type internal TextSanitizingCollector(collector, ?lineLimit: int) =
+type TextSanitizingCollector(collector, ?lineLimit: int) =
     let mutable isEmpty = true 
     let mutable endsWithLineBreak = false
     let mutable count = 0
@@ -54,27 +58,74 @@ type internal TextSanitizingCollector(collector, ?lineLimit: int) =
                     startXmlDoc <- false
                     paragraph.TrimStart() 
                 else paragraph
-                
+    
+         
             addTaggedTextEntry (tagText paragraph)
             if i < paragraphs.Length - 1 then
                 // insert two line breaks to separate paragraphs
                 addTaggedTextEntry Literals.lineBreak
                 addTaggedTextEntry Literals.lineBreak)
 
+    member __.TextLines = reportTextLines
+    
+    
     interface ITaggedTextCollector with
-        member this.Add text = 
-            // TODO: bail out early if line limit is already hit
-            match text with
-            | TaggedText.Text t -> reportTextLines t
-            | t -> addTaggedTextEntry t
+        member __.Add (_text: TaggedText ) = ()
+        member __.EndsWithLineBreak = true
+        member __.IsEmpty = false
+        member __.StartXMLDoc () = ()
+     
 
-        member this.IsEmpty = isEmpty
-        member this.EndsWithLineBreak = isEmpty || endsWithLineBreak
-        member this.StartXMLDoc() = startXmlDoc <- true
+
+
+//    interface ITaggedTextCollector with
+//        member this.Add text = 
+//            // TODO: bail out early if line limit is already hit
+//            match text with
+//            | TaggedText.Text t -> reportTextLines t
+//            | addTaggedTextEntry t
+//            | TaggedText.ActivePatternCase(_) -> Unchecked.defautOf<_>
+//            | TaggedText.ActivePatternResult(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Alias(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Class(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Union(_) -> Unchecked.defautOf<_>
+//            | TaggedText.UnionCase(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Delegate(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Enum(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Event(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Field(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Interface(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Keyword(_) -> Unchecked.defautOf<_>
+//            | TaggedText.LineBreak(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Local(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Record(_) -> Unchecked.defautOf<_>
+//            | TaggedText.RecordField(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Method(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Member(_) -> Unchecked.defautOf<_>
+//            | TaggedText.ModuleBinding(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Module(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Namespace(_) -> Unchecked.defautOf<_>
+//            | TaggedText.NumericLiteral(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Operator(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Parameter(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Property(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Space(_) -> Unchecked.defautOf<_>
+//            | TaggedText.StringLiteral(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Struct(_) -> Unchecked.defautOf<_>
+//            | TaggedText.TypeParameter(_) -> Unchecked.defautOf<_>
+//            | TaggedText.Punctuation(_) -> Unchecked.defautOf<_>
+//            | TaggedText.UnknownType(_) -> Unchecked.defautOf<_>
+//            | TaggedText.UnknownEntity(_) -> Unchecked.defautOf<_>
+
+    member this.IsEmpty = isEmpty
+    member this.EndsWithLineBreak = isEmpty || endsWithLineBreak
+    member this.StartXMLDoc() = startXmlDoc <- true
+
+
 
 /// XmlDocumentation builder, using the VS interfaces to build documentation.  An interface is used
 /// to allow unit testing to give an alternative implementation which captures the documentation.
-type internal IDocumentationBuilder =
+type IDocumentationBuilder =
 
     /// Append the given raw XML formatted into the string builder
     abstract AppendDocumentationFromProcessedXML : collector: ITaggedTextCollector * processedXml:string * showExceptions:bool * showParameters:bool * paramName:string option-> unit
@@ -83,26 +134,25 @@ type internal IDocumentationBuilder =
     abstract AppendDocumentation : collector: ITaggedTextCollector * filename: string * signature: string * showExceptions: bool * showParameters: bool * paramName: string option-> unit
 
 /// Documentation helpers.
-module internal XmlDocumentation =
+module XmlDocumentation =
 
     /// If the XML comment starts with '<' not counting whitespace then treat it as a literal XML comment.
     /// Otherwise, escape it and surround it with <summary></summary>
-    let ProcessXml(xml:string) =
-        if String.IsNullOrEmpty(xml) then xml
-        else
-            let trimmedXml = xml.TrimStart([|' ';'\r';'\n'|])
-            if trimmedXml.Length > 0 then
-                if trimmedXml.[0] <> '<' then 
-                #if !NETCORE
-                    // This code runs for local/within-project xmldoc tooltips, but not for cross-project or .XML - for that see ast.fs in the compiler
-                    let escapedXml = System.Security.SecurityElement.Escape(xml)
-                    "<summary>" + escapedXml + "</summary>"
-                #else
-                    "<summary>" + xml + "</summary>"
-                #endif
-                else 
-                    "<root>" + xml + "</root>"
-            else xml
+    let ProcessXml (xml:string) =
+        if String.IsNullOrEmpty xml then xml else
+        let trimmedXml = xml.TrimStart([|' ';'\r';'\n'|])
+        if trimmedXml.Length > 0 then
+            if trimmedXml.[0] <> '<' then 
+            #if !NETCORE
+                // This code runs for local/within-project xmldoc tooltips, but not for cross-project or .XML - for that see ast.fs in the compiler
+                let escapedXml = System.Security.SecurityElement.Escape(xml)
+                "<summary>" + escapedXml + "</summary>"
+            #else
+                "<summary>" + xml + "</summary>"
+            #endif
+            else 
+                "<root>" + xml + "</root>"
+        else xml
 
     let AppendHardLine(collector: ITaggedTextCollector) =
         collector.Add Literals.lineBreak
@@ -341,17 +391,18 @@ module internal XmlDocumentation =
             collector.Add (tagText "-------------")
             AppendHardLine collector
 
-//    /// Build a data tip text string with xml comments injected.
-//    let BuildTipText(documentationProvider:IDocumentationBuilder, dataTipText: FSharpToolTipText , textCollector, xmlCollector, showText, showExceptions, showParameters, showOverloadText) = 
-//        let textCollector: ITaggedTextCollector = TextSanitizingCollector(textCollector, lineLimit = 45) :> _
-//        let xmlCollector: ITaggedTextCollector = TextSanitizingCollector(xmlCollector, lineLimit = 45) :> _
-//
-//        let addSeparatorIfNecessary add =
-//            if add then
-//                AddSeparator textCollector
-//                AddSeparator xmlCollector
-//
-//        let Process add (dataTipElement:  FSharpToolTipElement) =
+    /// Build a data tip text string with xml comments injected.
+    let BuildTipText(_documentationProvider:IDocumentationBuilder, _ataTipText: FSharpToolTipText , textCollector, xmlCollector, _showText, _showExceptions, _showParameters, _showOverloadText) = 
+        let textCollector: ITaggedTextCollector = TextSanitizingCollector(textCollector, lineLimit = 45) :> _
+        let xmlCollector: ITaggedTextCollector = TextSanitizingCollector(xmlCollector, lineLimit = 45) :> _
+
+        let _addSeparatorIfNecessary add =
+            if add then
+                AddSeparator textCollector
+                AddSeparator xmlCollector
+
+        //let Process add (dataTipElement:  FSharpToolTipElement) = dataTipElement
+        ()
 //            match dataTipElement with 
 //            | FSharpStructuredToolTipElement.None -> false
 //            | FSharpStructuredToolTipElement.Single (text, xml) ->
@@ -395,18 +446,16 @@ module internal XmlDocumentation =
 //            | FSharpStructuredToolTipElement.CompositionError(errText) -> 
 //                textCollector.Add(tagText errText)
 //                true
-//
-//        List.fold Process false dataTipText |> ignore
-//
-//    let BuildDataTipText(documentationProvider, textCollector, xmlCollector, FSharpToolTipText(dataTipText)) = 
-//        BuildTipText(documentationProvider, dataTipText, textCollector, xmlCollector, true, true, false, true) 
-//
-//    let BuildMethodOverloadTipText(documentationProvider, textCollector, xmlCollector, FSharpToolTipText(dataTipText), showParams) = 
-//        BuildTipText(documentationProvider, dataTipText, textCollector, xmlCollector, false, false, showParams, false) 
-//
-//    let BuildMethodParamText(documentationProvider, xmlCollector, xml, paramName) =
-//        AppendXmlComment(documentationProvider, TextSanitizingCollector(xmlCollector), xml, false, true, Some paramName)
+//            dataTipElement
 
-//    let documentationBuilderCache = System.Runtime.CompilerServices.ConditionalWeakTable<IVsXMLMemberIndexService, IDocumentationBuilder>()
-//    let CreateDocumentationBuilder(xmlIndexService: IVsXMLMemberIndexService, dte: DTE) = 
-//        documentationBuilderCache.GetValue(xmlIndexService,(fun _ -> Provider(xmlIndexService, dte) :> IDocumentationBuilder))
+//        List.fold Process false dataTipText |> ignore
+
+    let BuildDataTipText(documentationProvider:IDocumentationBuilder, textCollector:TaggedText->_, xmlCollector, dataTipText:FSharpToolTipText) =         
+        BuildTipText(documentationProvider,dataTipText , textCollector, xmlCollector, true, true, false, true) 
+
+    let BuildMethodOverloadTipText(documentationProvider, textCollector, xmlCollector,(dataTipText), showParams) = 
+        BuildTipText(documentationProvider, dataTipText, textCollector, xmlCollector, false, false, showParams, false) 
+
+    let BuildMethodParamText(documentationProvider, xmlCollector, xml, paramName) =
+        AppendXmlComment(documentationProvider, TextSanitizingCollector(xmlCollector), xml, false, true, Some paramName)
+

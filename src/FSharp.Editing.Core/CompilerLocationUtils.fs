@@ -11,7 +11,7 @@ open System.Text.RegularExpressions
 
 #nowarn "44" // ConfigurationSettings is obsolete but the new stuff is horribly complicated. 
 
-module internal Environment = 
+module Environment = 
     /// Are we running on the Mono platform?
     let runningOnMono = 
         try System.Type.GetType("Mono.Runtime") <> null
@@ -50,7 +50,7 @@ type FSharpCompilerVersion =
         | "4.4.0.0" -> FSharp_4_0
         | null | _  -> FSharp_4_0
 
-module internal FSharpEnvironment =
+module FSharpEnvironment =
 
     let safeExists f = (try File.Exists(f) with _ -> false)
 

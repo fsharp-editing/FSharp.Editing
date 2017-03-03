@@ -1,18 +1,25 @@
 source http://nuget.org/api/v2
 source https://dotnet.myget.org/F/roslyn/api/v3/index.json
-redirects: on
+source https://dotnet.myget.org/F/dotnet-corefxlab/api/v3/index.json
+redirects: force
 
 nuget Fantomas
 nuget FSharp.Compiler.Service content: none 
-nuget FSharp.Core 
-nuget FSharp.NET.Sdk 1.0.1
+nuget FSharp.Core 4.0.0.1 redirects: force
+nuget FSharp.NET.Sdk
 nuget FSharpLint.Core prerelease
+nuget Microsoft.Build
+nuget Microsoft.Build.Runtime
 nuget Microsoft.Win32.Registry.AccessControl
 nuget NuGet.CommandLine
 nuget SourceLink.SymbolStore
 nuget Newtonsoft.Json
 nuget Suave
 nuget ExtCore
+nuget System.Collections.Generic.MultiValueDictionary
+nuget System.IO.FileSystem.Watcher
+nuget System.IO.FileSystem.Watcher.Polling
+nuget System.Runtime.Serialization.Json
 nuget System.Xml.XDocument
 nuget wire
 
@@ -31,7 +38,7 @@ nuget Microsoft.Extensions.Logging.Abstractions
 group Test
     source http://nuget.org/api/v2
     redirects: on
-
+    nuget FSharp.Core 4.0.0.1
     nuget FsCheck
     nuget FSharp.Compiler.Service.ProjectCracker
     nuget NUnit
@@ -42,10 +49,9 @@ group Test
 group Build
     source http://nuget.org/api/v2
     redirects: on
-    
+    nuget FSharp.Core 4.0.0.1
     nuget canopy
     nuget FAKE
-    nuget FSharp.Compiler.Tools
     nuget FSharp.Formatting
     nuget Nuget.CommandLine
     github fsharp/FAKE modules/Octokit/Octokit.fsx

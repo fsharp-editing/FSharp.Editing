@@ -202,9 +202,15 @@ module TargetName =
 module ItemName =
     let [<Literal>] Analyzer = "Analyzer"
     let [<Literal>] Compile = "Compile"
+    let [<Literal>] Resource = "Resource"
+    let [<Literal>] EmbeddedResource = "EmbeddedResource"
+    let [<Literal>] Content = "Content"
+    let [<Literal>] Page = "Page"
     let [<Literal>] None = "None"
     let [<Literal>] ProjectReference = "ProjectReference"
     let [<Literal>] ReferencePath = "ReferencePath"
+    let [<Literal>] ChildProjectReferences = "ChildProjectReferences"
+
 
 [<RequireQualifiedAccess>]
 /// MSBuild Project Metadata Names

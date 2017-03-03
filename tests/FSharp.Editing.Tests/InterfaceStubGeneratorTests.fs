@@ -25,7 +25,7 @@ let source = File.ReadAllText(fileName)
 let projectFileName = Path.ChangeExtension(fileName, ".fsproj")
 open FSharp.Editing.ProjectSystem
 let workspace = new FSharpWorkspace ()
-let languageService = FSharpLanguageService workspace
+let languageService = LanguageService workspace
 let opts = languageService.GetProjectCheckerOptions(projectFileName, [| fileName |], TestHelpers.LanguageServiceTestHelper.args, [||]) 
 
 #if INTERACTIVE
@@ -428,7 +428,7 @@ let arbitraryArg =
 
 let normalizeArgs =
     List.fold (fun (acc, namesWithIndices) arg ->
-            let arg, namesWithIndices = CodeGenerationUtils.normalizeArgName namesWithIndices arg
+            let arg, namesWithIndices = normalizeArgName namesWithIndices arg
             arg :: acc, namesWithIndices)
         ([], Map.empty)
     >> fst

@@ -1,0 +1,11 @@
+FSharp.Compiler.Service
+Newtonsoft.Json
+wire
+FSharp.Core
+System.Xml.XDocument
+Microsoft.CodeAnalysis.Common
+Microsoft.CodeAnalysis.Workspaces.Common
+Microsoft.CodeAnalysis.Features
+Microsoft.Extensions.Logging.Abstractions
+System.Xml.ReaderWriter
+System.Collections.Generic.MultiValueDictionary

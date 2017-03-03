@@ -28,7 +28,7 @@ open CodeGenerationTestInfrastructure
 let args = LanguageServiceTestHelper.args
 open FSharp.Editing.ProjectSystem
 let workspace = new FSharpWorkspace ()
-let languageService = FSharpLanguageService workspace
+let languageService = LanguageService workspace
 
 // [ ] write design doc
 // [x] Get the syntax construct that you're interested in

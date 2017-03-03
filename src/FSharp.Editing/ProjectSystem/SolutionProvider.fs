@@ -16,7 +16,7 @@ type IProjectProvider =
     abstract Project: ProjectDescriptor
     abstract GetReferencedProjects: unit -> IProjectProvider list
     abstract GetAllReferencedProjectFileNames: unit -> string list 
-    abstract GetProjectCheckerOptions: FSharpLanguageService -> Async<FSharpProjectOptions>
+    abstract GetProjectCheckerOptions: LanguageService -> Async<FSharpProjectOptions>
 
 [<AutoOpen>]
 module TypeExtensions =

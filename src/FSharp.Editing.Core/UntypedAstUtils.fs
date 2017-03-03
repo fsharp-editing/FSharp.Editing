@@ -11,7 +11,7 @@ type Range.range with
 type internal ShortIdent = string
 type internal Idents = ShortIdent[]
 
-let internal longIdentToArray (longIdent: LongIdent): Idents =
+let longIdentToArray (longIdent: LongIdent): Idents =
     longIdent |> Seq.map string |> Seq.toArray
 
     /// An recursive pattern that collect all sequential expressions to avoid StackOverflowException
@@ -27,7 +27,7 @@ let (|ConstructorPats|) = function
     | SynConstructorArgs.NamePatPairs(xs, _) -> List.map snd xs
 
 /// Returns all Idents and LongIdents found in an untyped AST.
-let internal getLongIdents (input: ParsedInput option) : IDictionary<Range.pos, Idents> =
+let getLongIdents (input: ParsedInput option) : IDictionary<Range.pos, Idents> =
     let identsByEndPos = Dictionary<Range.pos, Idents>()
 
     let addLongIdent (longIdent: LongIdent) =
@@ -482,7 +482,7 @@ let getQuotationRanges ast =
     quotationRanges
 
 /// Returns all string literal ranges
-let internal getStringLiterals ast : Range.range list =
+let getStringLiterals ast : Range.range list =
     let result = ResizeArray()
 
     let visitType ty =
@@ -1612,7 +1612,7 @@ module Printf =
         { Range: Range.range
           Arg: Range.range }
 
-    let internal getAll (input: ParsedInput option) : PrintfFunction[] =
+    let getAll (input: ParsedInput option) : PrintfFunction[] =
         let result = ResizeArray()
         let appStack: AppWithArg list ref = ref []
 

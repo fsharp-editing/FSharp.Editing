@@ -13,3 +13,7 @@
 #r "System.Xml.Linq.dll"
 #r "../../../packages/System.Xml.ReaderWriter/lib/net46/System.Xml.ReaderWriter.dll"
 #r "../../../../../../../../Program Files (x86)/Reference Assemblies/Microsoft/Framework/.NETFramework/v4.6.1/Facades/System.Xml.ReaderWriter.dll"
+#r "../../FSharp.Editing.Core/bin/Debug/FSharp.Editing.Core.dll"
+#r "System.Runtime.Serialization.dll"
+#r "../../../packages/System.Runtime.Serialization.Primitives/lib/net46/System.Runtime.Serialization.Primitives.dll"
+#r "../../../../../../../../Program Files (x86)/Reference Assemblies/Microsoft/Framework/.NETFramework/v4.6.1/Facades/System.Runtime.Serialization.Primitives.dll"

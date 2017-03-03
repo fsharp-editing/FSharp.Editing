@@ -33,7 +33,7 @@ with
           EndLine = LanguagePrimitives.Int32WithMeasure range.End.Line
           EndColumn = range.End.Column }
 
-type CodeGenerationTestService(languageService: FSharpLanguageService, compilerOptions: string[]) =
+type CodeGenerationTestService(languageService: LanguageService, compilerOptions: string[]) =
     interface ICodeGenerationService<FSharpProjectOptions, pos, Range> with
         member __.TokenizeLine(_project, document: IDocument, line1: int<Line1>): FSharpTokenInfo list option = 
                 let line0 = int line1 - 1 

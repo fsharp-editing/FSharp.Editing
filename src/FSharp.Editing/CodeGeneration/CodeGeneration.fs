@@ -32,7 +32,7 @@ type ICodeGenerationService<'Project, 'Pos, 'Range> =
 namespace FSharp.Editing.CodeGeneration
 
 [<AutoOpen>]
-module internal CodeGenerationUtils =
+module CodeGenerationUtils =
     open System
     open System.IO
     open FSharp.Editing

@@ -95,6 +95,7 @@ type ScopeKind =
     | HashDirective
     override x.ToString() = sprintf "%A" x
 
+[<NoComparison>]
 type InsertContext =
     { ScopeKind: ScopeKind
       Pos: Range.pos }

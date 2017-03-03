@@ -11,7 +11,7 @@ let projectFileName = Path.ChangeExtension(fileName, ".fsproj")
 let sourceFiles = [| fileName |]
 let framework = FSharpCompilerVersion.FSharp_3_1
 let workspace = new FSharpWorkspace()
-let languageService = FSharpLanguageService(workspace)
+let languageService = LanguageService(workspace)
 
 let opts source = 
     let opts = 

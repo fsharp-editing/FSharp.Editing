@@ -114,6 +114,8 @@ let CollectTaggedText (list: List<_>) t = list.Add ^ taggedTextToRoslyn t
 
 
 
+
+
 [<RequireQualifiedAccess>]
 type LexerSymbolKind =
     | Ident
@@ -130,6 +132,9 @@ type LexerSymbol =
       /// All parts of `LongIdent`
       FullIsland: string list }
     member x.Range: Range.range = x.Ident.idRange
+
+    member x.QualifyingNames () =
+        x.FullIsland |> List.except [x.Ident.idText]
 
 [<RequireQualifiedAccess>]
 type SymbolRangeLookup =
@@ -189,7 +194,7 @@ type private SourceTextData(approxLines: int) =
 
 let private dataCache = ConditionalWeakTable<DocumentId, SourceTextData>()
 
-let internal compilerTokenToRoslynToken(colorKind: FSharpTokenColorKind) : string = 
+let compilerTokenToRoslynToken(colorKind: FSharpTokenColorKind) : string = 
     match colorKind with
     | FSharpTokenColorKind.Comment -> ClassificationTypeNames.Comment
     | FSharpTokenColorKind.Identifier -> ClassificationTypeNames.Identifier
@@ -510,7 +515,7 @@ let isValidNameForSymbol (lexerSymbolKind: LexerSymbolKind, symbol: FSharpSymbol
 
 /// Active patterns over `FSharpSymbolUse`.
 [<CompilationRepresentation(CompilationRepresentationFlags.ModuleSuffix)>]
-module internal SymbolUse =
+module SymbolUse =
     let (|ActivePatternCase|_|) (symbol : FSharpSymbolUse) =
         match symbol.Symbol with
         | :? FSharpActivePatternCase as ap-> ActivePatternCase(ap) |> Some

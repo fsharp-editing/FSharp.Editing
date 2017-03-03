@@ -14,6 +14,25 @@ open Microsoft.FSharp.Compiler.SourceCodeServices
 open FSharp.Editing
 
 
+
+(*  WORKSPACE REFERENCE MATERIAL
+
+    - MonoDevelop.Ide.TypeSystem/MonoDevelopWorkspace.cs
+    - https://github.com/mono/monodevelop/blob/master/main/src/core/MonoDevelop.Ide/MonoDevelop.Ide.TypeSystem/MonoDevelopWorkspace.cs
+
+
+
+
+
+
+*)
+
+
+
+
+
+
+
 type LastWriteTime = DateTime
 
     // TODO -
@@ -96,7 +115,7 @@ type FSharpWorkspace (hostServices:Host.HostServices) as self =
         if not documentIds.IsEmpty then
             for docId in documentIds do
                 let doc = self.CurrentSolution.GetDocument docId
-                let! sourceText = doc.GetTextAsync () |> Async.AwaitTask
+                let! sourceText = doc.GetTextAsync () |> Async.AwaitTaskCorrect
                 let startOffset =
                     sourceText.Lines.GetPosition ^ LinePosition (bufferChange.StartLine, bufferChange.StartLine)
                 let endOffset = sourceText.Lines.GetPosition ^ LinePosition (bufferChange.EndLine, bufferChange.EndColumn)
@@ -304,6 +323,14 @@ type FSharpWorkspace (hostServices:Host.HostServices) as self =
         match documentTimeStamps.TryGetValue docId with
         | true, time -> Some time | _ -> None
 
+    member self.GetDocumentProjectOptions (docId:DocumentId) = async {
+        match  self.CurrentSolution.TryGetProject docId.ProjectId with
+        | None -> 
+            return None
+        | Some proj -> 
+            let! options =  proj.ToFSharpProjectOptionsAsync self
+            return Some options
+    }
 
     interface IDisposable with
         member __.Dispose () =
