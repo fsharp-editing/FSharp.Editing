@@ -9,6 +9,7 @@
     <DocumentationFile>..\..\build\$(TargetFramework)\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
     <PackageTargetFallback>portable-net45+win8+wp8+wpa81</PackageTargetFallback>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <OutputType>Library</OutputType>
     <TargetFramework>netstandard1.6</TargetFramework>
   </PropertyGroup>
   <ItemGroup>

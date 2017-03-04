@@ -265,7 +265,7 @@
     </When>
   </Choose>
   <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETStandard' And ($(TargetFrameworkVersion) == 'v1.3' Or $(TargetFrameworkVersion) == 'v1.4' Or $(TargetFrameworkVersion) == 'v1.5' Or $(TargetFrameworkVersion) == 'v1.6')">
+    <When Condition="$(TargetFrameworkIdentifier) == '.NETStandard' And ($(TargetFrameworkVersion) == 'v1.3' Or $(TargetFrameworkVersion) == 'v1.5' Or $(TargetFrameworkVersion) == 'v1.6')">
       <ItemGroup>
         <Reference Include="System.Diagnostics.Contracts">
           <HintPath>..\..\packages\System.Diagnostics.Contracts\lib\netstandard1.0\System.Diagnostics.Contracts.dll</HintPath>
@@ -434,24 +434,6 @@
         </Reference>
       </ItemGroup>
     </When>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETStandard' And ($(TargetFrameworkVersion) == 'v1.0' Or $(TargetFrameworkVersion) == 'v1.1' Or $(TargetFrameworkVersion) == 'v1.2')">
-      <ItemGroup>
-        <Reference Include="System.Linq.Expressions">
-          <HintPath>..\..\packages\System.Linq.Expressions\ref\netstandard1.0\System.Linq.Expressions.dll</HintPath>
-          <Private>False</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETStandard' And ($(TargetFrameworkVersion) == 'v1.3' Or $(TargetFrameworkVersion) == 'v1.4' Or $(TargetFrameworkVersion) == 'v1.5')">
-      <ItemGroup>
-        <Reference Include="System.Linq.Expressions">
-          <HintPath>..\..\packages\System.Linq.Expressions\ref\netstandard1.3\System.Linq.Expressions.dll</HintPath>
-          <Private>False</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
     <When Condition="$(TargetFrameworkIdentifier) == '.NETStandard' And $(TargetFrameworkVersion) == 'v1.6'">
       <ItemGroup>
         <Reference Include="System.Linq.Expressions">
@@ -527,17 +509,6 @@
       <ItemGroup>
         <Reference Include="System.Reflection.Emit.ILGeneration">
           <HintPath>..\..\packages\System.Reflection.Emit.ILGeneration\lib\netstandard1.3\System.Reflection.Emit.ILGeneration.dll</HintPath>
-          <Private>True</Private>
-          <Paket>True</Paket>
-        </Reference>
-      </ItemGroup>
-    </When>
-  </Choose>
-  <Choose>
-    <When Condition="$(TargetFrameworkIdentifier) == '.NETStandard' And ($(TargetFrameworkVersion) == 'v1.5' Or $(TargetFrameworkVersion) == 'v1.6')">
-      <ItemGroup>
-        <Reference Include="System.Reflection.Emit.Lightweight">
-          <HintPath>..\..\packages\System.Reflection.Emit.Lightweight\lib\netstandard1.3\System.Reflection.Emit.Lightweight.dll</HintPath>
           <Private>True</Private>
           <Paket>True</Paket>
         </Reference>

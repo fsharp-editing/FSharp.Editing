@@ -5,4 +5,4 @@ FSharp.Compiler.Service
 Microsoft.CodeAnalysis.Common framework: netstandard13
 Microsoft.CodeAnalysis.Workspaces.Common framework: netstandard13
 Newtonsoft.Json
-Microsoft.NETCore.App
+

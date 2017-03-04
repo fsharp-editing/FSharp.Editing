@@ -120,7 +120,7 @@ let netcoreTemplate (info:FsProjInfo) =
                 if info.OutputType = "Exe" then 
                     parent 
                     |> XElem.addElem "OutputType" info.OutputType
-                    |> XElem.addElem "TargetFramework" "netcoreapp1.0"
+                    |> XElem.addElem "TargetFramework" "netcoreapp1.1"
                 else
                     parent    
                     |> XElem.addElem "OutputType" info.OutputType

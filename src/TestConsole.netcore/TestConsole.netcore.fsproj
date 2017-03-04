@@ -10,7 +10,7 @@
     <PackageTargetFallback>portable-net45+win8+wp8+wpa81</PackageTargetFallback>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
     <OutputType>Exe</OutputType>
-    <TargetFramework>netcoreapp1.0</TargetFramework>
+    <TargetFramework>netcoreapp1.1</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
     <Content Include="app.config" HintPath="app.config" />

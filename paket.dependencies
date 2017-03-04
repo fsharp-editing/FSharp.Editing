@@ -36,12 +36,12 @@ nuget Microsoft.Extensions.Options.ConfigurationExtensions
 nuget Microsoft.Extensions.Logging.Abstractions     
 nuget Microsoft.Win32.Registry.AccessControl
 
-nuget Microsoft.CodeAnalysis.Common >= 2.1.1-rc5-61428-03 prerelease
-nuget Microsoft.CodeAnalysis.Features >=  2.1.1-rc5-61428-03 prerelease
-nuget Microsoft.CodeAnalysis.Workspaces.Common >= 2.1.1-rc5-61428-03 prerelease
+nuget Microsoft.CodeAnalysis.Common >= 2.1.1-rc5-61428-03 prerelease,  framework: netstandard13
+nuget Microsoft.CodeAnalysis.Features >=  2.1.1-rc5-61428-03 prerelease,  framework: netstandard13
+nuget Microsoft.CodeAnalysis.Workspaces.Common >= 2.1.1-rc5-61428-03 prerelease,  framework: netstandard13
 
 nuget NETStandard.Library 
-nuget Microsoft.NETCore.App 1.1.0
+
 
 group Test
     source http://nuget.org/api/v2

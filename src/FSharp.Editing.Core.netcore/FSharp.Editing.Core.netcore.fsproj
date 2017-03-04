@@ -1,7 +1,7 @@
 <Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
   <PropertyGroup>
     <Name>FSharp.Editing.Core</Name>
-    <RootNamespace>FSharp.Editing.Core</RootNamespace>
+    <RootNamespace>FSharp.Editing</RootNamespace>
     <AssemblyName>FSharp.Editing.Core</AssemblyName>
     <DefineConstants>NETCORE</DefineConstants>
     <DebugType>portable</DebugType>
@@ -9,6 +9,7 @@
     <DocumentationFile>..\..\build\$(TargetFramework)\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
     <PackageTargetFallback>portable-net45+win8+wp8+wpa81</PackageTargetFallback>
     <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <OutputType>Library</OutputType>
     <TargetFramework>netstandard1.6</TargetFramework>
   </PropertyGroup>
   <ItemGroup>
