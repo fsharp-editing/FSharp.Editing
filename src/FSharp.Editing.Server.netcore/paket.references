@@ -1,0 +1,5 @@
+FSharp.NET.Sdk
+FSharp.Compiler.Service
+Suave
+System.Runtime.InteropServices.RuntimeInformation
+Microsoft.NETCore.App

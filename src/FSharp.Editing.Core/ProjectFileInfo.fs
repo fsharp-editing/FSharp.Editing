@@ -4,6 +4,7 @@ open System
 open System.IO
 open Microsoft.CodeAnalysis
 open Microsoft.CodeAnalysis.Diagnostics
+open Microsoft.CodeAnalysis.Text
 open System.Runtime.Versioning
 open FSharp.Editing
 
@@ -119,7 +120,7 @@ module ProjectFileInfo =
                 ,   Path.GetFileNameWithoutExtension path
                 ,   sourceCodeKind = srcCodeKind
                 ,   filePath = fullpath
-                ,   loader = FileTextLoader(fullpath,Text.Encoding.UTF8)
+                ,   loader = TextLoader.FromPath fullpath
                 ,   isGenerated = false
                 )
 
@@ -142,7 +143,7 @@ module ProjectFileInfo =
                 (   DocumentId.CreateNewId projectId
                 ,   Path.GetFileNameWithoutExtension path
                 ,   filePath = fullpath
-                ,   loader = FileTextLoader(fullpath,Text.Encoding.UTF8)
+                ,   loader = TextLoader.FromPath fullpath
                 ,   isGenerated = false
                 )
 

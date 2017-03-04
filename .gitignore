@@ -181,7 +181,7 @@ paket-files
 *.xml
 
 release.cmd
-
+/src/*/Scripts/*
 tests/data/*/*.dll
 tests/data/*/*.xml
 tests/data/*/*.pdb

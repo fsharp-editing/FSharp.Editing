@@ -1,0 +1,6 @@
+FSharp.NET.Sdk
+Newtonsoft.Json
+System.IO.FileSystem
+System.IO.FileSystem.Primitives
+System.Reflection.TypeExtensions 
+System.Runtime.Serialization.Primitives

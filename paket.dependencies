@@ -10,30 +10,38 @@ nuget FSharp.NET.Sdk
 nuget FSharpLint.Core prerelease
 nuget Microsoft.Build
 nuget Microsoft.Build.Runtime
-nuget Microsoft.Win32.Registry.AccessControl
 nuget NuGet.CommandLine
 nuget SourceLink.SymbolStore
 nuget Newtonsoft.Json
-nuget Suave
-nuget ExtCore
+nuget Suave redirects: force
+
+
 nuget System.Collections.Generic.MultiValueDictionary
-nuget System.IO.FileSystem.Watcher
-nuget System.IO.FileSystem.Watcher.Polling
-nuget System.Runtime.Serialization.Json
+nuget System.Runtime
+nuget System.IO.FileSystem
+nuget System.IO.FileSystem.Primitives
+nuget System.Reflection.TypeExtensions
+nuget System.Runtime.InteropServices.RuntimeInformation
+nuget System.Runtime.Serialization.Primitives
 nuget System.Xml.XDocument
 nuget wire
 
-nuget Microsoft.CodeAnalysis.Common prerelease 
-nuget Microsoft.CodeAnalysis.Features prerelease 
-nuget Microsoft.CodeAnalysis.Workspaces.Common prerelease  
 
-nuget NETStandard.Library 
+nuget System.IO.FileSystem.Watcher
 nuget System.Composition
 nuget System.Runtime.Extensions
 nuget System.Runtime.InteropServices
-nuget System.Runtime.Loader
+
 nuget Microsoft.Extensions.Options.ConfigurationExtensions
 nuget Microsoft.Extensions.Logging.Abstractions     
+nuget Microsoft.Win32.Registry.AccessControl
+
+nuget Microsoft.CodeAnalysis.Common >= 2.1.1-rc5-61428-03 prerelease
+nuget Microsoft.CodeAnalysis.Features >=  2.1.1-rc5-61428-03 prerelease
+nuget Microsoft.CodeAnalysis.Workspaces.Common >= 2.1.1-rc5-61428-03 prerelease
+
+nuget NETStandard.Library 
+nuget Microsoft.NETCore.App 1.1.0
 
 group Test
     source http://nuget.org/api/v2
@@ -49,9 +57,8 @@ group Test
 group Build
     source http://nuget.org/api/v2
     redirects: on
-    nuget FSharp.Core 4.0.0.1
-    nuget canopy
+    nuget FSharp.Core
     nuget FAKE
     nuget FSharp.Formatting
-    nuget Nuget.CommandLine
+    nuget Paket.Core
     github fsharp/FAKE modules/Octokit/Octokit.fsx

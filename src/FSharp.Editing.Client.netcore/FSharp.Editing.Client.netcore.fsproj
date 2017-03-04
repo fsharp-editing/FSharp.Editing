@@ -1,0 +1,23 @@
+<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Name>FSharp.Editing.Client</Name>
+    <RootNamespace>Library1</RootNamespace>
+    <AssemblyName>FSharp.Editing.Client</AssemblyName>
+    <DefineConstants>NETCORE</DefineConstants>
+    <DebugType>portable</DebugType>
+    <OutputPath>..\..\build\$(TargetFramework)\$(Configuration)</OutputPath>
+    <DocumentationFile>..\..\build\$(TargetFramework)\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
+    <PackageTargetFallback>portable-net45+win8+wp8+wpa81</PackageTargetFallback>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <TargetFramework>netstandard1.6</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="app.config" HintPath="app.config" />
+    <Compile Include="..\FSharp.Editing.Client\Client.fs" HintPath="Client.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FSharp.Editing.Core.netcore\FSharp.Editing.Core.netcore.fsproj" />
+    <ProjectReference Include="..\FSharp.Editing.Messages.netcore\FSharp.Editing.Messages.netcore.fsproj" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

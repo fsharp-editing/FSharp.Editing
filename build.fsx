@@ -84,7 +84,11 @@ Target "AssemblyInfo" (fun _ ->
 // --------------------------------------------------------------------------------------
 // Clean build results
 
-Target "Clean" (fun _ -> CleanDirs ["bin"; "temp"; "nuget"])
+Target "Clean" ^ fun _ -> 
+    !! "src/**/obj" ++ "bin" ++ "temp" ++ "nuget"
+    // !! "bin" ++ "temp" ++ "nuget"
+    |> CleanDirs 
+
 Target "CleanDocs" (fun _ -> CleanDirs ["docs/output"])
 
 // --------------------------------------------------------------------------------------
@@ -128,7 +132,7 @@ Target "UnitTests" (fun _ ->
 )
 
 
-let dotnetcliVersion = "1.0.0-rc4-004911"
+let dotnetcliVersion = "2.0.0-alpha-005165"
 
 let dotnetSDKPath = System.Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) </> "dotnetcore" |> FullName
 
@@ -204,18 +208,34 @@ Target "DotnetRestoreTools" ^ fun _ ->
         { c with Project = currentDirectory</>"tools"</> "tools.fsproj";ToolPath = dotnetExePath  }
 
 
+#load "scripts/GenNetcore.fsx"
+
+Target "DotnetGenerate" ^ fun _ -> 
+    GenNetcore.generateNetcoreProjects __SOURCE_DIRECTORY__    
+
 let netcoreFiles = !! "src/*.netcore/*.fsproj" |> Seq.toList
 
 Target "DotnetRestore" ^ fun _ ->
     try netcoreFiles |> Seq.iter ^ fun proj ->
-            DotNetCli.Restore ^ fun c ->
-                { c with Project = proj; ToolPath = dotnetExePath }
+        DotNetCli.Restore ^ fun c ->
+        { c with 
+            Project = proj 
+            ToolPath = dotnetExePath 
+            AdditionalArgs = 
+            [   "-s https://dotnet.myget.org/F/roslyn/api/v3/index.json"
+                "-s https://dotnet.myget.org/F/dotnet-corefxlab/api/v3/index.json"
+            ]}
     with ex ->  traceError ex.Message
 
 Target "DotnetBuild" ^ fun _ ->
     netcoreFiles |> Seq.iter ^ fun proj ->
         DotNetCli.Build ^ fun c ->
-            { c with Project = proj; ToolPath = dotnetExePath }
+        { c with 
+            Project = proj 
+            ToolPath = dotnetExePath 
+            Configuration = "Release"
+            AdditionalArgs = [ "--framework netstandard1.6";  "/ds"; "/m" ]
+        }
     
 
 Target "DotnetPackage" ^ fun _ ->
@@ -288,13 +308,14 @@ Target "BuildBoth"  DoNothing
 
 "Clean"
   ==> "InstallDotNetCore"
+  ==> "DotnetGenerate"
   ==> "DotnetRestore"
   ==> "DotnetBuild"
   ==> "DotnetPackage"
 
 
-"Build" ==> "DotnetBuild" ==> "BuildBoth"
-
+"Build" ==> "BuildBoth" 
+"DotnetBuild" ==> "BuildBoth"
 //
 //"Release"
 //  ==> "PublishNuGet"

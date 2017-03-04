@@ -1,3 +1,6 @@
-ExtCore
 Newtonsoft.Json
 FSharp.Core
+System.IO.FileSystem
+System.IO.FileSystem.Primitives
+System.Reflection.TypeExtensions 
+System.Runtime.Serialization.Primitives

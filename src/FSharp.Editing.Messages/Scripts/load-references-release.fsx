@@ -16,4 +16,3 @@
 #r "System.Runtime.Serialization.dll"
 #r "../../../packages/System.Runtime.Serialization.Primitives/lib/net46/System.Runtime.Serialization.Primitives.dll"
 #r "../../../../../../../../Program Files (x86)/Reference Assemblies/Microsoft/Framework/.NETFramework/v4.6.1/Facades/System.Runtime.Serialization.Primitives.dll"
-#r "../../../build/Release/FSharp.Editing.Core.dll"

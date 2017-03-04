@@ -22,6 +22,13 @@ open FSharp.Editing
 (*  =================================== *)
 
 
+type TextLoader with 
+    static member FromPath fullpath =
+        let srcText = SourceText.From(File.ReadAllText(fullpath),Text.Encoding.UTF8)
+        let textAndVersion = TextAndVersion.Create(srcText,VersionStamp.Create(),fullpath)
+        TextLoader.From textAndVersion
+
+
 type SourceText with
     
     member self.Text with get () = self.ToString()

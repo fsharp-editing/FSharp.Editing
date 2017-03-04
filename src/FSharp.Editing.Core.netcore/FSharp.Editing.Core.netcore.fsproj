@@ -1,0 +1,34 @@
+<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Name>FSharp.Editing.Core</Name>
+    <RootNamespace>FSharp.Editing.Core</RootNamespace>
+    <AssemblyName>FSharp.Editing.Core</AssemblyName>
+    <DefineConstants>NETCORE</DefineConstants>
+    <DebugType>portable</DebugType>
+    <OutputPath>..\..\build\$(TargetFramework)\$(Configuration)</OutputPath>
+    <DocumentationFile>..\..\build\$(TargetFramework)\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
+    <PackageTargetFallback>portable-net45+win8+wp8+wpa81</PackageTargetFallback>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <TargetFramework>netstandard1.6</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="app.config" HintPath="app.config" />
+    <Compile Include="..\FSharp.Editing.Core\Pervasive.fs" HintPath="Pervasive.fs" />
+    <Compile Include="..\FSharp.Editing.Core\Extensions.fs" HintPath="Extensions.fs" />
+    <Compile Include="..\FSharp.Editing.Core\Logging.fs" HintPath="Logging.fs" />
+    <Compile Include="..\FSharp.Editing.Core\Constants.fs" HintPath="Constants.fs" />
+    <Compile Include="..\FSharp.Editing.Core\CodeAnalysisExtensions.fs" HintPath="CodeAnalysisExtensions.fs" />
+    <Compile Include="..\FSharp.Editing.Core\QuickParse.fs" HintPath="QuickParse.fs" />
+    <Compile Include="..\FSharp.Editing.Core\Lexer.fs" HintPath="Lexer.fs" />
+    <Compile Include="..\FSharp.Editing.Core\Utils.fs" HintPath="Utils.fs" />
+    <Compile Include="..\FSharp.Editing.Core\Text.fs" HintPath="Text.fs" />
+    <Compile Include="..\FSharp.Editing.Core\CompilerLocationUtils.fs" HintPath="CompilerLocationUtils.fs" />
+    <Compile Include="..\FSharp.Editing.Core\IdentifierUtils.fs" HintPath="IdentifierUtils.fs" />
+    <Compile Include="..\FSharp.Editing.Core\UntypedAstUtils.fs" HintPath="UntypedAstUtils.fs" />
+    <Compile Include="..\FSharp.Editing.Core\TypedAstUtils.fs" HintPath="TypedAstUtils.fs" />
+    <Compile Include="..\FSharp.Editing.Core\AssemblyContentProvider.fs" HintPath="AssemblyContentProvider.fs" />
+    <Compile Include="..\FSharp.Editing.Core\ProjectFileInfo.fs" HintPath="ProjectFileInfo.fs" />
+  </ItemGroup>
+  <ItemGroup />
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

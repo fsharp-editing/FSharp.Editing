@@ -47,6 +47,12 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution 
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TestConsole", "src\TestConsole\TestConsole.fsproj", "{E3176CF1-5193-4696-94B6-1F293C232631}"
 EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{0A9C7D00-C9D7-4E82-B586-50C4EF45F317}"
+	ProjectSection(SolutionItems) = preProject
+		scripts\GenNetcore.fsx = scripts\GenNetcore.fsx
+		scripts\XLinq.fsx = scripts\XLinq.fsx
+	EndProjectSection
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU

@@ -1,6 +1,5 @@
 ﻿namespace FSharp.Editing.Server
 
-open ExtCore.Control
 open FSharp.Editing
 open FSharp.Editing.Messages
 open FSharp.Editing.Messages.Serialization

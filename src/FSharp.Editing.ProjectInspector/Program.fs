@@ -1,8 +1,6 @@
 ﻿module FSharp.Editing.ProjectInspector.Program
 open System
 open System.IO
-open Wire
-open System.Runtime.Serialization.Json
 open Microsoft.CodeAnalysis
 open Newtonsoft.Json
 open FSharp.Editing
@@ -33,7 +31,8 @@ let main argv =
         let json = JsonConvert.SerializeObject(fileInfo)
         use writer = new StreamWriter( Console.OpenStandardOutput() )
         writer.WriteLine json
-        writer.Close()
+        writer.Flush()
+        writer.Dispose()
 //        Console.Write json
 //        let ser = new DataContractJsonSerializer(typeof<ProjectFileInfo>)
 //        ser.WriteObject(Console.OpenStandardOutput(), fileInfo)

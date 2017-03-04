@@ -1,0 +1,24 @@
+<Project Sdk="FSharp.NET.Sdk;Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <Name>FSharp.Editing.Messages</Name>
+    <RootNamespace>FSharp.Editing.Messages</RootNamespace>
+    <AssemblyName>FSharp.Editing.Messages</AssemblyName>
+    <DefineConstants>NETCORE</DefineConstants>
+    <DebugType>portable</DebugType>
+    <OutputPath>..\..\build\$(TargetFramework)\$(Configuration)</OutputPath>
+    <DocumentationFile>..\..\build\$(TargetFramework)\$(Configuration)\$(AssemblyName).XML</DocumentationFile>
+    <PackageTargetFallback>portable-net45+win8+wp8+wpa81</PackageTargetFallback>
+    <EnableDefaultCompileItems>false</EnableDefaultCompileItems>
+    <TargetFramework>netstandard1.6</TargetFramework>
+  </PropertyGroup>
+  <ItemGroup>
+    <Content Include="app.config" HintPath="app.config" />
+    <Compile Include="..\FSharp.Editing.Messages\Utils.fs" HintPath="Utils.fs" />
+    <Compile Include="..\FSharp.Editing.Messages\Messages.fs" HintPath="Messages.fs" />
+    <Compile Include="..\FSharp.Editing.Messages\Serialization.fs" HintPath="Serialization.fs" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\FSharp.Editing.Core.netcore\FSharp.Editing.Core.netcore.fsproj" />
+  </ItemGroup>
+  <Import Project="..\..\.paket\Paket.Restore.targets" />
+</Project>

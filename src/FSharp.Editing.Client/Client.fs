@@ -7,7 +7,6 @@ open System
 open FSharp.Editing
 open FSharp.Editing.Messages
 open FSharp.Editing.Messages.Serialization
-open ExtCore.Control
 
 type Client(serviceEndpoint: Uri) =
     let id = ref 0
@@ -21,7 +20,8 @@ type Client(serviceEndpoint: Uri) =
             ms.Write(buffer, 0, count)
             count <- inputStream.Read(buffer, 0, readSize)
         ms.Position <- 0L
-        inputStream.Close()
+        inputStream.Flush ()
+        inputStream.Dispose ()
         ms
 
     member __.Request<'a> (``method``: string, parameters: obj) : RequestResult<'a> =
@@ -41,8 +41,8 @@ type Client(serviceEndpoint: Uri) =
             use writer = new StreamWriter (reqStream)
             let json = serialize requestMessage
             writer.Write json
-            writer.Flush()
-            reqStream.Close()
+            writer.Flush ()
+            reqStream.Dispose ()
         
             let! resp = req.AsyncGetResponse()
             use respStream = resp.GetResponseStream()
