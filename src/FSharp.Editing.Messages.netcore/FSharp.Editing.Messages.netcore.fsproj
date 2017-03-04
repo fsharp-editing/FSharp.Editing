@@ -19,6 +19,9 @@
     <Compile Include="..\FSharp.Editing.Messages\Serialization.fs" HintPath="Serialization.fs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.1" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\FSharp.Editing.Core.netcore\FSharp.Editing.Core.netcore.fsproj" />
   </ItemGroup>
   <Import Project="..\..\.paket\Paket.Restore.targets" />

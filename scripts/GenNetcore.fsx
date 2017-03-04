@@ -132,10 +132,14 @@ let netcoreTemplate (info:FsProjInfo) =
             info.SourceFiles |> List.map ^ fun (itemType,sourcePath,hintPath)  ->
             XElem.withAttrs itemType [("Include",sourcePath);("HintPath",hintPath)]
         )
-
+        |> XElem.addElem "ItemGroup" (
+            (XElem.withAttrs "PackageReference" [("Include","FSharp.NET.Sdk");("Version","1.0.1")])
+        )
         // project references
         |> XElem.addElem  "ItemGroup" (info.ProjectReferences |> List.map makeProjectRef)
         |> XElem.addSingleAttr "Import" "Project" "..\..\.paket\Paket.Restore.targets"
+        
+
     let doc = XDocument()
     doc.Add xml
     info.Path, doc
@@ -150,6 +154,7 @@ let emptyConfig =
   </runtime>
 </configuration>
 """
+
 
 
 let genNetcoreProj = extractInfo >> netcoreTemplate

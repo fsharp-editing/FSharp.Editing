@@ -1,20 +1,22 @@
-FSharp.NET.Sdk
-FSharp.Compiler.Service
 wire
 Newtonsoft.Json
+
+Microsoft.Extensions.Logging.Abstractions
+
+Microsoft.CodeAnalysis.Common 
+Microsoft.CodeAnalysis.Workspaces.Common
+Microsoft.CodeAnalysis.Features
+
+group netcore
+FSharp.Core
+FSharp.Compiler.Service
+
+NETStandard.Library
 System.Xml.XDocument
 
 System.IO.FileSystem.Watcher
-System.Composition
 System.Runtime.Extensions
 System.Runtime.InteropServices
 
 Microsoft.Extensions.Options.ConfigurationExtensions
-Microsoft.Extensions.Logging.Abstractions
 Microsoft.Win32.Registry.AccessControl
-
-Microsoft.CodeAnalysis.Common framework: netstandard13
-Microsoft.CodeAnalysis.Workspaces.Common framework: netstandard13
-Microsoft.CodeAnalysis.Features framework: netstandard13
-
-NETStandard.Library

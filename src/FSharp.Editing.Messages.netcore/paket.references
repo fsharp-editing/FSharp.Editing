@@ -1,2 +1,4 @@
-FSharp.NET.Sdk
 Newtonsoft.Json
+
+group netcore 
+FSharp.Core

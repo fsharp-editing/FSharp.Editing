@@ -30,6 +30,9 @@
     <Compile Include="..\FSharp.Editing.Core\AssemblyContentProvider.fs" HintPath="AssemblyContentProvider.fs" />
     <Compile Include="..\FSharp.Editing.Core\ProjectFileInfo.fs" HintPath="ProjectFileInfo.fs" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.1" />
+  </ItemGroup>
   <ItemGroup />
   <Import Project="..\..\.paket\Paket.Restore.targets" />
 </Project>

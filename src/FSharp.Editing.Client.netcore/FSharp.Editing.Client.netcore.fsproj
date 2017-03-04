@@ -17,6 +17,9 @@
     <Compile Include="..\FSharp.Editing.Client\Client.fs" HintPath="Client.fs" />
   </ItemGroup>
   <ItemGroup>
+    <PackageReference Include="FSharp.NET.Sdk" Version="1.0.1" />
+  </ItemGroup>
+  <ItemGroup>
     <ProjectReference Include="..\FSharp.Editing.Core.netcore\FSharp.Editing.Core.netcore.fsproj" />
     <ProjectReference Include="..\FSharp.Editing.Messages.netcore\FSharp.Editing.Messages.netcore.fsproj" />
   </ItemGroup>

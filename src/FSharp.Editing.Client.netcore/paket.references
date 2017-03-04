@@ -1,5 +1,9 @@
-FSharp.NET.Sdk
 Newtonsoft.Json
+
+
+group netcore 
+FSharp.Core
+
 System.IO.FileSystem
 System.IO.FileSystem.Primitives
 System.Reflection.TypeExtensions 

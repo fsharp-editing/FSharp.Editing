@@ -4,8 +4,9 @@ Microsoft.CodeAnalysis.Common
 Microsoft.CodeAnalysis.Workspaces.Common
 Microsoft.CodeAnalysis.Features
 
+FSharp.Management
+FSharp.Data
+FsCheck
+
 group Test
-    FsCheck
     NUnit
-    FSharp.Management
-    FSharp.Data

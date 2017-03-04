@@ -85,8 +85,8 @@ Target "AssemblyInfo" (fun _ ->
 // Clean build results
 
 Target "Clean" ^ fun _ -> 
-    !! "src/**/obj" ++ "bin" ++ "temp" ++ "nuget"
-    // !! "bin" ++ "temp" ++ "nuget"
+    //!! "src/**/obj" ++ "bin" ++ "temp" ++ "nuget"
+    !! "bin" ++ "temp" ++ "nuget"
     |> CleanDirs 
 
 Target "CleanDocs" (fun _ -> CleanDirs ["docs/output"])
@@ -234,7 +234,7 @@ Target "DotnetBuild" ^ fun _ ->
             Project = proj 
             ToolPath = dotnetExePath 
             Configuration = "Release"
-            AdditionalArgs = [ "--framework netstandard1.6";  "/ds"; "/m" ]
+            AdditionalArgs = [ "/ds"; "/m"; (*"/pp"*) ]
         }
     
 

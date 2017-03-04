@@ -1,4 +1,16 @@
-FSharp.NET.Sdk
+Microsoft.CodeAnalysis.Common
+
+group netcore 
+
+FSharp.Core
 FSharp.Compiler.Service
-Suave
+
+Microsoft.NETCore.DotNetHostPolicy        
+Microsoft.NETCore.Runtime.CoreCLR
+
+NETStandard.Library   
+
 System.Runtime.InteropServices.RuntimeInformation
+System.Runtime.Loader
+
+Suave
