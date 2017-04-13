@@ -16,7 +16,6 @@
     <Content Include="app.config" HintPath="app.config" />
     <Compile Include="..\TestConsole\AssemblyInfo.fs" HintPath="AssemblyInfo.fs" />
     <Compile Include="..\TestConsole\Program.fs" HintPath="Program.fs" />
-    <Content Include="..\TestConsole\packages.config" HintPath="packages.config" />
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="FSharp.NET.Sdk" Version="1.0.1" />

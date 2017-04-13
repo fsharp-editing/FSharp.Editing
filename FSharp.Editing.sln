@@ -1,12 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26403.3
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{9B0032BD-A485-4F30-875E-002AA0E968C3}"
 	ProjectSection(SolutionItems) = preProject
 		paket.dependencies = paket.dependencies
-		.paket\paket.exe.config = .paket\paket.exe.config
 		paket.lock = paket.lock
 		.paket\Paket.Restore.targets = .paket\Paket.Restore.targets
 		.paket\paket.targets = .paket\paket.targets

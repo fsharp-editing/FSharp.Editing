@@ -1,4 +1,4 @@
-﻿// namespace Microsoft.VisualStudio.FSharp.Editor
+﻿namespace Microsoft.VisualStudio.FSharp.Editor
 
 // open System
 // open System.IO

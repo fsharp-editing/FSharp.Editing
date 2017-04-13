@@ -60,6 +60,11 @@ let release = parseReleaseNotes (File.ReadAllLines "RELEASE_NOTES.md")
 let isAppVeyorBuild = environVar "APPVEYOR" <> null
 let buildVersion = sprintf "%s-a%s" release.NugetVersion (DateTime.UtcNow.ToString "yyMMddHHmm")
 
+let msbuild14 = ProgramFilesX86</>"MSBuild"</>"14.0"</>"Bin"</>"MSBuild.exe"
+
+if isWindows && fileExists msbuild14 then 
+    setEnvironVar "MSBUILD"  msbuild14
+
 Target "BuildVersion" (fun _ ->
     Shell.Exec("appveyor", sprintf "UpdateBuild -Version \"%s\"" buildVersion) |> ignore
 )
@@ -132,7 +137,7 @@ Target "UnitTests" (fun _ ->
 )
 
 
-let dotnetcliVersion = "2.0.0-alpha-005165"
+let dotnetcliVersion = "2.0.0-preview1-005783"
 
 let dotnetSDKPath = System.Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) </> "dotnetcore" |> FullName
 

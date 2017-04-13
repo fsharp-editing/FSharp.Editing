@@ -656,7 +656,7 @@ type LanguageService (workspace:FSharpWorkspace,?backgroundCompilation: bool, ?p
         try 
             let fileName = fixFileName fileName
             debug "GetScriptCheckerOptions: Creating for stand-alone file or script: '%s'" fileName
-            let! opts = checkerInstance.GetProjectOptionsFromScript (fileName, source, fakeDateTimeRepresentingTimeLoaded projFilename)
+            let! opts,_ = checkerInstance.GetProjectOptionsFromScript (fileName, source, fakeDateTimeRepresentingTimeLoaded projFilename)
                 
             let results =
                 // The FSharpChecker resolution sometimes doesn't include FSharp.Core and other essential assemblies, so we need to include them by hand
@@ -823,7 +823,7 @@ type LanguageService (workspace:FSharpWorkspace,?backgroundCompilation: bool, ?p
                         else 
                             match func.EnclosingEntity with
                             // C# extension method
-                            | FSharpEntity Class ->
+                            | FSharpEntity TypedAstPatterns.Class ->
                                 let fullName = symbolUse.Symbol.FullName.Split '.'
                                 if fullName.Length > 2 then
                                     (* For C# extension methods FCS returns full name including the class name, like:
@@ -840,7 +840,7 @@ type LanguageService (workspace:FSharpWorkspace,?backgroundCompilation: bool, ?p
                     // Operators
                     | MemberFunctionOrValue func ->
                         match func with
-                        | Constructor _ ->
+                        | TypedAstPatterns.Constructor _ ->
                             // full name of a constructor looks like "UnusedSymbolClassifierTests.PrivateClass.( .ctor )"
                             // to make well formed full name parts we cut "( .ctor )" from the tail.
                             let fullName = func.FullName
@@ -866,7 +866,7 @@ type LanguageService (workspace:FSharpWorkspace,?backgroundCompilation: bool, ?p
                                 |]
                         | e, _, _ -> 
                             e.TryGetFullName () |> Option.map ^ fun fullName -> [| fullName |]
-                    | RecordField _
+                    | TypedAstPatterns.RecordField _
                     | UnionCase _ as symbol ->
                         Some [| let fullName = symbol.FullName
                                 yield fullName
