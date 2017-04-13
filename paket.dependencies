@@ -3,21 +3,19 @@ source https://dotnet.myget.org/F/roslyn/api/v3/index.json
 #source https://dotnet.myget.org/F/dotnet-corefxlab/api/v3/index.json
 redirects: force
 
-#nuget Fantomas
+
 nuget FSharp.Compiler.Service content: none 
-nuget FSharp.Core 4.0.0.1 redirects: force
+nuget FSharp.Core redirects: force
 nuget FSharp.NET.Sdk
 nuget Microsoft.Build >= 15.1
 nuget Microsoft.Build.Runtime >= 15.1
-#nuget NuGet.CommandLine
-#nuget SourceLink.SymbolStore
 nuget Newtonsoft.Json
 nuget Suave redirects: force
 nuget wire
 nuget Microsoft.Extensions.Logging.Abstractions   
-nuget Microsoft.CodeAnalysis.Common >= 2.1.1-rc5-61428-03 prerelease,  framework: netstandard13
-nuget Microsoft.CodeAnalysis.Features >=  2.1.1-rc5-61428-03 prerelease,  framework: netstandard13
-nuget Microsoft.CodeAnalysis.Workspaces.Common >= 2.1.1-rc5-61428-03 prerelease,  framework: netstandard13
+nuget Microsoft.CodeAnalysis.Common >= 3.0.0-beta1-61613-05 prerelease,  framework: netstandard13
+nuget Microsoft.CodeAnalysis.Features >=  3.0.0-beta1-61613-05 prerelease,  framework: netstandard13
+nuget Microsoft.CodeAnalysis.Workspaces.Common >= 3.0.0-beta1-61613-05 prerelease,  framework: netstandard13
 #nuget Microsoft.NETCore.App 2.0.0-beta-001663-00
 #nuget NETStandard.Library 2.0.0-beta-25103-01
 #nuget NETStandard.Library 
