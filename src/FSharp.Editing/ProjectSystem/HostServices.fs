@@ -53,20 +53,16 @@ type FSharpHostService () =
 type IHostServicesProvider =
     abstract Assemblies : Assembly ImmutableArray
 
-[<Export>]
-type HostServicesAggregator [<ImportingConstructor>] ([<ImportMany>] hostServicesProviders : seq<IHostServicesProvider>) =
-    let builder = ImmutableHashSet.CreateBuilder<Assembly>()
-
-    do
-        for asm in MefHostServices.DefaultAssemblies do
-            builder.Add asm |> ignore
-        for provider in hostServicesProviders do
-            for asm in provider.Assemblies do
+    type [<Export>] HostServicesAggregator [<ImportingConstructor>] 
+        ([<ImportMany>] hostServicesProviders : seq<IHostServicesProvider>) =
+        let builder = ImmutableHashSet.CreateBuilder<Assembly> ()
+        do  for asm in MefHostServices.DefaultAssemblies do
                 builder.Add asm |> ignore
-
-    let assemblies = builder.ToImmutableArray()
-    member __.CreateHostServices() = MefHostServices.Create assemblies
-
+            for provider in hostServicesProviders do
+                for asm in provider.Assemblies do
+                    builder.Add asm |> ignore
+        let assemblies = builder.ToImmutableArray ()
+        member __.CreateHostServices () = MefHostServices.Create assemblies
 
 type MefValueProvider<'a> (item:'a) =
     inherit ExportDescriptorProvider()

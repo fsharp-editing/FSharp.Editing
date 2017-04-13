@@ -190,68 +190,77 @@ type Document with
 
 type TextDocument with
 
+    /// Converts a TextDocument into the equivalent DocumentInfo asynchronously
     member self.ToDocumentInfoAsync () = async {
         let! src = self.GetTextAsync()
         let! version = self.GetTextVersionAsync()
         let textLoader = TextLoader.From (TextAndVersion.Create (src,version,self.FilePath))
         return DocumentInfo.Create
-            (   id=self.Id
-            ,   name=self.Name
-            ,   folders=self.Folders
-            ,   loader=textLoader
-            ,   filePath=self.FilePath
+            (   id = self.Id
+            ,   name = self.Name
+            ,   folders = self.Folders
+            ,   loader = textLoader
+            ,   filePath = self.FilePath
+            //,   sourceCodeKind = SourceCodeKind.Regular // should this always be applied?
             )
     }
 
+    /// Converts a TextDocument into the equivalent DocumentInfo 
+    member self.ToDocumentInfo () = self.ToDocumentInfoAsync() |> Async.RunSynchronously
+
+
 type Solution with 
 
-    member self.GetDocumentFilePath (docId:DocumentId) = 
-        let target =
-            self.Projects
-            |> Seq.collect ^ fun proj -> proj.Documents
-            |> Seq.tryFind ^ fun doc -> doc.Id = docId 
-        target |> Option.map ^ fun doc -> doc.FilePath    
-        
-
+       
+    /// Retrieve all Projects in the solution that contain the target document
     member self.GetProjectsContainingDocument (docId:DocumentId) =
         self.Projects |> Seq.filter (fun proj -> proj.ContainsDocument docId)
+
 
     /// Try to get a document inside the solution using the DocumentId
     member self.TryGetDocument (docId:DocumentId) =
         if self.ContainsDocument docId then Some (self.GetDocument docId) else None
 
+
     /// Try to get a document inside the solution using the document's name
     member self.TryGetDocument docName =
-        self.Projects |> Seq.tryPick ^ fun proj ->
-            proj.Documents |> Seq.tryFind ^ fun doc -> doc.Name = docName 
+        self.Projects |> Seq.tryPick (fun proj ->
+            proj.Documents |> Seq.tryFind (fun doc -> doc.Name = docName))
+
 
     /// Get a project inside the solution using the project's name
     member self.GetProject projectName =
-        self.Projects |> Seq.find ^ fun proj -> proj.Name = projectName
+        self.Projects |> Seq.find (fun proj -> proj.Name = projectName)
+
 
     /// Try to get a project inside the solution using the project's name
     member self.TryGetProject projectName =
-        self.Projects |> Seq.tryFind ^ fun proj -> proj.Name = projectName
+        self.Projects |> Seq.tryFind (fun proj -> proj.Name = projectName)
+
 
     /// Try to get a project inside the solution using the project's id
     member self.TryGetProject (projId:ProjectId) =
         if self.ContainsProject projId then Some (self.GetProject projId) else None
 
-    /// Sequence of DocumentInfo for all source files and addtional documents
-    /// from all of the projects within the solution
-    member self.GetAllDocumentsAsync () = async {
+
+    /// Get a seq of DocumentInfo for all source files and addtional documents
+    /// from all of the projects within the solution asynchronously
+    member self.GetAllDocumentInfosAsync () = async {
         let docInfoAsyncs = 
-            self.Projects |> Seq.collect ^ fun proj ->
+            self.Projects |> Seq.collect (fun proj ->
                 Seq.append
-                    (proj.Documents |> Seq.map ^ fun doc -> doc.ToDocumentInfoAsync ())
-                    (proj.AdditionalDocuments |> Seq.map ^ fun doc -> doc.ToDocumentInfoAsync ())
-        let! docInfo = Async.Parallel docInfoAsyncs
-        return  docInfo
+                    (proj.Documents |> Seq.map (fun doc -> doc.ToDocumentInfoAsync ()))
+                    (proj.AdditionalDocuments |> Seq.map (fun doc -> doc.ToDocumentInfoAsync ()))
+            )
+        let! docInfoArray = Async.Parallel docInfoAsyncs
+        return  docInfoArray
     }
 
-    member self.GetAllDocuments () = 
-        self.GetAllDocumentsAsync () |> Async.RunSynchronously
 
+    /// Get a seq of DocumentInfo for all source files and addtional documents
+    /// from all of the projects within the solution 
+    member self.GetAllDocumentInfos () = 
+        self.GetAllDocumentInfosAsync () |> Async.RunSynchronously
 
     member self.GetProjectsThatThisProjectTransitivelyDependsOn (projId:ProjectId) =
         let graph = self.GetProjectDependencyGraph ()
@@ -381,7 +390,98 @@ let internal toFSharpProjectOptions (workspace:'a :> Workspace) (projInfo:Projec
     projectStore.Clear ()
     fsprojOptions
 
+(*  With enough services implemented it should be posible to create FSharpProjectOptions entirely from scratch
 
+
+
+type OutputKind with 
+    /// Convert to the equivalent F# output type
+    member self.ToFSharpOutputType () =
+        match self with 
+        | OutputKind.ConsoleApplication -> "Exe"
+        | OutputKind.NetModule -> "Module"
+        | OutputKind.DynamicallyLinkedLibrary -> "Library"
+        | OutputKind.WindowsApplication -> "WinExe"
+        | OutputKind.WindowsRuntimeApplication -> failwith "F# has no OutputType equivalent to 'WindowsRuntimeApplication'"
+        | OutputKind.WindowsRuntimeMetadata -> failwith "F# has no OutputType equivalent to 'WindowsRuntimeMetadata'"
+        | x -> failwithf "F# has no OutputType equivalent to CodeAnalysis OutputKind - '%A'" x
+    
+    member self.ToFSharpCompilerArg () = 
+        match self with 
+        | OutputKind.ConsoleApplication ->"--target:exe"
+        | OutputKind.NetModule -> "--target:module"
+        | OutputKind.DynamicallyLinkedLibrary -> "--target:exe"
+        | OutputKind.WindowsApplication -> "--target:winexe"
+        | OutputKind.WindowsRuntimeApplication -> failwith "F# has no OutputType equivalent to 'WindowsRuntimeApplication'"
+        | OutputKind.WindowsRuntimeMetadata -> failwith "F# has no OutputType equivalent to 'WindowsRuntimeMetadata'"
+        | x -> failwithf "F# has no OutputType equivalent to CodeAnalysis OutputKind - '%A'" x
+
+
+
+    /// Get the FSharpProjectOptions for this project
+    member self.GetFSharpProjectOptionsAsync () = async {
+        let workspace = self.Solution.Workspace
+        workspace.Services.FindLanguageServices<ICompilationFactoryService>()
+
+        // cache any FSharpProjectOptions that have already been created
+        let projectStore = Dictionary<ProjectId,FSharpProjectOptions>()
+        let loadTime = System.DateTime.Now
+        let! projectInfo = self.ToProjectInfoAsync()
+
+        let outArg = sprintf "--out:%s" self.OutputFilePath
+        //let referenceArgs = 
+        //    self.MetadataReferences |> Seq.map (fun metaref -> 
+        //        match metaref.Properties.Kind with workspace.
+        //        | MetadataImageKind.Assembly ->MetadataImageKind.
+        //        | MetadataImageKind.Module -> 
+                
+        //        )
+        self.ParseOptions.
+        let toFSharpProjectOptionsAsync (projInfo:ProjectInfo) : FSharpProjectOptions Async = async {
+            Met
+            let rec generate (projInfo:ProjectInfo) : FSharpProjectOptions Async = async {
+                let getProjectRefs (projInfo:ProjectInfo): Async<(string * FSharpProjectOptions)[]> = async {
+                    let pathsAndOptions =
+                        projInfo.ProjectReferences
+                        |> Seq.choose (fun pref -> workspace.CurrentSolution.TryGetProject pref.ProjectId)
+                        |> Seq.map  (fun proj -> async {
+                            let! proj = proj.ToProjectInfoAsync ()
+                            if projectStore.ContainsKey proj.Id then
+                                return (proj.OutputFilePath, projectStore.[proj.Id])
+                            else
+                                let! fsinfo = generate proj
+                                projectStore.Add( proj.Id,fsinfo)
+                                return (proj.OutputFilePath, fsinfo)
+                        }) 
+                    let! fsharpOptionArray = pathsAndOptions |> Async.Parallel
+                    return fsharpOptionArray
+                }
+                let! referencedProjects =  getProjectRefs projInfo
+                return
+                    {   ProjectFileName = projInfo.FilePath
+                        ProjectFileNames = projInfo.Documents |> Seq.map (fun doc -> doc.FilePath) |> Array.ofSeq
+                        OtherOptions = [||]
+                        ReferencedProjects = referencedProjects
+                        IsIncompleteTypeCheckEnvironment = false
+                        UseScriptResolutionRules = false
+                        LoadTime = loadTime
+                        UnresolvedReferences = None
+                        OriginalLoadReferences = []
+            //            ExtraProjectInfo = None
+                        // I think this is supposed to hold the workspace?
+                        ExtraProjectInfo = Some (workspace :> _)
+                    }
+            }
+            let! fsprojOptions = generate projInfo
+            projectStore.Clear ()
+            return fsprojOptions
+        }
+
+
+
+
+
+*)
 
 
 type ProjectInfo with
