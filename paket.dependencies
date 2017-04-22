@@ -2,26 +2,28 @@ source https://api.nuget.org/v3/index.json
 source https://dotnet.myget.org/F/roslyn/api/v3/index.json
 #source https://dotnet.myget.org/F/dotnet-corefxlab/api/v3/index.json
 redirects: force
+content: none 
 
 nuget FSharp.Compiler.Service content: none 
-nuget FSharp.Core redirects: force
-nuget FSharp.NET.Sdk
+nuget FSharp.Core redirects: force,  content: none 
+nuget FSharp.NET.Sdk  content: none 
 nuget Microsoft.Build >= 15.1
 nuget Microsoft.Build.Runtime >= 15.1
 nuget Newtonsoft.Json
 nuget Suave redirects: force
 nuget wire
 nuget Microsoft.Extensions.Logging.Abstractions   
-nuget Microsoft.CodeAnalysis.Common >= 3.0.0-beta1-61613-05 #, framework: netstandard13
-nuget Microsoft.CodeAnalysis.Features >=  3.0.0-beta1-61613-05 #, framework: netstandard13
-nuget Microsoft.CodeAnalysis.Workspaces.Common >= 3.0.0-beta1-61613-05 #, framework: netstandard13
-
+nuget Microsoft.CodeAnalysis.Common >= 3.0.0-beta1-61613-05
+nuget Microsoft.CodeAnalysis.Features >=  3.0.0-beta1-61613-05 
+nuget Microsoft.CodeAnalysis.Workspaces.Common >= 3.0.0-beta1-61613-05 
 nuget FsCheck
 nuget FSharp.Management
 nuget FSharp.Data
 
 group netcore 
+    content: none 
     source https://api.nuget.org/v3/index.json
+
     nuget FSharp.Core
     nuget FSharp.Compiler.Service content: none 
     nuget Suave redirects: force
@@ -50,6 +52,7 @@ group netcore
 
 
 group Test
+    content: none 
     source https://api.nuget.org/v3/index.json
     redirects: on
 
