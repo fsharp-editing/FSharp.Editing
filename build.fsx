@@ -221,7 +221,7 @@ Target "DotnetRestoreTools" ^ fun _ ->
 Target "DotnetGenerate" ^ fun _ -> 
     GenNetcore.generateNetcoreProjects __SOURCE_DIRECTORY__    
 
-let netcoreFiles = !! "src/*.netcore/*.fsproj" |> Seq.toList
+let netcoreFiles = !! "src/netcore/*/*.fsproj" |> Seq.toList
 
 Target "DotnetRestore" ^ fun _ ->
     try netcoreFiles |> Seq.iter ^ fun proj ->

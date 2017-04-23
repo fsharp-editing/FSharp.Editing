@@ -64,7 +64,7 @@ let extractInfo (fsprojPath:string) =
     let fsprojName = fsprojPath |> Path.GetFileNameWithoutExtension
     let netcoreProj =  fsprojName + ".fsproj"
     let netcoreDir = "netcore" </> (DirectoryInfo(Path.GetDirectoryName fsprojPath)).Name 
-    let adjustPath srcpath = sprintf @"..\%s\%s" fsprojName srcpath
+    let adjustPath srcpath = sprintf @"..\..\%s\%s" fsprojName srcpath
 
     let srcFiles = 
         srcFiles |> Seq.map ^ fun (itemType,sourcePath,hintPath) ->
@@ -94,7 +94,7 @@ let extractInfo (fsprojPath:string) =
 let netcoreTemplate (info:FsProjInfo) =
 
     let makeProjectRef projectPath = 
-        let dirName = "netcore" </> (DirectoryInfo(Path.GetDirectoryName projectPath)).Name 
+        let dirName = (DirectoryInfo(Path.GetDirectoryName projectPath)).Name 
         let projName = (Path.GetFileNameWithoutExtension projectPath)  
         XElem.singleAttr "ProjectReference" "Include" (sprintf @"..\%s\%s.fsproj" dirName projName)
 
@@ -109,8 +109,8 @@ let netcoreTemplate (info:FsProjInfo) =
                     XElem.make "AssemblyName"               info.AssemblyName
                     XElem.make "DefineConstants"            "NETCORE"
                     XElem.make "DebugType"                  "portable"
-                    XElem.make "OutputPath"                 @"..\..\build\$(TargetFramework)\$(Configuration)"
-                    XElem.make "DocumentationFile"          @"..\..\build\$(TargetFramework)\$(Configuration)\$(AssemblyName).XML"
+                    XElem.make "OutputPath"                 @"..\..\..\build\$(TargetFramework)\$(Configuration)"
+                    XElem.make "DocumentationFile"          @"..\..\..\build\$(TargetFramework)\$(Configuration)\$(AssemblyName).XML"
                     XElem.make "PackageTargetFallback"      "portable-net45+win8+wp8+wpa81"
                     XElem.make "EnableDefaultCompileItems"  "false"
                 ] 

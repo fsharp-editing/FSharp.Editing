@@ -1,0 +1,18 @@
+Microsoft.CodeAnalysis.Common framework:netstandard16
+Microsoft.CodeAnalysis.Workspaces.Common framework:netstandard16
+Microsoft.CodeAnalysis.Features framework:netstandard16
+
+Microsoft.Build
+Newtonsoft.Json
+
+
+
+group netcore 
+
+    FSharp.Core
+    FSharp.NET.Sdk
+    FSharp.Compiler.Service
+    Microsoft.NETCore.DotNetHostPolicy        
+    Microsoft.NETCore.Runtime.CoreCLR
+    System.Runtime.Loader 
+    NETStandard.Library   

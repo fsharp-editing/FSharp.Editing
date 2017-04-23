@@ -13,6 +13,8 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{9B0032
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "project", "project", "{BF60BC93-E09B-4E5F-9D85-95A519479D54}"
 	ProjectSection(SolutionItems) = preProject
+		.gitattributes = .gitattributes
+		.gitignore = .gitignore
 		.travis.yml = .travis.yml
 		appveyor.yml = appveyor.yml
 		build.cmd = build.cmd
@@ -48,6 +50,17 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "scripts", "scripts", "{0A9C
 	ProjectSection(SolutionItems) = preProject
 		scripts\GenNetcore.fsx = scripts\GenNetcore.fsx
 		scripts\XLinq.fsx = scripts\XLinq.fsx
+	EndProjectSection
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "netcore", "netcore", "{59F8A114-BECB-4E99-A9D7-BD51159CE94A}"
+	ProjectSection(SolutionItems) = preProject
+		src\netcore\FSharp.Editing.Client\FSharp.Editing.Client.paket.references = src\netcore\FSharp.Editing.Client\FSharp.Editing.Client.paket.references
+		src\netcore\FSharp.Editing.Core\FSharp.Editing.Core.paket.references = src\netcore\FSharp.Editing.Core\FSharp.Editing.Core.paket.references
+		src\netcore\FSharp.Editing.Messages\FSharp.Editing.Messages.paket.references = src\netcore\FSharp.Editing.Messages\FSharp.Editing.Messages.paket.references
+		src\netcore\FSharp.Editing\FSharp.Editing.paket.references = src\netcore\FSharp.Editing\FSharp.Editing.paket.references
+		src\netcore\FSharp.Editing.ProjectInspector\FSharp.Editing.ProjectInspector.paket.references = src\netcore\FSharp.Editing.ProjectInspector\FSharp.Editing.ProjectInspector.paket.references
+		src\netcore\FSharp.Editing.Server\FSharp.Editing.Server.paket.references = src\netcore\FSharp.Editing.Server\FSharp.Editing.Server.paket.references
+		src\netcore\TestConsole\TestConsole.paket.references = src\netcore\TestConsole\TestConsole.paket.references
 	EndProjectSection
 EndProject
 Global

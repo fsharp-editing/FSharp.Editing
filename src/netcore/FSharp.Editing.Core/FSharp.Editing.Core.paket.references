@@ -1,0 +1,20 @@
+Newtonsoft.Json
+wire
+
+Microsoft.CodeAnalysis.Common framework:netstandard16
+Microsoft.CodeAnalysis.Workspaces.Common  framework:netstandard16
+Microsoft.CodeAnalysis.Features framework:netstandard16
+
+Microsoft.Extensions.Logging.Abstractions
+
+
+group netcore 
+
+    FSharp.Core
+    FSharp.Compiler.Service
+    FSharp.NET.Sdk
+    NETStandard.Library   
+
+    System.Xml.ReaderWriter
+    System.Xml.XDocument
+
