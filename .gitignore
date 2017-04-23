@@ -1,9 +1,9 @@
 ## Ignore Generated netcore projects 
 
-/src/netcore/
+src/netcore/
 
 ## paket.references for generated projects should be tracked
-!/src/netcore/*/paket.references
+!src/netcore/**/paket.references
 
 
 ## Ignore Visual Studio temporary files, build results, and
