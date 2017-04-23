@@ -6,7 +6,8 @@ Microsoft.CodeAnalysis.Features
 
 FSharp.Management
 FSharp.Data
-FsCheck
+
 
 group Test
+    FsCheck
     NUnit

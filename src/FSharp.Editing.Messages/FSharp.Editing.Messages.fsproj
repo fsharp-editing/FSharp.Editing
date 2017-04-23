@@ -8,7 +8,7 @@
     <OutputType>Library</OutputType>
     <RootNamespace>FSharp.Editing</RootNamespace>
     <AssemblyName>FSharp.Editing.Messages</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6.1</TargetFrameworkVersion>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Name>FSharp.Editing.Messages</Name>
     <TargetFrameworkProfile />
@@ -39,9 +39,9 @@
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
   </PropertyGroup>
   <Choose>
-    <When Condition="Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\4.0\Framework\v4.1\Microsoft.FSharp.Targets')">
+    <When Condition="Exists('$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\4.1\Framework\v4.0\Microsoft.FSharp.Targets')">
       <PropertyGroup>
-        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\4.0\Framework\v4.1\Microsoft.FSharp.Targets</FSharpTargetsPath>
+        <FSharpTargetsPath>$(MSBuildExtensionsPath32)\..\Microsoft SDKs\F#\4.1\Framework\v4.0\Microsoft.FSharp.Targets</FSharpTargetsPath>
       </PropertyGroup>
     </When>
     <When Condition="'$(VisualStudioVersion)' != '11.0' and Exists('$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\FSharp\Microsoft.FSharp.Targets')">
@@ -76,7 +76,6 @@
     <None Include="Scripts\Script1.fsx" />
     <None Include="Scripts\load-references-release.fsx" />
     <None Include="Scripts\load-project-release.fsx" />
-    <Content Include="app.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="mscorlib" />
