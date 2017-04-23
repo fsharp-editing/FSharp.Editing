@@ -1,6 +1,7 @@
-Microsoft.CodeAnalysis.Common framework: netstandard16
 
 group netcore 
+
+    Microsoft.CodeAnalysis.Common 
 
     FSharp.Core
     FSharp.NET.Sdk

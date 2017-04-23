@@ -1,9 +1,10 @@
 source https://api.nuget.org/v3/index.json
 source https://dotnet.myget.org/F/roslyn/api/v3/index.json
-#source https://dotnet.myget.org/F/dotnet-corefxlab/api/v3/index.json
+
+
 redirects: force
 content: none 
-
+framework: >= net45
 
 nuget FSharp.Compiler.Service content: none 
 nuget FSharp.Core redirects: force,  content: none 
@@ -20,24 +21,43 @@ nuget Microsoft.CodeAnalysis.Workspaces.Common >= 3.0.0-beta1-61613-05
 nuget FSharp.Management
 nuget FSharp.Data
 
+
 group netcore 
     source https://api.nuget.org/v3/index.json
+    source https://dotnet.myget.org/F/roslyn/api/v3/index.json
+
     redirects: on
     content: none 
+    framework: >= netstandard1.3
 
+
+    nuget FSharp.NET.Sdk  content: none 
     nuget FSharp.Core
     nuget FSharp.Compiler.Service content: none 
     nuget Suave redirects: force
+
+    nuget System.Runtime
     nuget System.IO.FileSystem
     nuget System.IO.FileSystem.Watcher
     nuget System.IO.FileSystem.Primitives
     nuget System.Reflection.TypeExtensions
     nuget System.Xml.XDocument
-    nuget FSharp.NET.Sdk  content: none 
 
-    nuget System.Runtime
+    nuget Microsoft.CodeAnalysis.Common >= 3.0.0-beta1-61613-05 
+    nuget Microsoft.CodeAnalysis.Features >=  3.0.0-beta1-61613-05 
+    nuget Microsoft.CodeAnalysis.Workspaces.Common >= 3.0.0-beta1-61613-05     
+    
+
+    nuget Microsoft.Build >= 15.1
+    nuget Microsoft.Build.Runtime >= 15.1
+    nuget Newtonsoft.Json
+    nuget wire
+
+    nuget Microsoft.Extensions.Logging.Abstractions   
+
     nuget Microsoft.NETCore.DotNetHostPolicy        
     nuget Microsoft.NETCore.Runtime.CoreCLR
+
     nuget System.Runtime.Loader 
     nuget System.Runtime.Extensions
     nuget System.Runtime.InteropServices
@@ -62,8 +82,6 @@ group Build
     redirects: on
     content: none 
 
-    nuget FSharp.Core
     nuget FAKE
     nuget FSharp.Formatting
-    nuget Paket.Core
     github fsharp/FAKE modules/Octokit/Octokit.fsx

@@ -1,0 +1,20 @@
+
+
+group netcore 
+
+    Newtonsoft.Json
+    wire
+    
+    FSharp.Core
+    FSharp.Compiler.Service
+    FSharp.NET.Sdk
+    NETStandard.Library   
+
+    System.Xml.ReaderWriter
+    System.Xml.XDocument
+
+    Microsoft.Extensions.Logging.Abstractions
+
+    Microsoft.CodeAnalysis.Common
+    Microsoft.CodeAnalysis.Workspaces.Common
+    Microsoft.CodeAnalysis.Features

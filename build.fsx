@@ -133,15 +133,13 @@ Target "UnitTests" (fun _ ->
             { p with
                 ShadowCopy = false
                 TimeOut = TimeSpan.FromMinutes 20.
-                //Framework = NUnit3Runtime.Net45
                 Domain = NUnit3DomainModel.MultipleDomainModel 
-                //Workers = Some 1
                 ResultSpecs = ["TestResults.xml"] }
         if isAppVeyorBuild then { param with Where = "cat != AppVeyorLongRunning" } else param)
 )
 
 
-let dotnetcliVersion = "1.0.1"
+let dotnetcliVersion = "2.0.0-preview2-005840"
 
 let dotnetSDKPath = System.Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) </> "dotnetcore" </> dotnetcliVersion |> FullName
 
@@ -211,11 +209,6 @@ let runCmdIn workDir exe =
 /// Execute a dotnet cli command
 let dotnet workDir = runCmdIn workDir "dotnet"
 
-Target "DotnetRestoreTools" ^ fun _ ->
-    DotNetCli.Restore ^ fun c ->
-        { c with Project = currentDirectory</>"tools"</> "tools.fsproj";ToolPath = dotnetExePath  }
-
-
 #load "scripts/GenNetcore.fsx"
 
 Target "DotnetGenerate" ^ fun _ -> 
@@ -229,10 +222,11 @@ Target "DotnetRestore" ^ fun _ ->
         { c with 
             Project = proj 
             ToolPath = dotnetExePath 
-            AdditionalArgs = 
-            [   "-s https://dotnet.myget.org/F/roslyn/api/v3/index.json"
-                "-s https://dotnet.myget.org/F/dotnet-corefxlab/api/v3/index.json"
-            ]}
+            //AdditionalArgs = 
+            //[   "-s https://dotnet.myget.org/F/roslyn/api/v3/index.json"
+            //    "-s https://dotnet.myget.org/F/dotnet-corefxlab/api/v3/index.json"
+            //]}
+        }
     with ex ->  traceError ex.Message
 
 Target "DotnetBuild" ^ fun _ ->
@@ -241,8 +235,8 @@ Target "DotnetBuild" ^ fun _ ->
         { c with 
             Project = proj 
             ToolPath = dotnetExePath 
-            Configuration = "Release"
-            AdditionalArgs = [ "/ds"; "/m"; (*"/pp"*) ]
+            //Configuration = "Release"
+            //AdditionalArgs = [ "/ds"; "/m"; (*"/pp"*) ]
         }
     
 

@@ -1,13 +1,12 @@
-Microsoft.Build
-Microsoft.Build.Runtime
-
-Microsoft.CodeAnalysis.Common framework: netstandard16
-Microsoft.CodeAnalysis.Workspaces.Common framework: netstandard16
-
-Newtonsoft.Json
-
 
 group netcore 
+    Microsoft.Build
+    Microsoft.Build.Runtime
+
+    Newtonsoft.Json
+
+    Microsoft.CodeAnalysis.Common 
+    Microsoft.CodeAnalysis.Workspaces.Common 
 
     FSharp.Core
     FSharp.Compiler.Service

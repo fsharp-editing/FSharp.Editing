@@ -112,7 +112,7 @@ let netcoreTemplate (info:FsProjInfo) =
                     XElem.make "OutputPath"                 @"..\..\..\build\$(TargetFramework)\$(Configuration)"
                     XElem.make "DocumentationFile"          @"..\..\..\build\$(TargetFramework)\$(Configuration)\$(AssemblyName).XML"
                     XElem.make "PackageTargetFallback"      "portable-net45+win8+wp8+wpa81"
-                    XElem.make "EnableDefaultCompileItems"  "false"
+                    //XElem.make "EnableDefaultCompileItems"  "false"
                 ] 
             let parent =
                 if info.OutputType = "Exe" then 
@@ -130,9 +130,6 @@ let netcoreTemplate (info:FsProjInfo) =
             info.SourceFiles |> List.map ^ fun (itemType,sourcePath,hintPath)  ->
             XElem.withAttrs itemType [("Include",sourcePath);("HintPath",hintPath)]
         )
-        // |> XElem.addElem "ItemGroup" (
-        //     (XElem.withAttrs "PackageReference" [("Include","FSharp.NET.Sdk");("Version","1.0.1")])
-        // )
         // project references
         |> XElem.addElem  "ItemGroup" (info.ProjectReferences |> List.map makeProjectRef)
         |> XElem.addSingleAttr "Import" "Project" "..\..\..\.paket\Paket.Restore.targets"

@@ -1,6 +1,5 @@
 Newtonsoft.Json
 
 group netcore 
-
     FSharp.Core
     FSharp.NET.Sdk

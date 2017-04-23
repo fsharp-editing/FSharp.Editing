@@ -1,13 +1,11 @@
-Microsoft.CodeAnalysis.Common framework:netstandard16
-Microsoft.CodeAnalysis.Workspaces.Common framework:netstandard16
-Microsoft.CodeAnalysis.Features framework:netstandard16
 
 Microsoft.Build
 Newtonsoft.Json
 
-
-
 group netcore 
+    Microsoft.CodeAnalysis.Common 
+    Microsoft.CodeAnalysis.Workspaces.Common 
+    Microsoft.CodeAnalysis.Features 
 
     FSharp.Core
     FSharp.NET.Sdk
