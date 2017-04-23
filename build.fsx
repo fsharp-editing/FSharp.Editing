@@ -214,39 +214,32 @@ let dotnet workDir = runCmdIn workDir "dotnet"
 Target "DotnetGenerate" ^ fun _ -> 
     GenNetcore.generateNetcoreProjects __SOURCE_DIRECTORY__    
 
-let netcoreFiles = !! "src/netcore/*/*.fsproj" |> Seq.toList
+let netcoresln = "src/netcore/FSharp.Editing.netcore.sln"
 
 Target "DotnetRestore" ^ fun _ ->
-    try netcoreFiles |> Seq.iter ^ fun proj ->
-        DotNetCli.Restore ^ fun c ->
+    try DotNetCli.Restore ^ fun c ->
         { c with 
-            Project = proj 
+            Project = netcoresln
             ToolPath = dotnetExePath 
-            //AdditionalArgs = 
-            //[   "-s https://dotnet.myget.org/F/roslyn/api/v3/index.json"
-            //    "-s https://dotnet.myget.org/F/dotnet-corefxlab/api/v3/index.json"
-            //]}
         }
     with ex ->  traceError ex.Message
 
 Target "DotnetBuild" ^ fun _ ->
-    netcoreFiles |> Seq.iter ^ fun proj ->
         DotNetCli.Build ^ fun c ->
         { c with 
-            Project = proj 
+            Project = netcoresln
             ToolPath = dotnetExePath 
-            //Configuration = "Release"
-            //AdditionalArgs = [ "/ds"; "/m"; (*"/pp"*) ]
+            Configuration = "Release"
+            AdditionalArgs = [ "/ds"; "/m"; (*"/pp"*) ]
         }
     
 
 Target "DotnetPackage" ^ fun _ ->
-    netcoreFiles |> Seq.iter ^ fun proj ->
         DotNetCli.Pack ^ fun c ->
         { c with
-            Project = proj
+            Project = netcoresln
             ToolPath = dotnetExePath
-            AdditionalArgs = [(sprintf "-o %s" currentDirectory </> tempDir </> "dotnetcore"); (sprintf "/p:Version=%s" release.NugetVersion)]
+            AdditionalArgs = [(sprintf "-o %s" currentDirectory </> tempDir </> "dotnetcore"); (sprintf "/p:Version=%s-alpha" release.NugetVersion)]
         }
 
 
