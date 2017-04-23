@@ -57,7 +57,7 @@ let tempDir = "temp"
 Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 let release = parseReleaseNotes (File.ReadAllLines "RELEASE_NOTES.md")
 
-let isAppVeyorBuild = environVar "APPVEYOR" <> null
+let isAppVeyorBuild = environVar "APPVEYOR" = "true"
 let buildVersion = sprintf "%s-a%s" release.NugetVersion (DateTime.UtcNow.ToString "yyMMddHHmm")
 
 let msbuild14 = ProgramFilesX86</>"MSBuild"</>"14.0"</>"Bin"</>"MSBuild.exe"
@@ -71,27 +71,31 @@ Target "BuildVersion" (fun _ ->
 
 // Generate assembly info files with the right version & up-to-date information
 Target "AssemblyInfo" (fun _ ->
-  let shared =
-    [   Attribute.Product project
+    let shared = [   
+        Attribute.Product project
         Attribute.Description summary
         Attribute.Version release.AssemblyVersion
-        Attribute.FileVersion release.AssemblyVersion ] 
+        Attribute.FileVersion release.AssemblyVersion 
+    ] 
 
-  CreateFSharpAssemblyInfo "src/FSharp.Editing.Messages/AssemblyInfo.fs" 
-      (Attribute.Title "FSharp.Editing.Messages" :: shared)
-  CreateFSharpAssemblyInfo "src/FSharp.Editing.Server/AssemblyInfo.fs" 
-      (Attribute.Title "FSharp.Editing.Server" :: shared)
+    CreateFSharpAssemblyInfo "src/FSharp.Editing.Messages/AssemblyInfo.fs" 
+        (Attribute.Title "FSharp.Editing.Messages" :: shared)
+    CreateFSharpAssemblyInfo "src/FSharp.Editing.Server/AssemblyInfo.fs" 
+        (Attribute.Title "FSharp.Editing.Server" :: shared)
 
-  CreateFSharpAssemblyInfo "src/FSharp.Editing/AssemblyInfo.fs"
-      (Attribute.InternalsVisibleTo "FSharp.Editing.Tests" :: Attribute.Title "FSharp.Editing" :: shared)
+    CreateFSharpAssemblyInfo "src/FSharp.Editing/AssemblyInfo.fs"
+        (Attribute.InternalsVisibleTo "FSharp.Editing.Tests" :: Attribute.Title "FSharp.Editing" :: shared)
 )
 
 // --------------------------------------------------------------------------------------
 // Clean build results
 
 Target "Clean" ^ fun _ -> 
-    //!! "src/**/obj" ++ "bin" ++ "temp" ++ "nuget"
-    !! "bin" ++ "temp" ++ "nuget"
+    !! "src/**/obj" 
+    ++ "src/**/bin" 
+    ++ "tests/**/bin"
+    ++ "tests/**/obj"
+    ++ "bin" ++ "temp" ++ "nuget"
     |> CleanDirs 
 
 Target "CleanDocs" (fun _ -> CleanDirs ["docs/output"])
@@ -137,13 +141,12 @@ Target "UnitTests" (fun _ ->
 )
 
 
-let dotnetcliVersion = "2.0.0-preview1-005783"
+let dotnetcliVersion = "1.0.1"
 
-let dotnetSDKPath = System.Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) </> "dotnetcore" |> FullName
+let dotnetSDKPath = System.Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData) </> "dotnetcore" </> dotnetcliVersion |> FullName
 
 let dotnetExePath =
-    dotnetSDKPath </> (if isWindows then "dotnet.exe" else "dotnet")
-    |> FullName
+    dotnetSDKPath </> (if isWindows then "dotnet.exe" else "dotnet") |> FullName
 
 
 
@@ -246,11 +249,11 @@ Target "DotnetBuild" ^ fun _ ->
 Target "DotnetPackage" ^ fun _ ->
     netcoreFiles |> Seq.iter ^ fun proj ->
         DotNetCli.Pack ^ fun c ->
-            { c with
-                Project = proj
-                ToolPath = dotnetExePath
-                AdditionalArgs = [(sprintf "-o %s" currentDirectory </> tempDir </> "dotnetcore"); (sprintf "/p:Version=%s" release.NugetVersion)]
-            }
+        { c with
+            Project = proj
+            ToolPath = dotnetExePath
+            AdditionalArgs = [(sprintf "-o %s" currentDirectory </> tempDir </> "dotnetcore"); (sprintf "/p:Version=%s" release.NugetVersion)]
+        }
 
 
 

@@ -18,7 +18,6 @@ let inline (|&|) (pred1:'a->bool) (pred2:'a->bool) = fun a -> pred1 a && pred2 a
 let printseq sqs = sqs |> Seq.iter ^ printfn "%A"
 
 
-//
 type FsProjInfo = {
     Path : string
     Name : string
@@ -63,8 +62,8 @@ let extractInfo (fsprojPath:string) =
         
 
     let fsprojName = fsprojPath |> Path.GetFileNameWithoutExtension
-    let netcoreProj =  fsprojName + ".netcore.fsproj"
-    let netcoreDir = (DirectoryInfo(Path.GetDirectoryName fsprojPath)).Name + ".netcore"
+    let netcoreProj =  fsprojName + ".fsproj"
+    let netcoreDir = "netcore" </> (DirectoryInfo(Path.GetDirectoryName fsprojPath)).Name 
     let adjustPath srcpath = sprintf @"..\%s\%s" fsprojName srcpath
 
     let srcFiles = 
@@ -73,7 +72,7 @@ let extractInfo (fsprojPath:string) =
             (itemType, adjustPath  sourcePath, sourcePath)
         |> Seq.filter ^ fun (itemType, sourcePath, hintpath) ->
             not (String.Equals(Path.GetFileName sourcePath,"App.Config", StringComparison.OrdinalIgnoreCase))
-        |> Seq.append [("Content","app.config","app.config")]
+        //|> Seq.append [("Content","app.config","app.config")]
 
 
     let findProperty name (xelems: XElement seq) = 
@@ -92,12 +91,11 @@ let extractInfo (fsprojPath:string) =
     }
 
 
-
 let netcoreTemplate (info:FsProjInfo) =
 
     let makeProjectRef projectPath = 
-        let dirName = (DirectoryInfo(Path.GetDirectoryName projectPath)).Name + ".netcore"
-        let projName = (Path.GetFileNameWithoutExtension projectPath)  + ".netcore"
+        let dirName = "netcore" </> (DirectoryInfo(Path.GetDirectoryName projectPath)).Name 
+        let projName = (Path.GetFileNameWithoutExtension projectPath)  
         XElem.singleAttr "ProjectReference" "Include" (sprintf @"..\%s\%s.fsproj" dirName projName)
 
     let xml =
@@ -132,12 +130,12 @@ let netcoreTemplate (info:FsProjInfo) =
             info.SourceFiles |> List.map ^ fun (itemType,sourcePath,hintPath)  ->
             XElem.withAttrs itemType [("Include",sourcePath);("HintPath",hintPath)]
         )
-        |> XElem.addElem "ItemGroup" (
-            (XElem.withAttrs "PackageReference" [("Include","FSharp.NET.Sdk");("Version","1.0.1")])
-        )
+        // |> XElem.addElem "ItemGroup" (
+        //     (XElem.withAttrs "PackageReference" [("Include","FSharp.NET.Sdk");("Version","1.0.1")])
+        // )
         // project references
         |> XElem.addElem  "ItemGroup" (info.ProjectReferences |> List.map makeProjectRef)
-        |> XElem.addSingleAttr "Import" "Project" "..\..\.paket\Paket.Restore.targets"
+        |> XElem.addSingleAttr "Import" "Project" "..\..\..\.paket\Paket.Restore.targets"
         
 
     let doc = XDocument()
@@ -159,21 +157,32 @@ let emptyConfig =
 
 let genNetcoreProj = extractInfo >> netcoreTemplate
 
-let generateNetcoreProjects root =
+let root = (__SOURCE_DIRECTORY__ + "/../") |> Path.GetFullPath
 
+let generateNetcoreProjects root =
+    
     let fsprojs = 
         !! (root + "/src/*/*.fsproj") 
-        -- (root + "/src/*.netcore/*.fsproj")
+        -- (root + "/src/*.netcore/*.netcore.fsproj")        
+        -- (root + "/src/netcore/*/*.fsproj")
     
-    printfn "\nDiscovered Target F# Projects\n"
+    printfn "\n Discovered Target F# Projects \n"
 
     printseq fsprojs
 
-    let projDirs = fsprojs |> Seq.map Path.GetDirectoryName 
+    let projDirs = fsprojs |> Seq.map Path.GetDirectoryName
 
-    let netcoreDirs = projDirs |> Seq.map ^ fun dir -> dir + ".netcore" 
+    let netcoreDirs = 
+        projDirs |> Seq.map ^ fun dir -> 
+            let dirName = Path.GetFileName dir
+            root </> "src" </> "netcore" </> dirName 
 
     netcoreDirs |> Seq.iter ensureDirectory
+
+    printfn "\n Ensuring Directories for netcore projects \n"
+
+    printseq netcoreDirs
+
 
     let netcoreXDocs =  fsprojs |> Seq.map   genNetcoreProj
 

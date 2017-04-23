@@ -4,25 +4,26 @@ source https://dotnet.myget.org/F/roslyn/api/v3/index.json
 redirects: force
 content: none 
 
+
 nuget FSharp.Compiler.Service content: none 
 nuget FSharp.Core redirects: force,  content: none 
-nuget FSharp.NET.Sdk  content: none 
 nuget Microsoft.Build >= 15.1
 nuget Microsoft.Build.Runtime >= 15.1
 nuget Newtonsoft.Json
 nuget Suave redirects: force
 nuget wire
 nuget Microsoft.Extensions.Logging.Abstractions   
-nuget Microsoft.CodeAnalysis.Common >= 3.0.0-beta1-61613-05
+nuget Microsoft.CodeAnalysis.Common >= 3.0.0-beta1-61613-05 
 nuget Microsoft.CodeAnalysis.Features >=  3.0.0-beta1-61613-05 
 nuget Microsoft.CodeAnalysis.Workspaces.Common >= 3.0.0-beta1-61613-05 
-nuget FsCheck
+
 nuget FSharp.Management
 nuget FSharp.Data
 
 group netcore 
-    content: none 
     source https://api.nuget.org/v3/index.json
+    redirects: on
+    content: none 
 
     nuget FSharp.Core
     nuget FSharp.Compiler.Service content: none 
@@ -32,7 +33,7 @@ group netcore
     nuget System.IO.FileSystem.Primitives
     nuget System.Reflection.TypeExtensions
     nuget System.Xml.XDocument
-
+    nuget FSharp.NET.Sdk  content: none 
 
     nuget System.Runtime
     nuget Microsoft.NETCore.DotNetHostPolicy        
@@ -43,12 +44,8 @@ group netcore
     nuget System.Runtime.Serialization.Primitives
     nuget System.Runtime.InteropServices.RuntimeInformation
 
-
-
     nuget Microsoft.Extensions.Options.ConfigurationExtensions
-  
     nuget Microsoft.Win32.Registry.AccessControl
-
 
 
 group Test
@@ -58,13 +55,13 @@ group Test
 
     nuget NUnit
     nuget NUnit.Runners
-
-
-
+    nuget FsCheck
 
 group Build
     source https://api.nuget.org/v3/index.json
     redirects: on
+    content: none 
+
     nuget FSharp.Core
     nuget FAKE
     nuget FSharp.Formatting

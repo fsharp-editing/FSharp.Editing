@@ -1,7 +1,7 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 15
-VisualStudioVersion = 15.0.26403.3
+VisualStudioVersion = 15.0.26403.7
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".paket", ".paket", "{9B0032BD-A485-4F30-875E-002AA0E968C3}"
 	ProjectSection(SolutionItems) = preProject
@@ -41,8 +41,6 @@ EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharp.Editing.ProjectInspector", "src\FSharp.Editing.ProjectInspector\FSharp.Editing.ProjectInspector.fsproj", "{AA1CCB77-13B4-454F-A544-FFD7E545C146}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "FSharp.Editing.Core", "src\FSharp.Editing.Core\FSharp.Editing.Core.fsproj", "{4DA275D6-B42A-4258-8798-5B91253EC3FD}"
-EndProject
-Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{EB98EE00-D81E-4ADC-9E4F-F45BADE66860}"
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "TestConsole", "src\TestConsole\TestConsole.fsproj", "{E3176CF1-5193-4696-94B6-1F293C232631}"
 EndProject
